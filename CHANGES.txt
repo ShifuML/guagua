@@ -1,0 +1,50 @@
+/**
+ * Copyright [2013-2014] eBay Software Foundation
+ *  
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+Guagua Change Logs
+
+Changes for Guagua-0.4.0
+    * Consistent guagua package in guagua-client. For this package, we have a shell 'guagua' help user select the 
+      platform,  user only to set his jar, his master and worker classes and other parameters he'd like to.
+    * Support jobs run in Parallel in GuaguaMapReduceClient, only mapreduce support it, yarn doesn't support it.
+Changes for Guagua-0.3.0
+    * Delete unneeded ZooKeeper znodes ASAP, for example: in iteration 4, delete all znodes from iteration 1 and 2, node
+      remove znodes for iteration 3 because of fail-over needed.
+    * Improve Hadoop mapper progress to make sure users can get accurate progress in web and console.
+    * Imporve nerual network implementation.
+    * Fulfill guagua client input validation.
+    * Add slow task detection mechanism, if one task iteration execution time is over a threshold value, task will kill 
+      itself to trigger fail-over task on other machines.
+Changes for Guagua-0.2.0
+    * Make guagua mapreduce work on Hadoop 0.20.2, 1.2.0 and 2.2.0, test guagua mapreduce on apache, cloudera, 
+      hortonworks distributions
+    * Change default task gc to concurrent gc to decrease gc stopping time to avoid ZooKeeper session timeout.
+    * Build two packages for guagua-mapreduce to make guagua work on hadoop 1.0 and hadoop yarn.
+    * Make guagua yarn works, token setting in GuaguaAppMaster
+    * Fix the bug: OOM for zookeeper and OOD(disk) for zookeeper
+    * Any exception send kill task signal to Job Tracker to make sure issue task can be killed
+    * Add detailed info to mapper status for user to check.
+Changes for Guagua-0.1.0
+    * Master-Workers services implementation for whole guagua arch.
+    * Sync and async ZooKeeper coordinators for both master and workers.
+    * MapReduce adapter implementation by using only mapper tasks.
+    * Yarn adapter implementation with fail-over like mapreduce tasks. By default each task has 4 attempts.
+    * Guagua-core fail-over support to make restarted-task starts at last successful iteration.
+    * Basic IO for master result and worker results and adpater for Hadoop writable.
+    * Add examples: sum values and distributed neural network implementation.
+    * Make all intercepters and properties set by Hadoop like commnad: '-Dkey=value'
+    * Input splits like Pig: set combination size, guagua can combine each worker according to the size.
+    * Profile intercepter liker memory profilers and worker timers.

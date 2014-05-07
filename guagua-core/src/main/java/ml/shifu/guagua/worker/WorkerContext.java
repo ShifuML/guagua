@@ -1,0 +1,157 @@
+/**
+ * Copyright [2013-2014] eBay Software Foundation
+ *  
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ml.shifu.guagua.worker;
+
+import java.util.List;
+import java.util.Properties;
+
+import ml.shifu.guagua.io.Bytable;
+import ml.shifu.guagua.io.GuaguaFileSplit;
+
+/**
+ * {@link WorkerContext} is a context to contain all objects used in master computation.
+ * 
+ * @param <MASTER_RESULT>
+ *            master result for computation in each iteration.
+ * @param <WORKER_RESULT>
+ *            worker result for computation in each iteration.
+ */
+public class WorkerContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
+
+    /**
+     * Current iteration, start from 1. 0 is used for initialization.
+     */
+    private int currentIteration;
+
+    /**
+     * Total iteration number, set by client.
+     */
+    private final int totalIteration;
+
+    /**
+     * master result in last iteration, this should be set in coordination mechanism.
+     */
+    private MASTER_RESULT lastMasterResult;
+
+    /**
+     * After iteration completed, worker result is set to this field. Intercepters in postIteration can read this field.
+     */
+    private WORKER_RESULT workerResult;
+
+    /**
+     * App id for whole application. For example: Job id in MapReduce(hadoop 1.0) or application id in Yarn.
+     */
+    private final String appId;
+
+    /**
+     * This props is used to store any key-value pairs for configurations. It will be set from hadoop configuration. The
+     * reason we don't want to use Configuration is that we don't want to depend on hadoop for guagua-core.
+     */
+    private final Properties props;
+
+    /**
+     * Container id in yarn, task attempt id in mapreduce.
+     */
+    private final String containerId;
+
+    /**
+     * Using list to make worker can read more than one FileSplit.
+     */
+    private final List<GuaguaFileSplit> fileSplits;
+
+    /**
+     * Class name for master result in each iteration. We must have this field because of reflection need it to create a
+     * new instance.
+     */
+    private final String masterResultClassName;
+
+    /**
+     * Class name for worker result in each iteration. We must have this field because of reflection need it to create a
+     * new instance.
+     */
+    private final String workerResultClassName;
+
+    public WorkerContext(int totalIteration, String appId, Properties props, String containerId,
+            List<GuaguaFileSplit> fileSplits, String masterResultClassName, String workerResultClassName) {
+        this.totalIteration = totalIteration;
+        this.appId = appId;
+        this.props = props;
+        this.containerId = containerId;
+        this.fileSplits = fileSplits;
+        this.masterResultClassName = masterResultClassName;
+        this.workerResultClassName = workerResultClassName;
+    }
+
+    public int getCurrentIteration() {
+        return currentIteration;
+    }
+
+    public void setCurrentIteration(int currentIteration) {
+        this.currentIteration = currentIteration;
+    }
+
+    public int getTotalIteration() {
+        return totalIteration;
+    }
+
+    public MASTER_RESULT getLastMasterResult() {
+        return lastMasterResult;
+    }
+
+    public void setLastMasterResult(MASTER_RESULT lastMasterResult) {
+        this.lastMasterResult = lastMasterResult;
+    }
+
+    void setWorkerResult(WORKER_RESULT workerResult) {
+        this.workerResult = workerResult;
+    }
+
+    public String getAppId() {
+        return appId;
+    }
+
+    public String getContainerId() {
+        return containerId;
+    }
+
+    public List<GuaguaFileSplit> getFileSplits() {
+        return fileSplits;
+    }
+
+    public Properties getProps() {
+        return props;
+    }
+
+    public WORKER_RESULT getWorkerResult() {
+        return workerResult;
+    }
+
+    public String getWorkerResultClassName() {
+        return workerResultClassName;
+    }
+
+    public String getMasterResultClassName() {
+        return masterResultClassName;
+    }
+
+    @Override
+    public String toString() {
+        return String
+                .format("WorkerContext [currentIteration=%s, totalIteration=%s, lastMasterResult=%s, workerResult=%s, appId=%s, containerId=%s, fileSplits=%s, masterResultClassName=%s, workerResultClassName=%s]",
+                        currentIteration, totalIteration, lastMasterResult, workerResult, appId, containerId,
+                        fileSplits, masterResultClassName, workerResultClassName);
+    }
+}

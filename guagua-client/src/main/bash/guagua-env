@@ -1,0 +1,185 @@
+# Copyright [2013-2014] eBay Software Foundation
+#  
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#  
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# ---------------- resolve links - $0 may be a softlink -----------------------------#
+THIS="${BASH_SOURCE:-0}"
+while [ -h "$THIS" ]; do
+  ls=`ls -ld "$THIS"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '.*/.*' > /dev/null; then
+    THIS="$link"
+  else
+    THIS=`dirname "$THIS"`/"$link"
+  fi
+done
+
+# ---------------- Home directory this directory ------------------------------------#
+THIS_DIR=`dirname "$THIS"`
+GUAGUA_HOME=`cd "$THIS_DIR/.." ; pwd`
+
+# ---------------- Check whether enabled yarn ---------------------------------------#
+YARN_ENABLE=false
+if [ "$1" = "-y" -o "$1" = "-yarn" ]; then
+    YARN_ENABLE=true
+    shift
+fi
+
+# ---------------- Reading -D parameters --------------------------------------------#
+# extra properties to send straight to Hadoop
+HADOOP_PROPERTIES=
+while [ $1 ] && [ ${1:0:2} == "-D" ] ; do
+    HADOOP_PROPERTIES="$1 $HADOOP_PROPERTIES"
+    shift
+done
+
+VERSION=`hadoop version | head -n 1 | awk '{ print $2 }'`
+VERSION_23=${VERSION:0:4}
+VERSION_2=${VERSION:0:1}
+
+# ---------------- Setting USER_JAR -------------------------------------------------#
+USER_JAR=$1
+shift
+if [ ! -e "$USER_JAR" ]; then
+  echo "No user jar found at $USER_JAR"
+  exit 1
+else
+  # add user jar to classpath
+  CLASSPATH=${USER_JAR}
+fi
+
+# ---------------- add Guagua conf dir to classpath----------------------------------#
+# add Guagua conf dir to classpath
+if [ -d "${GUAGUA_HOME}/conf" ]; then
+    CLASSPATH=$CLASSPATH:$GUAGUA_HOME/conf
+fi
+
+# so that filenames w/ spaces are handled correctly in loops below
+IFS=
+
+# ---------------- add Guagua common-lib jars to classpath---------------------------#
+GUAGUA_COMMON_LIB="$GUAGUA_HOME/common-lib"
+# add common lib dependencies to CLASSPATH
+if [ -d "$GUAGUA_COMMON_LIB" ]; then
+    for f in $GUAGUA_COMMON_LIB/*.jar; do
+      CLASSPATH=${CLASSPATH}:$f
+    done
+else
+    echo "No common lib directory!"
+    exit 1
+fi
+
+# ---------------- add other Guagua lib jars to classpath---------------------------#
+if [ "$YARN_ENABLE" = "true" ]; then
+    if [ "$VERSION_23" = "0.23" -o "$VERSION_2" = "2" ]; then
+        GUAGUA_HADOOP_LIB="$GUAGUA_HOME/yarn-lib"
+        CLASS=ml.shifu.guagua.yarn.GuaguaYarnClient
+        JAR_RX=$GUAGUA_HADOOP_LIB/guagua-yarn*.jar
+    else
+        GUAGUA_HADOOP_LIB="$GUAGUA_HOME/mapreduce-hadoop1-lib"
+        CLASS=ml.shifu.guagua.mapreduce.GuaguaMapReduceClient
+        JAR_RX=$GUAGUA_HADOOP_LIB/guagua-mapreduce*.jar
+    fi
+else
+    if [ "$VERSION_23" = "0.23" -o "$VERSION_2" = "2" ]; then
+        GUAGUA_HADOOP_LIB="$GUAGUA_HOME/mapreduce-hadoop2-lib"
+        CLASS=ml.shifu.guagua.mapreduce.GuaguaMapReduceClient
+        JAR_RX=$GUAGUA_HADOOP_LIB/guagua-mapreduce*.jar
+    else
+        GUAGUA_HADOOP_LIB="$GUAGUA_HOME/mapreduce-hadoop1-lib"
+        CLASS=ml.shifu.guagua.mapreduce.GuaguaMapReduceClient
+        JAR_RX=$GUAGUA_HADOOP_LIB/guagua-mapreduce*.jar
+    fi
+fi
+
+# add release dependencies to CLASSPATH
+if [ -d "$GUAGUA_HADOOP_LIB" ]; then
+    for f in $GUAGUA_HADOOP_LIB/*.jar; do
+      CLASSPATH=${CLASSPATH}:$f
+    done
+
+    for f in $JAR_RX ; do
+      if [ -e "$f" ]; then
+           JAR=$f
+           CLASSPATH=${CLASSPATH}:$f
+        break
+      fi
+    done
+else
+    echo "No hadoop lib directory!"
+    exit 1
+fi
+# restore ordinary behaviour
+unset IFS
+
+if [ "$JAR" = "" ] ; then
+  echo "Can't find Guagua jar."
+  exit 1
+fi
+
+# ---------------- HADOOP Environment Detection ----------------------------------#
+HADOOP_ROOT=""
+    
+# locate HADOOP_ROOT "which hadoop"
+HADOOP_CMD_PATH=`which hadoop 2>/dev/null`
+# Check whether hadoop is installed under /usr/bin or not
+if [ "${HADOOP_CMD_PATH}" == "/usr/bin/hadoop" -a -d /usr/lib/hadoop ]; then
+    HADOOP_ROOT=/usr/lib/hadoop
+else
+    # Check whether ${HADOOP_CMD_PATH}/../../lib exists or not
+    if [ "${HADOOP_CMD_PATH}" != "" ]; then
+        if [ -d "`dirname ${HADOOP_CMD_PATH}`/../lib" ]; then
+            HADOOP_ROOT=`dirname ${HADOOP_CMD_PATH}`/..
+        fi
+    fi
+fi
+
+# Not find yet, try to locate HADOOP_ROOT by "whereis hadoop"    
+if [ "${HADOOP_ROOT}" == "" ]; then
+    for h_dir in `whereis hadoop 2>/dev/null` ; do
+        if [ -e ${h_dir}/bin/hadoop ]; then
+            HADOOP_ROOT=${h_dir}
+            break
+        fi
+    done
+fi
+
+# add HADOOP configuration directory if exists
+if [ "${HADOOP_CONF_DIR}" != "" -a -d "${HADOOP_CONF_DIR}" ]; then
+    CLASSPATH="${HADOOP_CONF_DIR}:${CLASSPATH}"
+fi
+
+if [ "${HADOOP_ROOT}" != "" ]; then
+    LINUX_ARCH="i386-32"
+    if [ "`getconf LONG_BIT`" == "64" ]; then
+        LINUX_ARCH="amd64-64"
+    fi
+    
+    if [ -d ${HADOOP_ROOT}/lib/native/Linux-${LINUX_ARCH} ] ; then
+        LD_LIBRARY_PATH="${HADOOP_ROOT}/lib/native/Linux-${LINUX_ARCH}":${LD_LIBRARY_PATH}    
+    elif [ -d ${HADOOP_ROOT}/lib/native ]; then
+        LD_LIBRARY_PATH="${HADOOP_ROOT}/lib/native":${LD_LIBRARY_PATH}  
+    fi
+else
+    echo 'hadoop is not configurated well, please check.'
+    exit 1;
+fi
+
+export LD_LIBRARY_PATH
+# ---------------- Detection End ---------------------------------------------------#
+
+# ---------------- Export to hadoop classpath --------------------------------------#
+# Guagua's jars to add to distributed cache via -libjar, which are csv rather than :sv
+GUAGUA_JARS=`echo ${JAR}:${CLASSPATH}|sed s/:/,/g`
+export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$CLASSPATH
