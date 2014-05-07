@@ -25,7 +25,7 @@
         -Dguagua.sum.output=sum-output \
         -Dguagua.yarn.queue.name=default \
         -Dguagua.master.intercepters=ml.shifu.guagua.yarn.example.sum.SumOutput \
-        ../yarn-lib/guagua-yarn-examples-0.4.0.jar \
+        ../yarn-lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar \
         -i sum  \
         -z ${zookeeper.server} \
         -w ml.shifu.guagua.yarn.example.sum.SumWorker  \

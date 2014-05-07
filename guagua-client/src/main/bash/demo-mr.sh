@@ -20,7 +20,7 @@
 ./guagua -Dmapred.job.queue.name=default \
         -Dguagua.sum.output=sum-output \
         -Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.sum.SumOutput \
-        ../mapreduce-lib/guagua-mapreduce-examples-0.4.0.jar \
+        ../mapreduce-lib/guagua-mapreduce-examples-0.5.0-SNAPSHOT.jar \
         -i sum  \
         -z ${zookeeper.server}  \
         -w ml.shifu.guagua.mapreduce.example.sum.SumWorker  \
