@@ -22,7 +22,6 @@ package ml.shifu.guagua.io;
  * <p>
  * A CONTRACT here: To make sure halt status in {@link Bytable} can be serialized or de-serialized. Please make sure to
  * write and read halt status in {@link Bytable}.
- * 
  */
 public interface Serializer<RESULT extends Bytable> {
 

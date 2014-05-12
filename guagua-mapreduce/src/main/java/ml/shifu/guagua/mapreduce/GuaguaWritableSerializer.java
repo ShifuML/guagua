@@ -31,10 +31,10 @@ import org.apache.hadoop.io.Writable;
  * {@link GuaguaWritableSerializer} is to provide the functionality to support use hadoop writable interface.
  * 
  * By using this, one should set result class name to Writable, not {@link Bytable} like this:
- * {@code  
- *         conf.set(GuaguaConstants.GUAGUA_RESULT_CLASS, LongWritable.class.getName());
- * }
  * 
+ * <pre>
+ * conf.set(GuaguaConstants.GUAGUA_RESULT_CLASS, LongWritable.class.getName());
+ * </pre>
  */
 public class GuaguaWritableSerializer<RESULT extends Bytable> extends BytableSerializer<RESULT> {
 
@@ -44,7 +44,7 @@ public class GuaguaWritableSerializer<RESULT extends Bytable> extends BytableSer
      * @throws NullPointerException
      *             if className or data is null.
      * @throws GuaguaRuntimeException
-     *             if any io exception or other reflection exception.
+     *             if any IO exception or other reflection exception.
      */
     @SuppressWarnings("unchecked")
     @Override

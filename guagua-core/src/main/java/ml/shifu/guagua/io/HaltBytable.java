@@ -32,7 +32,6 @@ import java.io.IOException;
  * <p>
  * One switch in GuaguaConstants#GUAGUA_WORKER_HALT_ENABLE, if this switch is on, application will be terminated if all
  * workers are halted no matter what is the master halt status.
- * 
  */
 public abstract class HaltBytable implements Bytable {
 

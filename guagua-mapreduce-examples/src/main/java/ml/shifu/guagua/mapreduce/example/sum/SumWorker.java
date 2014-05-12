@@ -34,11 +34,10 @@ import org.slf4j.LoggerFactory;
  * {@link SumWorker} is used to accumulate the sum value for each line.
  * 
  * <p>
- * Each line of input should be numbers.
+ * Each line of input should be number.
  * 
  * <p>
  * The master's sum value will be added to current iteration.
- * 
  */
 public class SumWorker
         extends

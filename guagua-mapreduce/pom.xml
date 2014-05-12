@@ -127,7 +127,7 @@
 				</plugins>
 			</build>
 		</profile>
-		<!-- For hadoop 2.2.0 yarn -->
+		<!-- For hortonworks hadoop 2.2.0 yarn -->
 		<profile>
 			<id>hdp-yarn</id>
 			<activation>
@@ -139,6 +139,155 @@
 					<url>http://repo.hortonworks.com/nexus/content/repositories/releases</url>
 				</repository>
 			</repositories>
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-hdfs</artifactId>
+					<version>2.2.0.2.0.6.0-102</version>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-common</artifactId>
+					<version>2.2.0.2.0.6.0-102</version>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-mapreduce-client-core</artifactId>
+					<version>2.2.0.2.0.6.0-102</version>
+				</dependency>
+			</dependencies>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-jar-plugin</artifactId>
+						<version>2.4</version>
+						<executions>
+							<execution>
+								<id>hadoop2</id>
+								<phase>package</phase>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+								<configuration>
+									<classifier>hadoop2</classifier>
+								</configuration>
+							</execution>
+						</executions>
+						<configuration>
+							<archive>
+								<index>true</index>
+								<manifestEntries>
+									<vendor>PayPal</vendor>
+									<title>guagua-mapreduce</title>
+									<version>${project.version}</version>
+									<timestamp>${maven.build.timestamp}</timestamp>
+								</manifestEntries>
+							</archive>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<!-- For hadoop 0.20.2 apache version -->
+		<profile>
+			<id>apache-20</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-core</artifactId>
+					<version>0.20.2</version>
+				</dependency>
+			</dependencies>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-jar-plugin</artifactId>
+						<version>2.4</version>
+						<executions>
+							<execution>
+								<id>hadoop1</id>
+								<phase>package</phase>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+								<configuration>
+									<classifier>hadoop1</classifier>
+								</configuration>
+							</execution>
+						</executions>
+						<configuration>
+							<archive>
+								<index>true</index>
+								<manifestEntries>
+									<vendor>PayPal</vendor>
+									<title>guagua-mapreduce</title>
+									<version>${project.version}</version>
+									<timestamp>${maven.build.timestamp}</timestamp>
+								</manifestEntries>
+							</archive>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<!-- For apache version 1.2.0 cluster -->
+		<profile>
+			<id>apache-120</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-core</artifactId>
+					<version>1.2.0</version>
+				</dependency>
+			</dependencies>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-jar-plugin</artifactId>
+						<version>2.4</version>
+						<executions>
+							<execution>
+								<id>hadoop1</id>
+								<phase>package</phase>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+								<configuration>
+									<classifier>hadoop1</classifier>
+								</configuration>
+							</execution>
+						</executions>
+						<configuration>
+							<archive>
+								<index>true</index>
+								<manifestEntries>
+									<vendor>PayPal</vendor>
+									<title>guagua-mapreduce</title>
+									<version>${project.version}</version>
+									<timestamp>${maven.build.timestamp}</timestamp>
+								</manifestEntries>
+							</archive>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<!-- For hadoop 2.2.0 yarn -->
+		<profile>
+			<id>apache-220</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
 			<dependencies>
 				<dependency>
 					<groupId>org.apache.hadoop</groupId>
@@ -190,4 +339,5 @@
 			</build>
 		</profile>
 	</profiles>
+
 </project>

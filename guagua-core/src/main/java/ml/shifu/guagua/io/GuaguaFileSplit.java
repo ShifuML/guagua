@@ -21,7 +21,6 @@ package ml.shifu.guagua.io;
  * <p>
  * {@link GuaguaFileSplit} is using to wrap FileSplit in hadoop to make guagua read split data easy. Which is also to
  * make guagua independent from hadoop packages.
- * 
  */
 public class GuaguaFileSplit {
 

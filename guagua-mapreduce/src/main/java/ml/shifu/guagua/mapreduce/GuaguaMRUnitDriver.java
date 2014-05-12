@@ -35,7 +35,7 @@ import org.apache.hadoop.mapreduce.lib.input.InvalidInputException;
 import org.apache.hadoop.util.StringUtils;
 
 /**
- * {@link GuaguaMRUnitDriver} is used to run in-memory guagua application by using hadoop mapreduce splits.
+ * {@link GuaguaMRUnitDriver} is used to run in-memory guagua application by using hadoop MapReduce splits.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.
@@ -165,6 +165,8 @@ public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT ext
      * @return array of FileStatus objects
      * @throws IOException
      *             if zero items.
+     * @throws InvalidInputException
+     *             If any IOException for input files.
      */
     protected List<FileStatus> listStatus(Configuration conf, String input) throws IOException {
         List<FileStatus> result = new ArrayList<FileStatus>();

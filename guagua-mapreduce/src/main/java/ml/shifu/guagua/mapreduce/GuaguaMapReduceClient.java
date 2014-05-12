@@ -44,7 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Entry point for common guagua distributed computation.
+ * {@link GuaguaMapReduceClient} is the entry point for guagua mapreduce implementation application.
  * 
  * <p>
  * To use it in normal Hadoop mode. Use {@link #main(String[])} as entry point.
@@ -71,7 +71,7 @@ public class GuaguaMapReduceClient {
     private JobControl jc;
 
     /**
-     * Default constructor. Construct JobControl instance.
+     * Default constructor. Construct default JobControl instance.
      */
     public GuaguaMapReduceClient() {
         this.jc = new JobControl(INIT_JOB_ID_PREFIX);
@@ -181,8 +181,9 @@ public class GuaguaMapReduceClient {
      *            - The JobControl object that has been submitted
      * @param jobClient
      *            - The JobClient to which it has been submitted
-     * @return The progress as a precentage in double format
+     * @return The progress as a percentage in double format
      * @throws IOException
+     *             In case any IOException connecting to JobTracker.
      */
     protected double calculateProgress(JobControl jc, JobClient jobClient) throws IOException {
         double prog = 0.0;
@@ -204,6 +205,8 @@ public class GuaguaMapReduceClient {
      * @param jobClient
      *            - the JobClient to which it has been submitted
      * @return Returns the percentage progress of this Job
+     * @throws IOException
+     *             In case any IOException connecting to JobTracker.
      */
     protected double progressOfRunningJob(ControlledJob cjob, JobClient jobClient) throws IOException {
         @SuppressWarnings("deprecation")
@@ -225,7 +228,7 @@ public class GuaguaMapReduceClient {
     }
 
     /**
-     * Create Hadoop Job According to arguments from main.
+     * Create Hadoop job according to arguments from main.
      */
     public synchronized Job creatJob(String[] args) throws IOException {
         Configuration conf = new Configuration();

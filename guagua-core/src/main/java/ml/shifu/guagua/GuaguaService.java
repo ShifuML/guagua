@@ -23,13 +23,12 @@ import ml.shifu.guagua.util.Progressable;
 
 /**
  * {@link GuaguaService} is a common service interface of both master and worker service implementations.
- * 
- * TODO Define GuaguaServiceListener: 'onInit(Properties), onStart(), onStop()' to make three hooks for
- * GuaguaMasterService and GuaguaWorkerService to scale. GuaguaServiceListener is a list can be configurated by using
- * one parameter. And, we should also add setServiceListeners to set listeners on GuaguaService, which will be invoked
- * at the end of init, start and stop. Example: Master as a RPC server, workers as RPC client, start and stop them here,
- * which can be used to update progress or counter.
  */
+// TODO Define GuaguaServiceListener: 'onInit(Properties), onStart(), onStop()' to make three hooks for
+// GuaguaMasterService and GuaguaWorkerService to scale. GuaguaServiceListener is a list can be configurated by using
+// one parameter. And, we should also add setServiceListeners to set listeners on GuaguaService, which will be invoked
+// at the end of init, start and stop. Example: Master as a RPC server, workers as RPC client, start and stop them here,
+// which can be used to update progress or counter.
 public interface GuaguaService {
 
     /**

@@ -25,8 +25,15 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
 /**
- * {@link InputSplit} implementation in guagua. If mapper with {@link GuaguaInputSplit#isMaster} true means it is
- * master, and the master's FileSplit is {@code null}.
+ * {@link InputSplit} implementation in guagua for Hadoop MapReduce job.
+ * 
+ * <p>
+ * If mapper with {@link GuaguaInputSplit#isMaster} true means it is master, for master so far {@link #fileSplits} is
+ * {@code null}.
+ * 
+ * <p>
+ * For worker, input {@link #fileSplits} are included, here <code>FileSplit</code> array is used to make guagua support
+ * combining <code>FileSplit</code>s in one task.
  */
 public class GuaguaInputSplit extends InputSplit implements Writable {
 
@@ -36,13 +43,13 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
     private boolean isMaster;
 
     /**
-     * File splits used for that mapper task. For master task, it is almost null. Using array here to make guagua
-     * support combining small files into one split.
+     * File splits used for the task. For master task, it is almost null. Using array here to make guagua
+     * support combining small files into one GuaguaInputSplit.
      */
     private FileSplit[] fileSplits;
 
     /**
-     * Default constructor without any setting
+     * Default constructor without any setting.
      */
     public GuaguaInputSplit() {
     }

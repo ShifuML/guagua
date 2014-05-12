@@ -20,7 +20,6 @@ import java.io.IOException;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;
 
 /**
- * 
  * {@link GuaguaRecordReader} is used for consistent interface to iterate data through FileSplit provided. The typical
  * implementation is HDFS implementation in guagua-mapreduce.
  * 

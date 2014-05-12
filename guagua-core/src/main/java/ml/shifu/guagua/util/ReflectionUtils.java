@@ -30,7 +30,6 @@ import ml.shifu.guagua.GuaguaRuntimeException;
  * 
  * <p>
  * {@link Constructor}s are cached but instances are not cached. Each time you will get a new instance.
- * 
  */
 public final class ReflectionUtils {
 

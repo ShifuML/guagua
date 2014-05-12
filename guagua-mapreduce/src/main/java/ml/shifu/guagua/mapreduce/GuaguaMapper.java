@@ -49,15 +49,14 @@ import org.slf4j.LoggerFactory;
  * worker.
  * 
  * <p>
- * {@link #guaguaService} is interfaces for both Master and Worker implementation. According to {@link #isMaster},
- * master service and worker service will be determined.
+ * {@link #guaguaService} is the interface for both guagua Master and Worker implementation. According to
+ * {@link #isMaster}, master service and worker service will be determined.
  * 
  * <p>
  * Only mapper, no reducer for guagua MapReduce implementation. And in this mapper
  * {@link #run(org.apache.hadoop.mapreduce.Mapper.Context)} is override while
  * {@link #map(Object, Object, org.apache.hadoop.mapreduce.Mapper.Context)} is not since we don't need to iterate mapper
  * raw input.
- * 
  */
 public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> extends
         Mapper<LongWritable, Text, Text, Text> {

@@ -32,7 +32,6 @@ import ml.shifu.guagua.util.ReflectionUtils;
 /**
  * {@link GZIPBytableSerializer} is using{@link Bytable#write(java.io.DataOutput)} and
  * {@link Bytable#readFields(java.io.DataInput)} to serialize object to bytes and de-serialize bytes to object.
- * 
  */
 public class GZIPBytableSerializer<RESULT extends Bytable> implements Serializer<RESULT> {
 

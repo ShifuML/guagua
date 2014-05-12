@@ -27,19 +27,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 
  * {@link NNMaster} is used to accumulate all workers NN parameters.
  * 
  * <p>
- * We accumulate all gradients from workers to calculate model weights. And set weights to workers. Then workers use
- * weights to set their models and train for another iteration.
+ * All gradients are accumulated from workers to calculate model weights, and then new weights are sent to workers. Then
+ * workers use new weights to set their models and train for another iteration.
  * 
  * <p>
  * This logic follows Encog multi-core implementation.
  * 
  * <p>
- * Make sure workers and master use the same initialization weights.
- * 
+ * To make sure workers and master use the same initialization weights, first iteration of this guagua application is
+ * used to compute initial weights which are then sent to works for their initial weights.
  */
 public class NNMaster implements MasterComputable<NNParams, NNParams> {
 

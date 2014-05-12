@@ -43,7 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 
  * Copy from hadoop GenericOptionsParser and extend it.
  * 
  * <p>

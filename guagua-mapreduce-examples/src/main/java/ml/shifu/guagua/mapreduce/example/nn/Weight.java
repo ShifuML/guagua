@@ -20,7 +20,6 @@ package ml.shifu.guagua.mapreduce.example.nn;
  * 
  * <p>
  * We'd like to reuse code from Encog but unfortunately the methods are private:(.
- * 
  */
 public class Weight {
     /**

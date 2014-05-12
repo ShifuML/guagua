@@ -32,12 +32,12 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  * 
  * <p>
  * Why set {@link #currentIteration} to static? The reason is that currentIteration for task cannot be transferred to
- * {@link #GuaguaRecordReader} because of no API from MapperContext.So we use static field to update current iteration.
+ * {@link #GuaguaRecordReader} because of no API from MapperContext. So static field here is used to update current
+ * iteration.
  * 
  * <p>
  * If {@link #currentIteration} is not set in each iteration. It can only start from 0. This progress update doesn't
  * work well for task fail-over(TODO).
- * 
  */
 public class GuaguaMRRecordReader extends RecordReader<LongWritable, Text> {
     /** Singular key object */

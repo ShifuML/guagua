@@ -22,7 +22,6 @@ import org.apache.zookeeper.KeeperException;
  * 
  * @param <T>
  *            result for each command.
- * 
  */
 public interface GuaguaZooKeeperOperation<T> {
 

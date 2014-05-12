@@ -32,9 +32,8 @@ public final class StringUtils {
     }
 
     /**
-     * Return string object. If {@code requireNotEmpty} is true with empty or null {@code str}, a
-     * IllegalArgumentException will
-     * be thrown. Else return default string as null or original string.
+     * Return string object. If {@code requireNotEmpty} is true with empty or null {@code str}, an
+     * IllegalArgumentException will be thrown. Else return default string as null or original string.
      */
     public static String get(String str, boolean requireNotEmpty) {
         return get(str, requireNotEmpty, null);
@@ -48,7 +47,7 @@ public final class StringUtils {
     }
 
     /**
-     * Return string object. If {@code requireNotEmpty} is true with null {@code str}, a IllegalArgumentException will
+     * Return string object. If {@code requireNotEmpty} is true with null {@code str}, an IllegalArgumentException will
      * be thrown. Else return default string or original string.
      */
     public static String get(String str, boolean requireNotEmpty, String defaultStr) {

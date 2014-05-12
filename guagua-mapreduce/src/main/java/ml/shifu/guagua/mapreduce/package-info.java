@@ -34,7 +34,6 @@
  * Hadoop input format and output format customization for guagua is in 
  * {@link com.paypal.guagua.mapreduce.GuaguaInputFormat} and {@link com.paypal.guagua.mapreduce.GuaguaOutputFormat} and 
  * other related classes.
- * 
  */
 package ml.shifu.guagua.mapreduce;
 
