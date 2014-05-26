@@ -43,7 +43,6 @@ import org.apache.hadoop.util.StringUtils;
  *            worker result for computation in each iteration.
  * 
  * @see ml.shifu.guagua.mapreduce.example.sum.SumTest in guagua-mapreduce-examples project.
- * 
  */
 public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> extends
         GuaguaUnitDriver<MASTER_RESULT, WORKER_RESULT> {

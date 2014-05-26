@@ -40,20 +40,26 @@ public class MasterComputableTimer<MASTER_RESULT extends Bytable, WORKER_RESULT 
 
     private static final Logger LOG = LoggerFactory.getLogger(MasterComputableTimer.class);
 
-    private long applicationStartTime;
+    /**
+     * Application starting time.
+     */
+    private long appStartTime;
 
-    private long iterationStartTime;
+    /**
+     * Iteration starting time.
+     */
+    private long iterStartTime;
 
     @Override
     public void preApplication(MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
-        this.applicationStartTime = System.nanoTime();
+        this.appStartTime = System.nanoTime();
         LOG.info("Application {} container {} computation starts internal master computation.", context.getAppId(),
                 context.getContainerId());
     }
 
     @Override
     public void preIteration(MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
-        this.iterationStartTime = System.nanoTime();
+        this.iterStartTime = System.nanoTime();
         LOG.info("Application {} container {} iteration {} computation starts internal master computatio.",
                 context.getAppId(), context.getContainerId(), context.getCurrentIteration());
     }
@@ -62,13 +68,13 @@ public class MasterComputableTimer<MASTER_RESULT extends Bytable, WORKER_RESULT 
     public void postIteration(MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
         LOG.info("Application {} container {} iteration {} computation ends with {}ms execution time.",
                 context.getAppId(), context.getContainerId(), context.getCurrentIteration(),
-                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - this.iterationStartTime));
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - this.iterStartTime));
     }
 
     @Override
     public void postApplication(MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
         LOG.info("Application {} container {} computation ends with {}ms execution time.", context.getAppId(),
-                context.getContainerId(), TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - this.applicationStartTime));
+                context.getContainerId(), TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - this.appStartTime));
     }
 
 }

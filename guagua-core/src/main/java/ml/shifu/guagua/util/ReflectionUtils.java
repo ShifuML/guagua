@@ -37,16 +37,24 @@ public final class ReflectionUtils {
     private ReflectionUtils() {
     }
 
+    /**
+     * Only support constructors with no parameters.
+     */
     private static final Class<?>[] EMPTY_ARRAY = new Class[] {};
 
+    /**
+     * This map is used for cache
+     */
     private static final Map<Class<?>, Constructor<?>> CONSTRUCTOR_CACHE = new ConcurrentHashMap<Class<?>, Constructor<?>>();
 
     /**
-     * Create an object for the given class.
+     * Create an object for the given class. The class should have constructor without any parameters.
      * 
      * @param clazz
      *            class of which an object is created
      * @return a new object
+     * @throws GuaguaRuntimeException
+     *             In case any exception for reflection.
      */
     public static <T> T newInstance(Class<T> clazz) {
         T result;
@@ -66,10 +74,10 @@ public final class ReflectionUtils {
     }
 
     /**
-     * Create an object for the given class.
+     * Create an object for the given class. The class should have constructor without any parameters.
      * 
      * @param name
-     *            quarlified class name.
+     *            qualified class name.
      * @return a new object
      * @throws GuaguaRuntimeException
      *             In case any exception for reflection.

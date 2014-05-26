@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * Abstract implementation to load data one by one.
  * 
  * <p>
- * To load data successfully, one must make sure initialize {@link GuaguaRecordReader} firstly.
+ * To load data successfully, make sure {@link GuaguaRecordReader} is initialized firstly.
  * 
  * <p>
  * TODO how to add the first iteration to computation.
@@ -64,7 +64,6 @@ public abstract class AbstractWorkerComputable<MASTER_RESULT extends Bytable, WO
     @Override
     public WORKER_RESULT compute(WorkerContext<MASTER_RESULT, WORKER_RESULT> workerContext) throws IOException {
         if(this.isLoaded.compareAndSet(false, true)) {
-
             init(workerContext);
 
             long start = System.nanoTime();

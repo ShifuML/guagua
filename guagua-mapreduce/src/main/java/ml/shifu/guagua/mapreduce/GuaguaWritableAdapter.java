@@ -42,6 +42,7 @@ import org.apache.hadoop.io.Writable;
  * 
  * Here is a sample:
  * 
+ * <pre>
  * {@code
  * hadoop jar ../lib/guagua-mapreduce-0.0.1-SNAPSHOT.jar \
  *     ml.shifu.guagua.mapreduce.GuaguaMapReduceClient   \
@@ -55,14 +56,17 @@ import org.apache.hadoop.io.Writable;
  *     -mr org.apache.hadoop.io.LongWritable \
  *     -wr org.apache.hadoop.io.LongWritable \
  *     $queue_opts}
+ * </pre>
  * 
  * <p>
  * If you set your own main class, not use {@link GuaguaMapReduceClient}, you can set the result class like this.
  * 
+ * <pre>
  * {@code  
  *         conf.set(GuaguaConstants.GUAGUA_MASTER_RESULT_CLASS, LongWritable.class.getName());
  *         conf.set(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS, LongWritable.class.getName());
  * }
+ * </pre>
  * 
  * @see GuaguaWritableSerializer
  */

@@ -58,12 +58,12 @@ public class AsyncWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     private static final Logger LOG = LoggerFactory.getLogger(AsyncWorkerCoordinator.class);
 
     /**
-     * Current iteration
+     * Current iteration, start from 1, not 0.
      */
     private int currentIteration;
 
     /**
-     * Current app id.
+     * Application id, mapreduce job id or yarn application id.
      */
     private String appId;
 

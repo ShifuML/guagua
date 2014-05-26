@@ -21,7 +21,7 @@ import java.util.List;
 import ml.shifu.guagua.io.Bytable;
 
 /**
- * {@link MemoryCoordinator} is helper for in-memory master and worker coordination.
+ * {@link InMemoryCoordinator} is helper for in-memory master and worker coordination.
  * 
  * <p>
  * Master result can be set from master by {@link #signalWorkers(int, Bytable)}. Workers can get the result by
@@ -36,7 +36,7 @@ import ml.shifu.guagua.io.Bytable;
  * @param <WORKER_RESULT>
  *            worker computation result in each iteration.
  */
-public class MemoryCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
+public class InMemoryCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
 
     private static final int DEFAULT_SLEEP_TIME = 300;
 
@@ -65,7 +65,7 @@ public class MemoryCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exte
      */
     private List<Integer> masterCounts;
 
-    public MemoryCoordinator(int workers, int iteration) {
+    public InMemoryCoordinator(int workers, int iteration) {
         this.workers = workers;
         // iteration + (step 0(initialization))
         int maxIteration = iteration + 1;

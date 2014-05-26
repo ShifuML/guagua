@@ -24,7 +24,7 @@ import ml.shifu.guagua.BasicCoordinator;
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.GuaguaService;
-import ml.shifu.guagua.MemoryCoordinator;
+import ml.shifu.guagua.InMemoryCoordinator;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.GuaguaFileSplit;
 import ml.shifu.guagua.io.HaltBytable;
@@ -117,7 +117,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     /**
      * Which is used in in-memory coordination like unit-test.
      */
-    private MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator;
+    private InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator;
 
     /*
      * (non-Javadoc)
@@ -288,8 +288,8 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                             GuaguaConstants.GUAGUA_IO_DEFAULT_SERIALIZER);
                     Serializer<WORKER_RESULT> workerSerializer = ReflectionUtils.newInstance(serialierClassName);
                     ((BasicCoordinator<MASTER_RESULT, WORKER_RESULT>) instance).setWorkerSerializer(workerSerializer);
-                } else if(instance instanceof InternalMasterCoordinator) {
-                    ((InternalMasterCoordinator<MASTER_RESULT, WORKER_RESULT>) instance)
+                } else if(instance instanceof LocalMasterCoordinator) {
+                    ((LocalMasterCoordinator<MASTER_RESULT, WORKER_RESULT>) instance)
                             .setCoordinator(this.coordinator);
                 }
                 masterIntercepters.add(instance);
@@ -435,7 +435,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     /**
      * @return the coordinator
      */
-    public MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> getCoordinator() {
+    public InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> getCoordinator() {
         return coordinator;
     }
 
@@ -443,7 +443,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
      * @param coordinator
      *            the coordinator to set
      */
-    public void setCoordinator(MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator) {
+    public void setCoordinator(InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator) {
         this.coordinator = coordinator;
     }
 

@@ -15,14 +15,14 @@
  */
 package ml.shifu.guagua.master;
 
-import ml.shifu.guagua.MemoryCoordinator;
+import ml.shifu.guagua.InMemoryCoordinator;
 import ml.shifu.guagua.io.Bytable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link InternalMasterCoordinator} is local coordinator implementation in one jvm instance.
+ * {@link LocalMasterCoordinator} is local coordinator implementation in one jvm instance.
  * 
  * <p>
  * {@link #coordinator} should be set by using the same instance with InternalWorkerCoordinator.
@@ -32,12 +32,12 @@ import org.slf4j.LoggerFactory;
  * @param <WORKER_RESULT>
  *            worker result for computation in each iteration.
  */
-public class InternalMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> extends
+public class LocalMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> extends
         BasicMasterInterceptor<MASTER_RESULT, WORKER_RESULT> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(InternalMasterCoordinator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LocalMasterCoordinator.class);
 
-    private MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator;
+    private InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator;
 
     @Override
     public void preApplication(MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
@@ -62,7 +62,7 @@ public class InternalMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RES
      * @param coordinator
      *            the coordinator to set
      */
-    public void setCoordinator(MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator) {
+    public void setCoordinator(InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator) {
         this.coordinator = coordinator;
     }
 
