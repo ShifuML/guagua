@@ -20,6 +20,23 @@
 
 # please follow ../README.md to run this demo shell.
 
+# Comments for all parameters:
+#  '-Dmapred.job.queue.name=default': Queue name setting
+#  '-Dguagua.yarn.queue.name=default': Queue name setting for guagua YARN application
+#  '-Dguagua.sum.output=sum-output': Output file, this is used in 'ml.shifu.guagua.yarn.example.sum.SumOutput'
+#  '-Dguagua.master.intercepters=ml.shifu.guagua.yarn.example.sum.SumOutput': User master intercepters, SumOutput is 
+        used to save global sum result to HDFS.
+#  '../yarn-lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar': Jar files include master, worker and user intercepters
+#  '-i sum': '-i' means guagua application input, should be HDFS input file or folder
+#  '-z ${zookeeper.server}': '-z' is used to configure zookeeper server, this should be placed by real zookeeper server.
+#       The format is like '<zkServer1:zkPort1,zkServer2:zkPort2>'
+#  '-w ml.shifu.guagua.yarn.example.sum.SumWorker': Worker computable implementation class setting
+#  '-m ml.shifu.guagua.yarn.example.sum.SumMaster': Master computable implementation class setting
+#  '-c 10': Total iteration number setting
+#  '-n Guagua-Sum-Master-Workers-Job': Hadoop job name or YARN application name specified
+#  '-mr org.apache.hadoop.io.LongWritable': Master result class setting
+#  '-wr org.apache.hadoop.io.LongWritable': Worker result class setting
+
 ./guagua -y \
         -Dmapred.job.queue.name=default \
         -Dguagua.sum.output=sum-output \
@@ -34,4 +51,4 @@
         -n "Guagua-Sum-Master-Workers-Job" \
         -mr org.apache.hadoop.io.LongWritable \
         -wr org.apache.hadoop.io.LongWritable
-                                           
+

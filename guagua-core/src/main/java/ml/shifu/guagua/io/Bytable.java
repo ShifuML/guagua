@@ -20,11 +20,11 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * Copy from hadoop io writable. The reason is that we don't want to depend on hadoop for guagua core project.
+ * Copy from Hadoop io writable. The reason is that we don't want to depend on Hadoop for guagua core project.
  * 
  * <p>
- * To use hadoop-original writable, we have adapter in GuaguaWritableAdapter of guagua-mapreduce module to help you
- * re-use hadoop writable.
+ * To use Hadoop original writable, we have adapter in GuaguaWritableAdapter of guagua-mapreduce module to help you
+ * re-use Hadoop writable.
  */
 public interface Bytable {
 

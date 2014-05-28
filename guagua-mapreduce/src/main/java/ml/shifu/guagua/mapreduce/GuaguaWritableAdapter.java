@@ -84,7 +84,7 @@ public class GuaguaWritableAdapter<W extends Writable> extends HaltBytable {
      *            Hadoop Writable instance
      */
     public GuaguaWritableAdapter(W writable) {
-        this.setWritable(writable);
+        this.writable = writable;
     }
 
     /*

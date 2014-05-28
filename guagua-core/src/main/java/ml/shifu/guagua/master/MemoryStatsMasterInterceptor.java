@@ -24,6 +24,10 @@ import org.slf4j.LoggerFactory;
 /**
  * {@link MemoryStatsMasterInterceptor} is used to print memory usage for each master checkpoint.
  * 
+ * <p>
+ * {@link MemoryStatsMasterInterceptor} is set as default system intercepter. So memory usage will be found in each
+ * task's log file.
+ * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.
  * @param <WORKER_RESULT>

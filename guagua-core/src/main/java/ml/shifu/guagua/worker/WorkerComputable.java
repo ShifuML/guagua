@@ -20,29 +20,53 @@ import java.io.IOException;
 import ml.shifu.guagua.io.Bytable;
 
 /**
- * Worker computation interface for an application.
+ * {@link WorkerComputable} defines worker computation for any guagua application. All guagua application should define
+ * its own worker logic and to configure it by using guagua client configuration.
  * 
  * <p>
- * The absolute flexibility for customers to use with only {@link #compute(WorkerContext)} function.
+ * Any context parameters like current iteration, master result in last iteration can be got from {@link WorkerContext}.
  * 
  * <p>
- * If you'd like to load data then computation, you can implement such logic in {@link #compute(WorkerContext)} to leave
- * some template functions. We do it in guagua-mapreduce project.
+ * To get global properties like Hadoop and YARN configuration properties, {@link WorkerContext#getProps()} is a wrapper
+ * for Hadoop Configuration. Anything configurated by using '-D' in command line or by internal Hadoop/YARN filling can
+ * be got from these properties.
+ * 
+ * <p>
+ * {@link WorkerContext#getLastMasterResult()} is the master result from last iteration. For first iteration (current
+ * iteration equals 1), it is null.
+ * 
+ * <p>
+ * Iteration starts from 1, ends with {@link WorkerContext#getTotalIteration()}. Total iteration can be set in command
+ * line as '-c' parameter. It is the same for master and worker total iteration number setting.
+ * 
+ * <p>
+ * {@link WorkerContext#getAppId()} denotes the job ID for a map-reduce job in Hadoop, or YARN application ID for a YARN
+ * application. {@link WorkerContext#getContainerId()} denotes current worker container. It is task partition index in
+ * Hadoop map-reduce job or split index in YARN guagua application. Container ID is unique for each worker task, if
+ * current worker task is restarted after failure, it should use the same container id with the failed worker task to
+ * make sure guagua knows who it is.
+ * 
+ * <p>
+ * In worker computation logic, sometimes data loading is needed for only the first iteration. An abstract
+ * {@link AbstractWorkerComputable} class which wraps data loading in first iteration (iteration 1) to help load data
+ * and do worker computation logic easier.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.
  * @param <WORKER_RESULT>
  *            worker result for computation in each iteration.
+ * @see AbstractWorkerComputable
  */
 public interface WorkerComputable<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
 
     /**
-     * Computation for each iteration.
+     * Worker computation for each iteration.
      * 
      * @param context
-     *            worker context instance which includes worker info for each iteration.
+     *            the worker context instance which includes worker info, master result of laster iteration or other
+     *            useful into for each iteration.
      * @throws IOException
-     *             If any io exception in computation, for example, IOException in reading data.
+     *             any io exception in computation, for example, IOException in reading data.
      */
     WORKER_RESULT compute(WorkerContext<MASTER_RESULT, WORKER_RESULT> context) throws IOException;
 

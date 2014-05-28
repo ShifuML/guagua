@@ -22,7 +22,7 @@ import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.GuaguaFileSplit;
 
 /**
- * {@link WorkerContext} is a context to contain all objects used in master computation.
+ * {@link WorkerContext} is a context to contain all useful info which can be used in worker computation.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.

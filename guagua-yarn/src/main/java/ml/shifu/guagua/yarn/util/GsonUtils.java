@@ -32,14 +32,14 @@ public final class GsonUtils {
     private static Gson gson = new Gson();
 
     /**
-     * Serialize an object to JSON-format String.
+     * Serialize an object to JSON-format string.
      */
     public static String toJson(Object src) {
         return gson.toJson(src);
     }
 
     /**
-     * De-serialize JSON-format String to an object.
+     * De-serialize JSON-format string to an object.
      */
     public static <T> T fromJson(String json, Class<T> c) {
         return gson.fromJson(json, c);

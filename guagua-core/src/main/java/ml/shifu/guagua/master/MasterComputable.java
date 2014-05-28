@@ -18,7 +18,30 @@ package ml.shifu.guagua.master;
 import ml.shifu.guagua.io.Bytable;
 
 /**
- * Master computation for an application.
+ * {@link MasterComputable} defines master computation for any guagua application. All guagua application should define
+ * its own master logic and to configure it by using guagua client configuration.
+ * 
+ * <p>
+ * Any context parameters like current iteration, worker results can be got from {@link MasterContext}.
+ * 
+ * <p>
+ * To get global properties like Hadoop and YARN configuration properties, {@link MasterContext#getProps()} is a wrapper
+ * for Hadoop Configuration. Anything configurated by using '-D' in command line can be got from these properties.
+ * 
+ * <p>
+ * {@link MasterContext#getWorkerResults()} is the worker results from all the workers in current iteration. It can be
+ * used for master computation logic.
+ * 
+ * <p>
+ * Iteration starts from 1, ends with {@link MasterContext#getTotalIteration()}. Total iteration can be set in command
+ * line as '-c' parameter.
+ * 
+ * <p>
+ * {@link MasterContext#getAppId()} denotes the job ID for a map-reduce job in Hadoop, or YARN application ID for a YARN
+ * application. {@link MasterContext#getContainerId()} denotes current master container. It is task partition index in
+ * Hadoop map-reduce job or split index in YARN guagua application. Container ID is unique for each master task, if
+ * current master task is restarted after failure, it should use the same container id to make sure guagua knows who it
+ * is.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.
@@ -28,10 +51,11 @@ import ml.shifu.guagua.io.Bytable;
 public interface MasterComputable<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
 
     /**
-     * Computation for each iteration.
+     * Master computation for each iteration.
      * 
      * @param context
-     *            master context instance which includes worker results for each iteration.
+     *            the master context instance which includes worker results and other useful parameters for each
+     *            iteration.
      */
     MASTER_RESULT compute(MasterContext<MASTER_RESULT, WORKER_RESULT> context);
 
