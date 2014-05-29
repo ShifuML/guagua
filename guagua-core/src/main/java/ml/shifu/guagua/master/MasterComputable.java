@@ -40,7 +40,7 @@ import ml.shifu.guagua.io.Bytable;
  * {@link MasterContext#getAppId()} denotes the job ID for a map-reduce job in Hadoop, or YARN application ID for a YARN
  * application. {@link MasterContext#getContainerId()} denotes current master container. It is task partition index in
  * Hadoop map-reduce job or split index in YARN guagua application. Container ID is unique for each master task, if
- * current master task is restarted after failure, it should use the same container id to make sure guagua knows who it
+ * current master task is restarted after failure, it should use the same container id to make sure guagua know who it
  * is.
  * 
  * @param <MASTER_RESULT>
@@ -54,8 +54,9 @@ public interface MasterComputable<MASTER_RESULT extends Bytable, WORKER_RESULT e
      * Master computation for each iteration.
      * 
      * @param context
-     *            the master context instance which includes worker results and other useful parameters for each
-     *            iteration.
+     *            the master context instance which includes worker results and other useful parameters.
+     * @return
+     *         the master result of each iteration.
      */
     MASTER_RESULT compute(MasterContext<MASTER_RESULT, WORKER_RESULT> context);
 

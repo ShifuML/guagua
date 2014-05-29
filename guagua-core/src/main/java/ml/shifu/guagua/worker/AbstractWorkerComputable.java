@@ -27,10 +27,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Abstract implementation to load data one by one.
+ * Abstract {@link WorkerComputable} implementation to load data one by one and only in the very 1st iteration.
  * 
  * <p>
  * To load data successfully, make sure {@link GuaguaRecordReader} is initialized firstly.
+ * 
+ * <p>
+ * After data is loaded in the first iteration, one can store the data into collections (meomory or disk) to do later
+ * iteration logic.
  * 
  * <p>
  * TODO how to add the first iteration to computation.

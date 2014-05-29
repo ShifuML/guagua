@@ -39,7 +39,7 @@ import ml.shifu.guagua.worker.LocalWorkerCoordinator;
  * {@link GuaguaUnitDriver} is a helper class to run master, worker and intercepters in one jvm instance.
  * 
  * <p>
- * One should provide all the properties by using {@link #GuaguaUnitDriver(Properties)}
+ * One should provide all the properties by using {@link #GuaguaUnitDriver(Properties)}.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.
@@ -50,16 +50,34 @@ public abstract class GuaguaUnitDriver<MASTER_RESULT extends Bytable, WORKER_RES
 
     private static final String GUAGUA_UNIT_TEST = "Guagua Unit Test";
 
+    /**
+     * Properties for all configuration information.
+     */
     private Properties props;
 
+    /**
+     * Master service instance.
+     */
     private GuaguaService masterService;
 
+    /**
+     * This list mocks services for all workers which will be run in different threads.
+     */
     private List<GuaguaService> workerServices;
 
+    /**
+     * The executor used to schedule master and workers in threads.
+     */
     private ExecutorService executor;
 
+    /**
+     * Total iteration.
+     */
     private int iteration;
 
+    /**
+     * File splits used for workers.
+     */
     private List<GuaguaFileSplit[]> fileSplits;
 
     /**

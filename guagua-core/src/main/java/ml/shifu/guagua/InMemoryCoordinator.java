@@ -21,7 +21,7 @@ import java.util.List;
 import ml.shifu.guagua.io.Bytable;
 
 /**
- * {@link InMemoryCoordinator} is helper for in-memory master and worker coordination.
+ * {@link InMemoryCoordinator} is a helper for in-memory master and worker coordination.
  * 
  * <p>
  * Master result can be set from master by {@link #signalWorkers(int, Bytable)}. Workers can get the result by

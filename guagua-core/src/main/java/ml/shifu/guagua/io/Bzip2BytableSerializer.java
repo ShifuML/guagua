@@ -31,8 +31,13 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 
 /**
- * {@link Bzip2BytableSerializer} is using{@link Bytable#write(java.io.DataOutput)} and
- * {@link Bytable#readFields(java.io.DataInput)} to serialize object to bytes and de-serialize bytes to object.
+ * {@link Bzip2BytableSerializer} is using bzip2 compression algorithm for serialization.
+ * 
+ * <p>
+ * Byte array by using {@link Bzip2BytableSerializer} is bzip2 format.
+ * 
+ * @see Serializer
+ * @see BytableSerializer
  */
 public class Bzip2BytableSerializer<RESULT extends Bytable> implements Serializer<RESULT> {
 

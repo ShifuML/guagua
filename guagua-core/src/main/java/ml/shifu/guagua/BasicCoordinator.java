@@ -43,8 +43,9 @@ import org.slf4j.LoggerFactory;
  * {@link BasicCoordinator} is a basic implementation for both SyncWorkerCoordinator and SyncMasterCoordinator:
  * <ul>
  * <li>1. A {@link Watcher} to monitor zookeeper znodes.</li>
- * <li>2. Construct master znode and worker znode.</li>
+ * <li>2. Help functions to construct master znodes and worker znodes.</li>
  * <li>3. Basic functions to convert object to bytes or bytes to object.</li>
+ * <li>4. Heart beat used to avoid ZooKeeperSessionExpiredException.</li>
  * </ul>
  * 
  * @param <MASTER_RESULT>

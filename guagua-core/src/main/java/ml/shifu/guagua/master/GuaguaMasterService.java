@@ -38,8 +38,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link GuaguaMasterService} is the basic implementation as a master to coordinator all workers' work in each
- * iteration.
+ * {@link GuaguaMasterService} is the basic implementation as a master for whole guagua application process.
+ * 
+ * <p>
+ * All the properties used to create computable instance, intercepter instances are set in {@link #props}.
+ * 
+ * <p>
+ * After {@link #masterComputable}, {@link #masterInterceptors} are constructed, they will be used in {@link #start()},
+ * {@link #run(Progressable)}, {@link #stop()} to do the whole iteration logic.
+ * 
+ * <p>
+ * {@link GuaguaMasterService} is only a skeleton and all implementations are in the intercepters and computable classes
+ * defined by user.
+ * 
+ * <p>
+ * The execution order of preXXXX is different with postXXXX. For preXXX, the order is FIFO, but for postXXX, the order
+ * is FILO.
  * 
  * @param <MASTER_RESULT>
  *            master computation result in each iteration.
@@ -289,8 +303,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                     Serializer<WORKER_RESULT> workerSerializer = ReflectionUtils.newInstance(serialierClassName);
                     ((BasicCoordinator<MASTER_RESULT, WORKER_RESULT>) instance).setWorkerSerializer(workerSerializer);
                 } else if(instance instanceof LocalMasterCoordinator) {
-                    ((LocalMasterCoordinator<MASTER_RESULT, WORKER_RESULT>) instance)
-                            .setCoordinator(this.coordinator);
+                    ((LocalMasterCoordinator<MASTER_RESULT, WORKER_RESULT>) instance).setCoordinator(this.coordinator);
                 }
                 masterIntercepters.add(instance);
             }
@@ -432,17 +445,10 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         this.minWorkersTimeOut = minWorkersTimeOut;
     }
 
-    /**
-     * @return the coordinator
-     */
     public InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> getCoordinator() {
         return coordinator;
     }
 
-    /**
-     * @param coordinator
-     *            the coordinator to set
-     */
     public void setCoordinator(InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator) {
         this.coordinator = coordinator;
     }

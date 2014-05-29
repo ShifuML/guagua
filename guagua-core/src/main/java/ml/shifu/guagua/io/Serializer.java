@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 package ml.shifu.guagua.io;
 
 /**
- * {@link Serializer} is used to serialize object to bytes and de-serialize bytes to object
+ * {@link Serializer} is used to serialize {@link Bytable} object to bytes and de-serialize bytes to {@link Bytable}
+ * object.
  * 
  * <p>
  * A CONTRACT here: To make sure halt status in {@link Bytable} can be serialized or de-serialized. Please make sure to
@@ -28,10 +29,10 @@ public interface Serializer<RESULT extends Bytable> {
     /**
      * Transform object to byte array.
      */
-    public byte[] objectToBytes(RESULT result);
+    byte[] objectToBytes(RESULT result);
 
     /**
      * Transform byte array to object. Because of generic erasion, className should be provided.
      */
-    public RESULT bytesToObject(byte[] data, String className);
+    RESULT bytesToObject(byte[] data, String className);
 }

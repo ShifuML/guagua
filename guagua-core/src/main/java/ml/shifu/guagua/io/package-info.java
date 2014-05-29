@@ -15,13 +15,12 @@
  */
 
 /**
- * This package contains our own io settings for guagua.
+ * This package contains guagua own io settings.
  * 
  * <p>
- * {@link com.paypal.guagua.io.Bytable} is a copy from hadoop Writable, the reason is that we don't want to depend on 
- * hadoop platform since guagua is designed to support all kinds of computation platform. One can check 
- * GuaguaWritableAdapter in guagua-mapreduce to see how to use hadoop writable with guagua 
- * {@link com.paypal.guagua.io.Bytable}.
+ * {@link com.paypal.guagua.io.Bytable} is a copy from Hadoop Writable, the reason is that guagua doesn't want to depend 
+ * on Hadoop platform since guagua is designed to support all kinds of computation platform. Check GuaguaWritableAdapter 
+ * in guagua-mapreduce to see how to use Hadoop Writable with guagua {@link com.paypal.guagua.io.Bytable}.
  * 
  * <p>
  * Compressed serialzer like {@link com.paypal.guagua.io.GZIPBytableSerializer} is used to support gz format. And 

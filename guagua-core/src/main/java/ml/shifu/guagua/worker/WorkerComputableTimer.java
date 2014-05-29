@@ -23,11 +23,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link WorkerComputableTimer} is used to get execution time for computation. Waiting time is not included in this
- * timer.
+ * {@link WorkerComputableTimer} is used to print execution time for master computation function. Waiting time is not
+ * included in this timer.
  * 
  * <p>
- * {@link WorkerComputableTimer} should be set to user intercepters, not system intercepters.
+ * {@link WorkerComputableTimer} should be set as user intercepter, not system intercepter.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.

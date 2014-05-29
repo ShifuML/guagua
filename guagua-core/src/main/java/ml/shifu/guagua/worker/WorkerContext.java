@@ -24,6 +24,17 @@ import ml.shifu.guagua.io.GuaguaFileSplit;
 /**
  * {@link WorkerContext} is a context to contain all useful info which can be used in worker computation.
  * 
+ * <p>
+ * The info includes:
+ * <ul>
+ * <li>Application ID: Job ID for Hadoop mapreduce Job, application ID for YARN application.</li>
+ * <li>Container ID: Task index for Hadoop mapreduce task, Task index for YARN Container.</li>
+ * <li>Total iteration number.</li>
+ * <li>Current iteration number.</li>
+ * <li>Worker result for current iteration after computation which is used to be sent to master.</li>
+ * <li>Master result from last iteration.</li>
+ * </ul>
+ * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.
  * @param <WORKER_RESULT>

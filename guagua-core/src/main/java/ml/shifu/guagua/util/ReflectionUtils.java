@@ -22,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import ml.shifu.guagua.GuaguaRuntimeException;
 
 /**
- * <p>
  * {@link ReflectionUtils} is used to get instance from java reflection mechanism.
  * 
  * <p>

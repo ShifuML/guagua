@@ -33,9 +33,9 @@ import ml.shifu.guagua.io.Bytable;
  * <p>
  * For a list of interceptors, the order to call preXXX methods and postXXX methods is different. For example, a and b
  * two intercepters. The order is
- * a.preApplication->b.preApplication->a.preIteration->b.preIteration->computation->b.postIteration
- * ->a.postIteration->b.postApplication->a.postApplication. This is like call stack to make sure each intercepter to
- * intercept the whole other intercepters and master computation.
+ * a.preApplication-&gt;b.preApplication-&gt;a.preIteration-&gt;b.preIteration-&gt;computation-&gt;b.postIteration
+ * -&gt;a.postIteration-&gt;b.postApplication-&gt;a.postApplication. This is like call stack to make sure each
+ * intercepter to intercept the whole other intercepters and master computation.
  * 
  * <p>
  * {@link BasicMasterInterceptor} is a empty implementation for user to choose the hooks to override.

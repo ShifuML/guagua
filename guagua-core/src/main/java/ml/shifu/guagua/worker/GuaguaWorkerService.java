@@ -42,6 +42,21 @@ import org.slf4j.LoggerFactory;
 /**
  * {@link GuaguaWorkerService} is the basic implementation as a worker for whole application process.
  * 
+ * <p>
+ * All the properties used to create computable instance, intercepter instances are set in {@link #props}.
+ * 
+ * <p>
+ * After {@link #workerComputable}, {@link #workerInterceptors} are constructed, they will be used in {@link #start()},
+ * {@link #run(Progressable)}, {@link #stop()} to do the whole iteration logic.
+ * 
+ * <p>
+ * {@link GuaguaWorkerService} is only a skeleton and all implementations are in the intercepters and computable classes
+ * defined by user.
+ * 
+ * <p>
+ * The execution order of preXXXX is different with postXXXX. For preXXX, the order is FIFO, but for postXXX, the order
+ * is FILO.
+ * 
  * @param <MASTER_RESULT>
  *            master computation result in each iteration.
  * @param <WORKER_RESULT>
@@ -412,17 +427,10 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         this.workerResultClassName = workerResultClassName;
     }
 
-    /**
-     * @return the coordinator
-     */
     public InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> getCoordinator() {
         return coordinator;
     }
 
-    /**
-     * @param coordinator
-     *            the coordinator to set
-     */
     public void setCoordinator(InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator) {
         this.coordinator = coordinator;
     }

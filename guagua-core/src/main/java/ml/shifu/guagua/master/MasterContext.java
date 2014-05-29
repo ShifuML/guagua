@@ -20,14 +20,25 @@ import java.util.Properties;
 import ml.shifu.guagua.io.Bytable;
 
 /**
- * {@link MasterContext} is a context to contain all objects used in master computation.
+ * {@link MasterContext} is a context object which contains all useful info used in master computation.
+ * 
+ * <p>
+ * The info includes:
+ * <ul>
+ * <li>Application ID: Job ID for Hadoop mapreduce Job, application ID for YARN application.</li>
+ * <li>Container ID: Task index for Hadoop mapreduce task, Task index for YARN Container.</li>
+ * <li>Total iteration number.</li>
+ * <li>Current iteration number.</li>
+ * <li>Worker result list for current iteration.</li>
+ * <li>Master result for current iteration which is used to be sent to workers in next iteration.</li>
+ * </ul>
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.
  * @param <WORKER_RESULT>
  *            worker result for computation in each iteration.
  */
-// TODO make it readonly, the same as WorkerContext 
+// TODO make it readonly, the same as WorkerContext
 public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
 
     /**

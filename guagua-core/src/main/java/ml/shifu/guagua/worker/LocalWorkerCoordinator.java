@@ -22,10 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link LocalWorkerCoordinator} is local coordinator implementation on one jvm instance.
+ * {@link LocalWorkerCoordinator} is local coordinator implementation in one jvm instance.
  * 
  * <p>
- * {@link #coordinator} should be set by using the same instance with InternalMasterCoordinator.
+ * {@link LocalWorkerCoordinator} is a proxy and {@link #coordinator} has the real logic to coordinate master and
+ * workers. {@link #coordinator} should be set by using the same instance with InternalWorkerCoordinator.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.
@@ -37,6 +38,9 @@ public class LocalWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalWorkerCoordinator.class);
 
+    /**
+     * Real in memory coordinator implementation.
+     */
     private InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator;
 
     @Override
@@ -61,10 +65,6 @@ public class LocalWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         LOG.info("Worker {} is done in iteration {}.", context.getContainerId(), context.getCurrentIteration());
     }
 
-    /**
-     * @param coordinator
-     *            the coordinator to set
-     */
     public void setCoordinator(InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator) {
         this.coordinator = coordinator;
     }

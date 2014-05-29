@@ -32,10 +32,10 @@ public interface CoordinatorFactory<MASTER_RESULT extends Bytable, WORKER_RESULT
     /**
      * Create coordinator instance for master.
      */
-    public abstract MasterInterceptor<MASTER_RESULT, WORKER_RESULT> createMasterCoordinator();
+    MasterInterceptor<MASTER_RESULT, WORKER_RESULT> createMasterCoordinator();
 
     /**
      * Create coordinator instance for worker.
      */
-    public abstract WorkerInterceptor<MASTER_RESULT, WORKER_RESULT> createWorkerCoordinator();
+    WorkerInterceptor<MASTER_RESULT, WORKER_RESULT> createWorkerCoordinator();
 }

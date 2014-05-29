@@ -18,7 +18,8 @@ package ml.shifu.guagua.coordinator.zk;
 import org.apache.zookeeper.KeeperException;
 
 /**
- * {@link GuaguaZooKeeperOperation} is used as command to process same logic like re-trying.
+ * {@link GuaguaZooKeeperOperation} is used as command to process consistent logic like re-trying for all zookeeper
+ * operations (create, get, ...).
  * 
  * @param <T>
  *            result for each command.

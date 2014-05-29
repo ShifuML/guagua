@@ -63,8 +63,10 @@ public interface WorkerComputable<MASTER_RESULT extends Bytable, WORKER_RESULT e
      * Worker computation for each iteration.
      * 
      * @param context
-     *            the worker context instance which includes worker info, master result of laster iteration or other
+     *            the worker context instance which includes worker info, master result of last iteration or other
      *            useful into for each iteration.
+     * @return
+     *         the worker result of each iteration.
      * @throws IOException
      *             any io exception in computation, for example, IOException in reading data.
      */
