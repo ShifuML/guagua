@@ -54,6 +54,7 @@
                 <include>*:guagua-yarn:*</include>
                 <include>*:guagua-yarn-examples:*</include>
                 <include>*:zookeeper:*</include>
+                <include>*:encog-core:*</include>
                 <include>*:guava:*</include>
                 <include>*:gson:*</include>
             </includes>

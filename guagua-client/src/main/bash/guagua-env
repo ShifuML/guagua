@@ -36,19 +36,12 @@ if [ "$1" = "-y" -o "$1" = "-yarn" ]; then
     shift
 fi
 
-# ---------------- Reading -D parameters --------------------------------------------#
-# extra properties to send straight to Hadoop
-HADOOP_PROPERTIES=
-while [ $1 ] && [ ${1:0:2} == "-D" ] ; do
-    HADOOP_PROPERTIES="$1 $HADOOP_PROPERTIES"
-    shift
-done
-
-VERSION=`hadoop version | head -n 1 | awk '{ print $2 }'`
-VERSION_23=${VERSION:0:4}
-VERSION_2=${VERSION:0:1}
-
 # ---------------- Setting USER_JAR -------------------------------------------------#
+# shift first 'jar' or '-jar'
+if [ "$1" = "jar" -o "$1" = "-jar" ]; then
+    shift
+fi
+
 USER_JAR=$1
 shift
 if [ ! -e "$USER_JAR" ]; then
@@ -58,6 +51,70 @@ else
   # add user jar to classpath
   CLASSPATH=${USER_JAR}
 fi
+
+# ---------------- HADOOP Environment Detection ----------------------------------#
+HADOOP_ROOT=""
+    
+# locate HADOOP_ROOT "which hadoop"
+HADOOP_CMD_PATH=`which hadoop 2>/dev/null`
+# Check whether hadoop is installed under /usr/bin or not
+if [ "${HADOOP_CMD_PATH}" == "/usr/bin/hadoop" -a -d /usr/lib/hadoop ]; then
+    HADOOP_ROOT=/usr/lib/hadoop
+else
+    # Check whether ${HADOOP_CMD_PATH}/../../lib exists or not
+    if [ "${HADOOP_CMD_PATH}" != "" ]; then
+        if [ -d "`dirname ${HADOOP_CMD_PATH}`/../lib" ]; then
+            HADOOP_ROOT=`dirname ${HADOOP_CMD_PATH}`/..
+        fi
+    fi
+fi
+
+# Not find yet, try to locate HADOOP_ROOT by "whereis hadoop"    
+if [ "${HADOOP_ROOT}" == "" ]; then
+    for h_dir in `whereis hadoop 2>/dev/null` ; do
+        if [ -e ${h_dir}/bin/hadoop ]; then
+            HADOOP_ROOT=${h_dir}
+            break
+        fi
+    done
+fi
+
+# add HADOOP configuration directory if exists
+if [ "${HADOOP_CONF_DIR}" != "" -a -d "${HADOOP_CONF_DIR}" ]; then
+    CLASSPATH="${HADOOP_CONF_DIR}:${CLASSPATH}"
+fi
+
+if [ "${HADOOP_ROOT}" != "" ]; then
+    LINUX_ARCH="i386-32"
+    if [ "`getconf LONG_BIT`" == "64" ]; then
+        LINUX_ARCH="amd64-64"
+    fi
+    
+    if [ -d ${HADOOP_ROOT}/lib/native/Linux-${LINUX_ARCH} ] ; then
+        LD_LIBRARY_PATH="${HADOOP_ROOT}/lib/native/Linux-${LINUX_ARCH}":${LD_LIBRARY_PATH}    
+    elif [ -d ${HADOOP_ROOT}/lib/native ]; then
+        LD_LIBRARY_PATH="${HADOOP_ROOT}/lib/native":${LD_LIBRARY_PATH}  
+    fi
+else
+    echo 'Hadoop is not configurated well, please check.'
+    exit 1;
+fi
+
+export LD_LIBRARY_PATH
+# ---------------- Detection End ---------------------------------------------------#
+
+# ---------------- Check Hadoop version  --------------------------------------------#
+VERSION=`${HADOOP_ROOT}/bin/hadoop version | head -n 1 | awk '{ print $2 }'`
+VERSION_23=${VERSION:0:4}
+VERSION_2=${VERSION:0:1}
+
+# ---------------- Reading -D parameters --------------------------------------------#
+# extra properties to send straight to Hadoop
+#HADOOP_PROPERTIES=
+#while [ $1 ] && [ ${1:0:2} == "-D" ] ; do
+#    HADOOP_PROPERTIES="$1 $HADOOP_PROPERTIES"
+#    shift
+#done
 
 # ---------------- add Guagua conf dir to classpath----------------------------------#
 # add Guagua conf dir to classpath
@@ -127,57 +184,6 @@ if [ "$JAR" = "" ] ; then
   echo "Can't find Guagua jar."
   exit 1
 fi
-
-# ---------------- HADOOP Environment Detection ----------------------------------#
-HADOOP_ROOT=""
-    
-# locate HADOOP_ROOT "which hadoop"
-HADOOP_CMD_PATH=`which hadoop 2>/dev/null`
-# Check whether hadoop is installed under /usr/bin or not
-if [ "${HADOOP_CMD_PATH}" == "/usr/bin/hadoop" -a -d /usr/lib/hadoop ]; then
-    HADOOP_ROOT=/usr/lib/hadoop
-else
-    # Check whether ${HADOOP_CMD_PATH}/../../lib exists or not
-    if [ "${HADOOP_CMD_PATH}" != "" ]; then
-        if [ -d "`dirname ${HADOOP_CMD_PATH}`/../lib" ]; then
-            HADOOP_ROOT=`dirname ${HADOOP_CMD_PATH}`/..
-        fi
-    fi
-fi
-
-# Not find yet, try to locate HADOOP_ROOT by "whereis hadoop"    
-if [ "${HADOOP_ROOT}" == "" ]; then
-    for h_dir in `whereis hadoop 2>/dev/null` ; do
-        if [ -e ${h_dir}/bin/hadoop ]; then
-            HADOOP_ROOT=${h_dir}
-            break
-        fi
-    done
-fi
-
-# add HADOOP configuration directory if exists
-if [ "${HADOOP_CONF_DIR}" != "" -a -d "${HADOOP_CONF_DIR}" ]; then
-    CLASSPATH="${HADOOP_CONF_DIR}:${CLASSPATH}"
-fi
-
-if [ "${HADOOP_ROOT}" != "" ]; then
-    LINUX_ARCH="i386-32"
-    if [ "`getconf LONG_BIT`" == "64" ]; then
-        LINUX_ARCH="amd64-64"
-    fi
-    
-    if [ -d ${HADOOP_ROOT}/lib/native/Linux-${LINUX_ARCH} ] ; then
-        LD_LIBRARY_PATH="${HADOOP_ROOT}/lib/native/Linux-${LINUX_ARCH}":${LD_LIBRARY_PATH}    
-    elif [ -d ${HADOOP_ROOT}/lib/native ]; then
-        LD_LIBRARY_PATH="${HADOOP_ROOT}/lib/native":${LD_LIBRARY_PATH}  
-    fi
-else
-    echo 'hadoop is not configurated well, please check.'
-    exit 1;
-fi
-
-export LD_LIBRARY_PATH
-# ---------------- Detection End ---------------------------------------------------#
 
 # ---------------- Export to hadoop classpath --------------------------------------#
 # Guagua's jars to add to distributed cache via -libjar, which are csv rather than :sv

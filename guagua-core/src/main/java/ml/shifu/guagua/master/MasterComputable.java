@@ -26,7 +26,7 @@ import ml.shifu.guagua.io.Bytable;
  * 
  * <p>
  * To get global properties like Hadoop and YARN configuration properties, {@link MasterContext#getProps()} is a wrapper
- * for Hadoop Configuration. Anything configurated by using '-D' in command line can be got from these properties.
+ * for Hadoop Configuration. Anything configured by using '-D' in command line can be got from these properties.
  * 
  * <p>
  * {@link MasterContext#getWorkerResults()} is the worker results from all the workers in current iteration. It can be

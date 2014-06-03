@@ -16,6 +16,13 @@
 
 # please follow ../README.md to run this demo shell.
 
+ZOOKEEPER_SERVERS=
+
+if [ "${ZOOKEEPER_SERVERS}X" == "X" ] ; then
+  echo "Zookeeper server should be provided for guagua coordination. Set 'ZOOKEEPER_SERVERS' at first please."
+  exit 1
+fi
+
 OLD_HADOOP_CLASSPATH="$HADOOP_CLASSPATH"
 
 # set new HADOOP_CLASSPATH to run guagua
@@ -25,7 +32,7 @@ hadoop jar ../lib/guagua-mapreduce-0.5.0-SNAPSHOT.jar \
     ml.shifu.guagua.mapreduce.GuaguaMapReduceClient   \
     -libjars ../lib/guagua-mapreduce-examples-0.5.0-SNAPSHOT.jar,../lib/guava-14.0.1.jar,../lib/guagua-mapreduce-0.5.0-SNAPSHOT.jar,../lib/guagua-core-0.5.0-SNAPSHOT.jar,../lib/zookeeper-3.4.5.jar \
     -i sum  \
-    -z ${zookeeper.server}  \
+    -z ${ZOOKEEPER_SERVERS}  \
     -w ml.shifu.guagua.mapreduce.example.sum.SumWorker  \
     -m ml.shifu.guagua.mapreduce.example.sum.SumMaster  \
     -c 10 \

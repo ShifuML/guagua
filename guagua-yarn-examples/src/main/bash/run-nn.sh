@@ -16,6 +16,7 @@
 
 # please follow ../README.md to run this demo shell.
 
+
 ZOOKEEPER_SERVERS=
 
 if [ "${ZOOKEEPER_SERVERS}X" == "X" ] ; then
@@ -26,24 +27,23 @@ fi
 OLD_HADOOP_CLASSPATH="$HADOOP_CLASSPATH"
 
 # set new HADOOP_CLASSPATH to run guagua
-export HADOOP_CLASSPATH="../lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar:../lib/guagua-yarn-0.5.0-SNAPSHOT.jar:../lib/gson-2.2.2.jar:../lib/guava-11.0.2.jar:../lib/guagua-core-0.5.0-SNAPSHOT.jar:../lib/zookeeper-3.4.5.jar"
+export HADOOP_CLASSPATH="../lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar:../lib/guava-14.0.1.jar:../lib/encog-core-3.0.0.jar:../lib/guagua-yarn-0.5.0-SNAPSHOT.jar:../lib/guagua-core-0.5.0-SNAPSHOT.jar:../lib/zookeeper-3.4.5.jar:../lib/gson-2.2.2.jar"
 
-hadoop jar ../lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar \
+hadoop jar ../lib/guagua-yarn-0.5.0-SNAPSHOT.jar \
     ml.shifu.guagua.yarn.GuaguaYarnClient  \
-    -libjars ../lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar,../lib/guagua-yarn-0.5.0-SNAPSHOT.jar,../lib/gson-2.2.2.jar,../lib/guava-11.0.2.jar,../lib/guagua-core-0.5.0-SNAPSHOT.jar,../lib/zookeeper-3.4.5.jar \
-    -i sum  \
+    -libjars ../lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar,../lib/guava-14.0.1.jar,../lib/encog-core-3.0.0.jar,../lib/gson-2.2.2.jar,../lib/guagua-yarn-0.5.0-SNAPSHOT.jar,../lib/guagua-core-0.5.0-SNAPSHOT.jar,../lib/zookeeper-3.4.5.jar \
+    -i nn  \
     -z ${ZOOKEEPER_SERVERS}  \
-    -w ml.shifu.guagua.yarn.example.sum.SumWorker  \
-    -m ml.shifu.guagua.yarn.example.sum.SumMaster  \
-    -c 10 \
-    -n "guagua" \
-    -mr org.apache.hadoop.io.LongWritable \
-    -wr org.apache.hadoop.io.LongWritable \
-    -Dmapred.job.queue.name=default \
-    -Dguagua.sum.output=sum-output \
-    -Dguagua.yarn.queue.name=default \
-    -Dguagua.master.intercepters=ml.shifu.guagua.yarn.example.sum.SumOutput
-
+    -w ml.shifu.guagua.yarn.example.nn.NNWorker  \
+    -m ml.shifu.guagua.yarn.example.nn.NNMaster  \
+    -c 100 \
+    -n "Guagua NN Master-Workers Job" \
+    -mr ml.shifu.guagua.yarn.example.nn.meta.NNParams \
+    -wr ml.shifu.guagua.yarn.example.nn.meta.NNParams \
+    -Dguagua.nn.output=NN.model -Dnn.test.scale=1 -Dnn.record.scale=1  \
+    -Dguagua.master.intercepters=ml.shifu.guagua.yarn.example.nn.NNOutput  \
+    -Dmapred.job.queue.name=default
+    
 ## restore HADOOP_CLASSPATH 
 export HADOOP_CLASSPATH="$OLD_HADOOP_CLASSPATH"
 
