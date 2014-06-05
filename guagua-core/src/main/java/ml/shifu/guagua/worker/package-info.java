@@ -19,10 +19,10 @@
  * 
  * <p>
  * {@link com.paypal.guagua.worker.GuaguaWorkerService} is an implementation to do worker computation and worker 
- * intercepters.
+ * interceptors.
  * 
  * <p>
- * Worker coordinator, memory profiler and timer such kind of useful intercepters are included in this package.
+ * Worker coordinator, memory profiler and timer such kind of useful interceptors are included in this package.
  */
 package ml.shifu.guagua.worker;
 

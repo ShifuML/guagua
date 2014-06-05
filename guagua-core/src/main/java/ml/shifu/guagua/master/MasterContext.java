@@ -38,7 +38,7 @@ import ml.shifu.guagua.io.Bytable;
  * @param <WORKER_RESULT>
  *            worker result for computation in each iteration.
  */
-// TODO make it readonly, the same as WorkerContext
+// TODO make it read-only, the same as WorkerContext
 public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
 
     /**
@@ -103,6 +103,14 @@ public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
      * After this time elapsed, we can use {@link #minWorkersRatio} to determine done of that iteration.
      */
     private final long minWorkersTimeOut;
+
+    /**
+     * This attachment is for {@link MasterComputable} and {@link MasterInterceptor} to transfer object. It can be set
+     * by user for running time usage.
+     * 
+     * @since 0.5.0
+     */
+    private Object attachment;
 
     public MasterContext(int totalIteration, int workers, Properties props, String appId, String containerId,
             String masterResultClassName, String workerResultClassName, double minWorkersRatio, long minWorkersTimeOut) {
@@ -177,6 +185,14 @@ public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
         return minWorkersTimeOut;
     }
 
+    public Object getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(Object attachment) {
+        this.attachment = attachment;
+    }
+
     @Override
     public String toString() {
         return String
@@ -184,4 +200,5 @@ public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
                         workerResults, masterResult, currentIteration, totalIteration, workers, appId,
                         masterResultClassName, workerResultClassName, containerId, minWorkersRatio, minWorkersTimeOut);
     }
+
 }

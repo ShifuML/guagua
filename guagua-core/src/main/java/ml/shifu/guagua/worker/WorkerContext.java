@@ -95,6 +95,14 @@ public class WorkerContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
      */
     private final String workerResultClassName;
 
+    /**
+     * This attachment is for {@link WorkerComputable} and {@link WorkerInterceptor} to transfer object. It can be set
+     * by user for running time usage.
+     * 
+     * @since 0.5.0
+     */
+    private Object attachment;
+
     public WorkerContext(int totalIteration, String appId, Properties props, String containerId,
             List<GuaguaFileSplit> fileSplits, String masterResultClassName, String workerResultClassName) {
         this.totalIteration = totalIteration;
@@ -156,6 +164,14 @@ public class WorkerContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
 
     public String getMasterResultClassName() {
         return masterResultClassName;
+    }
+
+    public Object getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(Object attachment) {
+        this.attachment = attachment;
     }
 
     @Override

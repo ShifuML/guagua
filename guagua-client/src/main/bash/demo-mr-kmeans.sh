@@ -66,5 +66,7 @@ fi
         -Dkmeans.centers.output=kmeans-centers \
         -Dkmeans.data.output=kmeans-tags \
         -Dkmeans.k.centers=${KMEANS_INIT_CENTERS} \
-        -Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansCentersOutput
+        -Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansCentersOutput \
+        -Dguagua.worker.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansDataOutput
+        
         

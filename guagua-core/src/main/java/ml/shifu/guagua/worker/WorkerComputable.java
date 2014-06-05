@@ -36,8 +36,8 @@ import ml.shifu.guagua.io.Bytable;
  * iteration equals 1), it is null.
  * 
  * <p>
- * Iteration starts from 1, ends with {@link WorkerContext#getTotalIteration()}. Total iteration can be set in command
- * line as '-c' parameter. It is the same for master and worker total iteration number setting.
+ * Iteration starts from 1, ends with {@link WorkerContext#getTotalIteration()}.Total iteration number can be set in
+ * command line through '-c' parameter. It is the same for master and worker total iteration number setting.
  * 
  * <p>
  * {@link WorkerContext#getAppId()} denotes the job ID for a map-reduce job in Hadoop, or YARN application ID for a YARN

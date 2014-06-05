@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * included in this timer.
  * 
  * <p>
- * {@link WorkerComputableTimer} should be set as user intercepter, not system intercepter.
+ * {@link WorkerComputableTimer} should be set as user interceptor, not system interceptor.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.

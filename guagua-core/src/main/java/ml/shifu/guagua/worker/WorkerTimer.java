@@ -23,11 +23,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link WorkerTimer} is used to log execution time of preXXXX of intercepters, worker computation and postXXXX of
- * intercepters. {@link WorkerTimer} includes waiting time and should be set as system intercepter.
+ * {@link WorkerTimer} is used to log execution time of preXXXX of interceptors, worker computation and postXXXX of
+ * interceptors. {@link WorkerTimer} includes waiting time and should be set as system interceptor.
  * 
  * <p>
- * {@link WorkerTimer} is set as one master intercepter by default.
+ * {@link WorkerTimer} is set as one master interceptor by default.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.

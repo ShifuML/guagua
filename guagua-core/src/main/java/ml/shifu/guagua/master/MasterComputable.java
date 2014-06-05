@@ -33,8 +33,8 @@ import ml.shifu.guagua.io.Bytable;
  * used for master computation logic.
  * 
  * <p>
- * Iteration starts from 1, ends with {@link MasterContext#getTotalIteration()}. Total iteration can be set in command
- * line as '-c' parameter.
+ * Iteration starts from 1, ends with {@link MasterContext#getTotalIteration()}. Total iteration number can be set in
+ * command line through '-c' parameter.
  * 
  * <p>
  * {@link MasterContext#getAppId()} denotes the job ID for a map-reduce job in Hadoop, or YARN application ID for a YARN

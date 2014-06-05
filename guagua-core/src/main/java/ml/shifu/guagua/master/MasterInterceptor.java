@@ -22,20 +22,20 @@ import ml.shifu.guagua.io.Bytable;
  * and after application and hooks after and before each iteration.
  * 
  * <p>
- * Almost all services in guagua like coordination, fail-over, profiler are implemented as intercepters. These are
- * system intercepters can be configured by using command line '-D' parameter.
+ * Almost all services in guagua like coordination, fail-over, profiler are implemented as interceptors. These are
+ * system interceptors can be configured by using command line '-D' parameter.
  * 
  * <p>
- * After system intercepters, user defined intercepters are also supported for user to define his/her own intercepters.
+ * After system interceptors, user defined interceptors are also supported for user to define his/her own interceptors.
  * Check <code>SumOutput</code> in examples project to see how interceper is used to save global result at the end of
  * one guagua application.
  * 
  * <p>
  * For a list of interceptors, the order to call preXXX methods and postXXX methods is different. For example, a and b
- * two intercepters. The order is
+ * two interceptors. The order is
  * a.preApplication-&gt;b.preApplication-&gt;a.preIteration-&gt;b.preIteration-&gt;computation-&gt;b.postIteration
  * -&gt;a.postIteration-&gt;b.postApplication-&gt;a.postApplication. This is like call stack to make sure each
- * intercepter to intercept the whole other intercepters and master computation.
+ * interceptor to intercept the whole other interceptors and master computation.
  * 
  * <p>
  * {@link BasicMasterInterceptor} is a empty implementation for user to choose the hooks to override.

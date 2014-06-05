@@ -16,7 +16,6 @@
 package ml.shifu.guagua.mapreduce.example.kmeans;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -26,11 +25,6 @@ import ml.shifu.guagua.mapreduce.GuaguaWritableAdapter;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;
 import ml.shifu.guagua.worker.WorkerContext;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
@@ -90,9 +84,12 @@ public class KMeansWorker
         this.k = Integer.parseInt(workerContext.getProps().getProperty(KMeansContants.KMEANS_K_NUMBER));
         this.c = Integer.parseInt(workerContext.getProps().getProperty(KMeansContants.KMEANS_COLUMN_NUMBER));
         this.separator = workerContext.getProps().getProperty(KMeansContants.KMEANS_DATA_SEPERATOR);
+        // TODO this initial center should be set in one HDFS file
         this.initCenterList = initKCenters(workerContext.getProps().getProperty(KMeansContants.KMEANS_K_CENTERS));
         this.dataList = new LinkedList<TaggedRecord>();
-        LOG.info("k:" + k + " c:" + c + " separator:" + separator + " initCenterList:" + initCenterList);
+        LOG.debug("k:" + k + " c:" + c + " separator:" + separator + " initCenterList:" + initCenterList);
+        // just set into worker context for data output interceptor usage.
+        workerContext.setAttachment(this.dataList);
     }
 
     /**
@@ -123,7 +120,7 @@ public class KMeansWorker
     public KMeansWorkerParams doCompute(WorkerContext<KMeansMasterParams, KMeansWorkerParams> workerContext) {
         // new centers used in this iteration.
         List<double[]> centers = getNewKCenters(workerContext);
-        LOG.info("Initial centers:%s", (centers));
+        LOG.debug("Initial centers:%s", (centers));
 
         // sum list and count list as worker result sent to master for global accumulation.
         List<double[]> sumList = new LinkedList<double[]>();
@@ -145,15 +142,13 @@ public class KMeansWorker
             }
         }
 
-        LOG.info("sumList:%s", (sumList));
-        LOG.info("countList:%s", countList);
+        LOG.debug("sumList:%s", (sumList));
+        LOG.debug("countList:%s", countList);
 
-        // last iteration, store tag with data into output files
-        // TODO for guagua framework: how to transfer attached object from WorkerComputable or MasterComputable to
-        // interceptors to extract output logic.
-        if(workerContext.getCurrentIteration() == workerContext.getTotalIteration()) {
-            storeOutput(workerContext);
-        }
+        // // last iteration, store tag with data into output files
+        // if(workerContext.getCurrentIteration() == workerContext.getTotalIteration()) {
+        // storeOutput(workerContext);
+        // }
 
         KMeansWorkerParams workerResult = new KMeansWorkerParams();
         workerResult.setK(this.k);
@@ -163,28 +158,29 @@ public class KMeansWorker
         return workerResult;
     }
 
-    private void storeOutput(WorkerContext<KMeansMasterParams, KMeansWorkerParams> workerContext) {
-        Path outFolder = new Path(workerContext.getProps().getProperty(KMeansContants.KMEANS_DATA_OUTPUT,
-                "part-g-" + workerContext.getContainerId()));
-        PrintWriter pw = null;
-        try {
-            FileSystem fileSystem = FileSystem.get(new Configuration());
-            fileSystem.mkdirs(outFolder);
-
-            Path outputFile = new Path(outFolder, "part-g-" + workerContext.getContainerId());
-            FSDataOutputStream fos = fileSystem.create(outputFile);
-            LOG.info("Writing results to {}", outputFile.toString());
-            pw = new PrintWriter(fos);
-            for(TaggedRecord record: this.dataList) {
-                pw.println(record.toString(this.separator));
-            }
-            pw.flush();
-        } catch (IOException e) {
-            LOG.error("Error in writing output.", e);
-        } finally {
-            IOUtils.closeStream(pw);
-        }
-    }
+    //
+    // private void storeOutput(WorkerContext<KMeansMasterParams, KMeansWorkerParams> workerContext) {
+    // Path outFolder = new Path(workerContext.getProps().getProperty(KMeansContants.KMEANS_DATA_OUTPUT,
+    // "part-g-" + workerContext.getContainerId()));
+    // PrintWriter pw = null;
+    // try {
+    // FileSystem fileSystem = FileSystem.get(new Configuration());
+    // fileSystem.mkdirs(outFolder);
+    //
+    // Path outputFile = new Path(outFolder, "part-g-" + workerContext.getContainerId());
+    // FSDataOutputStream fos = fileSystem.create(outputFile);
+    // LOG.info("Writing results to {}", outputFile.toString());
+    // pw = new PrintWriter(fos);
+    // for(TaggedRecord record: this.dataList) {
+    // pw.println(record.toString(this.separator));
+    // }
+    // pw.flush();
+    // } catch (IOException e) {
+    // LOG.error("Error in writing output.", e);
+    // } finally {
+    // IOUtils.closeStream(pw);
+    // }
+    // }
 
     private List<double[]> getNewKCenters(WorkerContext<KMeansMasterParams, KMeansWorkerParams> workerContext) {
         if(workerContext.getCurrentIteration() == 1) {

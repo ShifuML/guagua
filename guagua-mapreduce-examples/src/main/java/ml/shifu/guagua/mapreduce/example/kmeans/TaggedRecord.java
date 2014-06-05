@@ -15,6 +15,8 @@
  */
 package ml.shifu.guagua.mapreduce.example.kmeans;
 
+import java.util.Arrays;
+
 /**
  * Data records with tag. The tag is the index of the k categories range from 0 to k-1.
  */
@@ -73,6 +75,10 @@ public class TaggedRecord {
     @Override
     public String toString() {
         return this.toString("|");
+    }
+    
+    public static void main(String[] args) {
+        System.out.println(Arrays.toString("aaa\u0010bbb".split("\u0010")));
     }
 
 }
