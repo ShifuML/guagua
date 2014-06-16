@@ -15,9 +15,13 @@
  */
 package ml.shifu.guagua.mapreduce.example.kmeans;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
+import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.master.MasterComputable;
 import ml.shifu.guagua.master.MasterContext;
 
@@ -47,6 +51,61 @@ public class KMeansMaster implements MasterComputable<KMeansMasterParams, KMeans
             throw new NullPointerException("No worker results received in Master.");
         }
 
+        if(context.getCurrentIteration() == 1) {
+            return doFirstIteration(context);
+        } else {
+            return doOtherIterations(context);
+        }
+    }
+
+    private KMeansMasterParams doFirstIteration(MasterContext<KMeansMasterParams, KMeansWorkerParams> context) {
+        List<double[]> allInitialCentriods = new ArrayList<double[]>();
+        boolean initilized = false;
+        int k = 0, c = 0;
+        for(KMeansWorkerParams workerResult: context.getWorkerResults()) {
+            allInitialCentriods.addAll(workerResult.getPointList());
+            if(!initilized) {
+                k = workerResult.getK();
+                c = workerResult.getC();
+            }
+        }
+
+        if(allInitialCentriods.size() < k) {
+            throw new GuaguaRuntimeException(
+                    "Error: data size is smaller than k, please check your input and k settings.");
+        }
+
+        Collections.sort(allInitialCentriods, new Comparator<double[]>() {
+            @Override
+            public int compare(double[] o1, double[] o2) {
+                double dist = distance(o1) - distance(o2);
+                return Double.valueOf(dist).compareTo(Double.valueOf(0d));
+            }
+        });
+
+        List<double[]> initialCentriods = new ArrayList<double[]>(k);
+        int step = allInitialCentriods.size() / k;
+        for(int i = 0; i < k; i++) {
+            initialCentriods.add(allInitialCentriods.get(i * step));
+        }
+
+        KMeansMasterParams masterResult = new KMeansMasterParams();
+        masterResult.setK(k);
+        masterResult.setC(c);
+        masterResult.setPointList(initialCentriods);
+        return masterResult;
+    }
+
+    private double distance(double[] record) {
+        double sumSquare = 0d;
+        for(int i = 0; i < record.length; i++) {
+            sumSquare += (record[i] * record[i]);
+        }
+
+        return Math.sqrt(sumSquare);
+    }
+
+    private KMeansMasterParams doOtherIterations(MasterContext<KMeansMasterParams, KMeansWorkerParams> context) {
         // Accumulate all values for all categories
         List<double[]> sumAllList = new LinkedList<double[]>();
         // here use long to avoid over flow
@@ -71,7 +130,7 @@ public class KMeansMaster implements MasterComputable<KMeansMasterParams, KMeans
 
                 double[] sumAll = sumAllList.get(i);
                 for(int j = 0; j < c; j++) {
-                    sumAll[j] += workerResult.getSumList().get(i)[j];
+                    sumAll[j] += workerResult.getPointList().get(i)[j];
                 }
             }
             initilized = true;
@@ -96,7 +155,7 @@ public class KMeansMaster implements MasterComputable<KMeansMasterParams, KMeans
         KMeansMasterParams masterResult = new KMeansMasterParams();
         masterResult.setK(k);
         masterResult.setC(c);
-        masterResult.setMeanList(meanList);
+        masterResult.setPointList(meanList);
         return masterResult;
     }
 

@@ -42,9 +42,10 @@ public class KMeansMasterParams extends HaltBytable {
     private int c;
 
     /**
-     * Sums all values for each category.
+     * For the first iteration, this is the k initial centroids selected. For other iterations, this is the new
+     * centriods after worker iteration.
      */
-    private List<double[]> meanList;
+    private List<double[]> pointList;
 
     @Override
     public void doWrite(DataOutput out) throws IOException {
@@ -53,7 +54,7 @@ public class KMeansMasterParams extends HaltBytable {
         out.writeInt(this.c);
         for(int i = 0; i < this.k; i++) {
             for(int j = 0; j < this.c; j++) {
-                out.writeDouble(this.meanList.get(i)[j]);
+                out.writeDouble(this.pointList.get(i)[j]);
             }
         }
     }
@@ -62,7 +63,7 @@ public class KMeansMasterParams extends HaltBytable {
         validateK();
         validateC();
 
-        if(this.k != this.meanList.size()) {
+        if(this.k != this.pointList.size()) {
             throw new IllegalArgumentException("In-consistent sum list.");
         }
     }
@@ -73,13 +74,13 @@ public class KMeansMasterParams extends HaltBytable {
         validateK();
         this.c = in.readInt();
         validateC();
-        this.meanList = new LinkedList<double[]>();
+        this.pointList = new LinkedList<double[]>();
         for(int i = 0; i < this.k; i++) {
             double[] units = new double[this.c];
             for(int j = 0; j < this.c; j++) {
                 units[j] = in.readDouble();
             }
-            this.meanList.add(units);
+            this.pointList.add(units);
         }
     }
 
@@ -111,12 +112,11 @@ public class KMeansMasterParams extends HaltBytable {
         this.c = c;
     }
 
-    public List<double[]> getMeanList() {
-        return meanList;
+    public List<double[]> getPointList() {
+        return pointList;
     }
 
-    public void setMeanList(List<double[]> meanList) {
-        this.meanList = meanList;
+    public void setPointList(List<double[]> pointList) {
+        this.pointList = pointList;
     }
-
 }

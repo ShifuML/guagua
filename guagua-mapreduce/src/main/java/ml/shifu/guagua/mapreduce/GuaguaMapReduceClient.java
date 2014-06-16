@@ -178,9 +178,9 @@ public class GuaguaMapReduceClient {
      * Compute the progress of the current job submitted through the JobControl object jc to the JobClient jobClient
      * 
      * @param jc
-     *            - The JobControl object that has been submitted
+     *            The JobControl object that has been submitted
      * @param jobClient
-     *            - The JobClient to which it has been submitted
+     *            The JobClient to which it has been submitted
      * @return The progress as a percentage in double format
      * @throws IOException
      *             In case any IOException connecting to JobTracker.

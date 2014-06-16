@@ -15,7 +15,11 @@
  */
 package ml.shifu.guagua;
 
-public class GuaguaConstants {
+public final class GuaguaConstants {
+
+    // avoid new
+    private GuaguaConstants() {
+    }
 
     public static final String GUAGUA_WORKER_NUMBER = "guagua.worker.number";
 

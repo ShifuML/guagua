@@ -1,6 +1,5 @@
 #!/bin/bash
 #
-#
 # Copyright [2013-2014] eBay Software Foundation
 #  
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,20 +32,13 @@
 #  '-Dkmeans.data.seperator="|"': data input separator
 #  '-Dkmeans.column.number': Columns used in kmeans
 #  '-Dkmeans.k.number=2': set k
-#  '-Dkmeans.centers.output=kmeans-centers': new centers output file in HDFS
+#  '-Dkmeans.centriods.output=kmeans-centriods': new centriods output file in HDFS
 #  '-Dkmeans.data.output=kmeans-tags': new data file folder with tag at last column
-#  '-Dkmeans.k.centers=${KMEANS_INIT_CENTERS}': initial centers
-#  '-Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansCentersOutput': User master interceptors
+#  '-Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansCentriodsOutput': User master interceptors
 
 ZOOKEEPER_SERVERS=
 if [ "${ZOOKEEPER_SERVERS}X" == "X" ] ; then
   echo "Zookeeper server should be provided for guagua coordination. Set 'ZOOKEEPER_SERVERS' at first please."
-  exit 1
-fi
-
-KMEANS_INIT_CENTERS=1,1:-1,-1
-if [ "${KMEANS_INIT_CENTERS}X" == "X" ] ; then
-  echo "Kmeans initial centers should be set firstly. Set 'KMEANS.INIT.CENTERS' at first please."
   exit 1
 fi
 
@@ -63,10 +55,8 @@ fi
         -Dkmeans.k.number=2 \
         -Dkmeans.data.seperator="|" \
         -Dkmeans.column.number=2 \
-        -Dkmeans.centers.output=kmeans-centers \
+        -Dkmeans.centriods.output=kmeans-centriods \
         -Dkmeans.data.output=kmeans-tags \
-        -Dkmeans.k.centers=${KMEANS_INIT_CENTERS} \
-        -Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansCentersOutput \
+        -Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansCentriodsOutput \
         -Dguagua.worker.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansDataOutput
-        
         

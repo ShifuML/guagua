@@ -59,10 +59,12 @@ import org.apache.hadoop.io.Writable;
  * <p>
  * If you set your own main class, not use {@link GuaguaYarnClient}, you can set the result class like this.
  * 
+ * <pre>
  * {@code  
  *         conf.set(GuaguaConstants.GUAGUA_MASTER_RESULT_CLASS, LongWritable.class.getName());
  *         conf.set(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS, LongWritable.class.getName());
  * }
+ * </pre>
  * 
  * @see GuaguaWritableSerializer
  */

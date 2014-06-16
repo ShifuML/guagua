@@ -42,9 +42,15 @@ public class KMeansWorkerParams extends HaltBytable {
     private int c;
 
     /**
-     * Sums all values for each category.
+     * If first iteration,
      */
-    private List<double[]> sumList;
+    private boolean isFirstIteration;
+
+    /**
+     * For the first iteration, this is the k initial centroids selected in worker. For other iterations, this is sum
+     * value of the new centriods in worker iteration.
+     */
+    private List<double[]> pointList;
 
     /**
      * Counts all records for each category.
@@ -58,22 +64,29 @@ public class KMeansWorkerParams extends HaltBytable {
         out.writeInt(this.c);
         for(int i = 0; i < this.k; i++) {
             for(int j = 0; j < this.c; j++) {
-                out.writeDouble(this.sumList.get(i)[j]);
+                out.writeDouble(this.pointList.get(i)[j]);
             }
         }
-        for(int i = 0; i < this.k; i++) {
-            out.writeInt(this.countList.get(i));
+        out.writeBoolean(this.isFirstIteration);
+        if(!this.isFirstIteration) {
+            if(this.countList != null) {
+                for(int i = 0; i < this.k; i++) {
+                    out.writeInt(this.countList.get(i));
+                }
+            }
         }
     }
 
     private void validate() {
         validateK();
         validateC();
-        if(this.k != this.sumList.size()) {
+        if(this.k != this.pointList.size()) {
             throw new IllegalArgumentException("In-consistent sum list.");
         }
-        if(this.k != this.countList.size()) {
-            throw new IllegalArgumentException("In-consistent count list.");
+        if(!this.isFirstIteration) {
+            if(this.k != this.countList.size()) {
+                throw new IllegalArgumentException("In-consistent count list.");
+            }
         }
     }
 
@@ -83,17 +96,20 @@ public class KMeansWorkerParams extends HaltBytable {
         validateK();
         this.c = in.readInt();
         validateC();
-        this.sumList = new LinkedList<double[]>();
+        this.pointList = new LinkedList<double[]>();
         for(int i = 0; i < this.k; i++) {
             double[] units = new double[this.c];
             for(int j = 0; j < this.c; j++) {
                 units[j] = in.readDouble();
             }
-            this.sumList.add(units);
+            this.pointList.add(units);
         }
-        this.countList = new LinkedList<Integer>();
-        for(int i = 0; i < this.k; i++) {
-            this.countList.add(in.readInt());
+        boolean isFirstIteration = in.readBoolean();
+        if(!isFirstIteration) {
+            this.countList = new LinkedList<Integer>();
+            for(int i = 0; i < this.k; i++) {
+                this.countList.add(in.readInt());
+            }
         }
     }
 
@@ -125,12 +141,12 @@ public class KMeansWorkerParams extends HaltBytable {
         this.c = c;
     }
 
-    public List<double[]> getSumList() {
-        return sumList;
+    public List<double[]> getPointList() {
+        return pointList;
     }
 
-    public void setSumList(List<double[]> sumList) {
-        this.sumList = sumList;
+    public void setPointList(List<double[]> sumList) {
+        this.pointList = sumList;
     }
 
     public List<Integer> getCountList() {
@@ -141,9 +157,17 @@ public class KMeansWorkerParams extends HaltBytable {
         this.countList = countList;
     }
 
+    public boolean isFirstIteration() {
+        return isFirstIteration;
+    }
+
+    public void setFirstIteration(boolean isFirstIteration) {
+        this.isFirstIteration = isFirstIteration;
+    }
+
     @Override
     public String toString() {
-        return "KMeansWorkerParams [k=" + k + ", c=" + c + ", sumList=" + sumList + ", countList=" + countList + "]";
+        return "KMeansWorkerParams [k=" + k + ", c=" + c + ", sumList=" + pointList + ", countList=" + countList + "]";
     }
 
 }

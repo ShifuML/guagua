@@ -16,6 +16,7 @@
 package ml.shifu.guagua.mapreduce.example.kmeans;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,11 +52,6 @@ public class KMeansWorker
     private List<TaggedRecord> dataList;
 
     /**
-     * Initial k center points provided by configuration.
-     */
-    private List<double[]> initCenterList;
-
-    /**
      * K categories pre-defined
      */
     private int k;
@@ -84,33 +80,9 @@ public class KMeansWorker
         this.k = Integer.parseInt(workerContext.getProps().getProperty(KMeansContants.KMEANS_K_NUMBER));
         this.c = Integer.parseInt(workerContext.getProps().getProperty(KMeansContants.KMEANS_COLUMN_NUMBER));
         this.separator = workerContext.getProps().getProperty(KMeansContants.KMEANS_DATA_SEPERATOR);
-        // TODO this initial center should be set in one HDFS file
-        this.initCenterList = initKCenters(workerContext.getProps().getProperty(KMeansContants.KMEANS_K_CENTERS));
         this.dataList = new LinkedList<TaggedRecord>();
-        LOG.debug("k:" + k + " c:" + c + " separator:" + separator + " initCenterList:" + initCenterList);
         // just set into worker context for data output interceptor usage.
         workerContext.setAttachment(this.dataList);
-    }
-
-    /**
-     * "1,2,3:4,5,6" format as List<double[]>.
-     */
-    private List<double[]> initKCenters(String kCentersStr) {
-        List<double[]> initCenters = new LinkedList<double[]>();
-        String[] centers = kCentersStr.split(":");
-        if(centers.length != this.k) {
-            throw new IllegalArgumentException("not k initial centers.");
-        }
-        for(String center: centers) {
-            String[] split = center.split(",");
-            double[] data = new double[split.length];
-            int i = 0;
-            for(String string: split) {
-                data[i++] = Double.parseDouble(string);
-            }
-            initCenters.add(data);
-        }
-        return initCenters;
     }
 
     /**
@@ -118,8 +90,47 @@ public class KMeansWorker
      */
     @Override
     public KMeansWorkerParams doCompute(WorkerContext<KMeansMasterParams, KMeansWorkerParams> workerContext) {
+        if(workerContext.getCurrentIteration() == 1) {
+            return doFirstIteration(workerContext);
+        } else {
+            return doOtherIterations(workerContext);
+        }
+    }
+
+    private KMeansWorkerParams doFirstIteration(WorkerContext<KMeansMasterParams, KMeansWorkerParams> workerContext) {
+        KMeansWorkerParams workerResult = new KMeansWorkerParams();
+        workerResult.setK(this.k);
+        workerResult.setC(this.c);
+        workerResult.setFirstIteration(true);
+        int dataSize = this.dataList.size();
+        List<double[]> pointList = new ArrayList<double[]>(dataSize);
+        if(this.k >= dataSize) {
+            for(TaggedRecord record: this.dataList) {
+                pointList.add(toDouble(record));
+            }
+        } else {
+            int m = dataSize / this.k;
+            for(int i = 0; i < this.k; i++) {
+                pointList.add(toDouble(this.dataList.get(m * i)));
+            }
+        }
+        workerResult.setPointList(pointList);
+        return workerResult;
+    }
+
+    private double[] toDouble(TaggedRecord record) {
+        Double[] data = record.getRecord();
+        double[] newData = new double[data.length];
+        int i = 0;
+        for(Double d: data) {
+            newData[i] = d == null ? 0d : d;
+        }
+        return newData;
+    }
+
+    private KMeansWorkerParams doOtherIterations(WorkerContext<KMeansMasterParams, KMeansWorkerParams> workerContext) {
         // new centers used in this iteration.
-        List<double[]> centers = getNewKCenters(workerContext);
+        List<double[]> centers = workerContext.getLastMasterResult().getPointList();
         LOG.debug("Initial centers:%s", (centers));
 
         // sum list and count list as worker result sent to master for global accumulation.
@@ -145,49 +156,13 @@ public class KMeansWorker
         LOG.debug("sumList:%s", (sumList));
         LOG.debug("countList:%s", countList);
 
-        // // last iteration, store tag with data into output files
-        // if(workerContext.getCurrentIteration() == workerContext.getTotalIteration()) {
-        // storeOutput(workerContext);
-        // }
-
         KMeansWorkerParams workerResult = new KMeansWorkerParams();
         workerResult.setK(this.k);
         workerResult.setC(this.c);
-        workerResult.setSumList(sumList);
+        workerResult.setFirstIteration(false);
+        workerResult.setPointList(sumList);
         workerResult.setCountList(countList);
         return workerResult;
-    }
-
-    //
-    // private void storeOutput(WorkerContext<KMeansMasterParams, KMeansWorkerParams> workerContext) {
-    // Path outFolder = new Path(workerContext.getProps().getProperty(KMeansContants.KMEANS_DATA_OUTPUT,
-    // "part-g-" + workerContext.getContainerId()));
-    // PrintWriter pw = null;
-    // try {
-    // FileSystem fileSystem = FileSystem.get(new Configuration());
-    // fileSystem.mkdirs(outFolder);
-    //
-    // Path outputFile = new Path(outFolder, "part-g-" + workerContext.getContainerId());
-    // FSDataOutputStream fos = fileSystem.create(outputFile);
-    // LOG.info("Writing results to {}", outputFile.toString());
-    // pw = new PrintWriter(fos);
-    // for(TaggedRecord record: this.dataList) {
-    // pw.println(record.toString(this.separator));
-    // }
-    // pw.flush();
-    // } catch (IOException e) {
-    // LOG.error("Error in writing output.", e);
-    // } finally {
-    // IOUtils.closeStream(pw);
-    // }
-    // }
-
-    private List<double[]> getNewKCenters(WorkerContext<KMeansMasterParams, KMeansWorkerParams> workerContext) {
-        if(workerContext.getCurrentIteration() == 1) {
-            return this.initCenterList;
-        } else {
-            return workerContext.getLastMasterResult().getMeanList();
-        }
     }
 
     /**

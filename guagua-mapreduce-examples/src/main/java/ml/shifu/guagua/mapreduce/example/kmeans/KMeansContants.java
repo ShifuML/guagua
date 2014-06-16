@@ -15,13 +15,17 @@
  */
 package ml.shifu.guagua.mapreduce.example.kmeans;
 
-public class KMeansContants {
+public final class KMeansContants {
+
+    // avoid new
+    private KMeansContants() {
+    }
 
     public static final String KMEANS_DATA_OUTPUT = "kmeans.data.output";
 
-    public static final String KMEANS_CENTERS_OUTPUT = "kmeans.centers.output";
+    public static final String KMEANS_CENTERS_OUTPUT = "kmeans.centriods.output";
 
-    public static final String KMEANS_K_CENTERS = "kmeans.k.centers";
+    public static final String KMEANS_K_CENTERS = "kmeans.k.centriods";
 
     public static final String KMEANS_DATA_SEPERATOR = "kmeans.data.seperator";
 

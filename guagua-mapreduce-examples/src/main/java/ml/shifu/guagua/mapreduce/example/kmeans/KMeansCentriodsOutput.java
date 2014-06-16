@@ -31,11 +31,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link KMeansCentersOutput} is used to write the final k centers to file system.
+ * {@link KMeansCentriodsOutput} is used to write the final k centers to file system.
  */
-public class KMeansCentersOutput extends BasicMasterInterceptor<KMeansMasterParams, KMeansWorkerParams> {
+public class KMeansCentriodsOutput extends BasicMasterInterceptor<KMeansMasterParams, KMeansWorkerParams> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(KMeansCentersOutput.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KMeansCentriodsOutput.class);
 
     @Override
     public void postApplication(MasterContext<KMeansMasterParams, KMeansWorkerParams> context) {
@@ -48,7 +48,7 @@ public class KMeansCentersOutput extends BasicMasterInterceptor<KMeansMasterPara
             LOG.info("Writing results to {}", out.toString());
             pw = new PrintWriter(fos);
             KMeansMasterParams masterResult = context.getMasterResult();
-            for(double[] center: masterResult.getMeanList()) {
+            for(double[] center: masterResult.getPointList()) {
                 pw.println(Arrays.toString(center));
             }
             pw.flush();

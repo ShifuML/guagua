@@ -41,14 +41,14 @@ import org.slf4j.LoggerFactory;
  * {@link GuaguaMasterService} is the basic implementation as a master for whole guagua application process.
  * 
  * <p>
- * All the properties used to create computable instance, intercepter instances are set in {@link #props}.
+ * All the properties used to create computable instance, interceptor instances are set in {@link #props}.
  * 
  * <p>
  * After {@link #masterComputable}, {@link #masterInterceptors} are constructed, they will be used in {@link #start()},
  * {@link #run(Progressable)}, {@link #stop()} to do the whole iteration logic.
  * 
  * <p>
- * {@link GuaguaMasterService} is only a skeleton and all implementations are in the intercepters and computable classes
+ * {@link GuaguaMasterService} is only a skeleton and all implementations are in the interceptors and computable classes
  * defined by user.
  * 
  * <p>
@@ -71,8 +71,8 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     private Properties props;
 
     /**
-     * All intercepters which includes system intercepters like {@link SyncMasterCoordinator} and customized
-     * intercepters.
+     * All interceptors which includes system interceptors like {@link SyncMasterCoordinator} and customized
+     * interceptors.
      */
     private List<MasterInterceptor<MASTER_RESULT, WORKER_RESULT>> masterInterceptors;
 
@@ -148,7 +148,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
             try {
                 masterInterceptor.preApplication(context);
             } catch (Throwable e) {
-                LOG.error("Error in master intercepters starting.", e);
+                LOG.error("Error in master interceptors starting.", e);
                 throw new GuaguaRuntimeException(e);
             }
         }
@@ -175,7 +175,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     }
 
     /**
-     * Call each iteration computation and preIteration, postIteration in intercepters.
+     * Call each iteration computation and preIteration, postIteration in interceptors.
      */
     protected MASTER_RESULT iterate(MasterContext<MASTER_RESULT, WORKER_RESULT> context, int iteration,
             Progressable progress) {
@@ -225,7 +225,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     }
 
     /**
-     * Stop services from intercepters which is used for resource cleaning or servers shutting down.
+     * Stop services from interceptors which is used for resource cleaning or servers shutting down.
      */
     @Override
     public void stop() {
@@ -240,8 +240,8 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
             try {
                 getMasterInterceptors().get(interceptersSize - 1 - i).postApplication(context);
             } catch (Throwable e) {
-                // To make sure all intercepters' post can be invoked.
-                LOG.error("Error in master intercepters cleaning.", e);
+                // To make sure all interceptors' post can be invoked.
+                LOG.error("Error in master interceptors cleaning.", e);
                 if(exception == null) {
                     exception = e;
                 }
@@ -286,7 +286,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         if(systemMasterInterceptersStr != null && systemMasterInterceptersStr.length() != 0) {
             String[] intercepters = systemMasterInterceptersStr.split(GuaguaConstants.GUAGUA_INTERCEPTER_SEPARATOR);
             if(LOG.isInfoEnabled()) {
-                LOG.info("System master intercepters: {}.", Arrays.toString(intercepters));
+                LOG.info("System master interceptors: {}.", Arrays.toString(intercepters));
             }
             for(String intercepter: intercepters) {
                 MasterInterceptor<MASTER_RESULT, WORKER_RESULT> instance = (MasterInterceptor<MASTER_RESULT, WORKER_RESULT>) ReflectionUtils

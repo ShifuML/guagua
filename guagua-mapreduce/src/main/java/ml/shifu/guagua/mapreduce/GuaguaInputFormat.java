@@ -45,7 +45,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * <p>
  * {@link GuaguaInputFormat} is used to determine how many mappers in guagua MapReduce job.
  * 
  * <p>
