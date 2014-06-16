@@ -23,7 +23,6 @@
  * <p>
  * Others are common utils like {@link com.paypal.guagua.util.StringUtils} are used to avoid loading extra jars into our
  * guagua core framework.
- * 
  */
 package ml.shifu.guagua.util;
 

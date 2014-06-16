@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 /**
  * ZooKeeper provides only atomic operations. GuaguaZooKeeper provides additional non-atomic operations that are useful.
  * It also provides wrappers to deal with ConnectionLossException. All methods of this class should be thread-safe.
- * 
  */
 public class GuaguaZooKeeper {
 
@@ -486,7 +485,7 @@ public class GuaguaZooKeeper {
         });
     }
 
-    private static class SequenceComparator implements Comparator<String> , Serializable{
+    private static class SequenceComparator implements Comparator<String>, Serializable {
 
         private static final long serialVersionUID = 4555088814306270860L;
 

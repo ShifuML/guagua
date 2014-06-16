@@ -30,14 +30,18 @@ import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.util.ReflectionUtils;
 
 /**
- * {@link GZIPBytableSerializer} is using{@link Bytable#write(java.io.DataOutput)} and
- * {@link Bytable#readFields(java.io.DataInput)} to serialize object to bytes and de-serialize bytes to object.
+ * {@link GZIPBytableSerializer} is using gzip compression algorithm for serialization.
  * 
+ * <p>
+ * Byte array by using {@link GZIPBytableSerializer} is gzip format.
+ * 
+ * @see Serializer
+ * @see BytableSerializer
  */
 public class GZIPBytableSerializer<RESULT extends Bytable> implements Serializer<RESULT> {
 
     /**
-     * Serialize from object to bytes.
+     * Serialize from object to bytes. Byte array is gzip compression format.
      * 
      * @throws NullPointerException
      *             if result is null.
@@ -68,7 +72,8 @@ public class GZIPBytableSerializer<RESULT extends Bytable> implements Serializer
     }
 
     /**
-     * De-serialize from bytes to object. One should provide the class name before de-serializing the object.
+     * De-serialize from bytes to object. One should provide the class name before de-serializing the object. Byte array
+     * is gzip compression format.
      * 
      * @throws NullPointerException
      *             if className or data is null.

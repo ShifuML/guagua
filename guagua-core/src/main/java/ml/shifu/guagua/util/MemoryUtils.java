@@ -26,7 +26,6 @@ public final class MemoryUtils {
 
     /**
      * Get megabytes
-     * 
      */
     private static double megaBytes(long bytes) {
         return bytes / 1024.0 / 1024.0;

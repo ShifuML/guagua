@@ -70,7 +70,7 @@ public final class NumberFormatUtils {
      *            if required, should be parsed successfully without default value to replace; else use default value.
      * @param defaultValue
      *            default value
-     * @throws Exception
+     * @throws IllegalArgumentException
      *             if invalid format with required set 'true'
      */
     public static int getInt(String str, boolean required, int defaultValue) {
@@ -114,7 +114,7 @@ public final class NumberFormatUtils {
      *            string needed to be parsed
      * @param required
      *            if required, should be parsed successfully without default value to replace
-     * @throws Exception
+     * @throws IllegalArgumentException
      *             if invalid format with required set 'true'
      */
     public static long getLong(String str, boolean required) {
@@ -190,7 +190,7 @@ public final class NumberFormatUtils {
      *            if required, should be parsed successfully without default value to replace; else use default value.
      * @param defaultValue
      *            default value
-     * @throws Exception
+     * @throws IllegalArgumentException
      *             if invalid format with required set 'true'
      */
     public static double getDouble(String str, boolean required, double defaultValue) {

@@ -18,7 +18,10 @@ package ml.shifu.guagua.mapreduce.example.nn;
 /**
  * Constants in guagua mapreduce.
  */
-public class NNConstants {
+public final class NNConstants {
+    // avoid new
+    private NNConstants() {
+    }
 
     public static final String GUAGUA_NN_LEARNING_RATE = "guagua.nn.learning.rate";
     public static final String GUAGUA_NN_THREAD_COUNT = "guagua.nn.thread.count";

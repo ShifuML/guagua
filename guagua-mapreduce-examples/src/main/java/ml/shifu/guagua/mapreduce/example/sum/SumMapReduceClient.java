@@ -34,7 +34,6 @@ import org.apache.hadoop.util.GenericOptionsParser;
  * Entry point for Guagua Sum job.
  * 
  * @Deprecated Use {@link GuaguaMapReduceClient} please.
- * 
  */
 @Deprecated
 public class SumMapReduceClient {

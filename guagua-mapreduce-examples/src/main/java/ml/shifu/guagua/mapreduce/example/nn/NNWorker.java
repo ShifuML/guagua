@@ -49,7 +49,6 @@ import com.google.common.base.Splitter;
  * <p>
  * Gradients in each worker will be sent to master to update weights of model in worker, which follows Encog's
  * multi-core implementation.
- * 
  */
 public class NNWorker extends
         AbstractWorkerComputable<NNParams, NNParams, GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<Text>> {

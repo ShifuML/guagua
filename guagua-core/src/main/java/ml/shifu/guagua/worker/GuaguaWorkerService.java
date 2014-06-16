@@ -26,7 +26,7 @@ import ml.shifu.guagua.BasicCoordinator;
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.GuaguaService;
-import ml.shifu.guagua.MemoryCoordinator;
+import ml.shifu.guagua.InMemoryCoordinator;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.GuaguaFileSplit;
 import ml.shifu.guagua.io.HaltBytable;
@@ -41,6 +41,21 @@ import org.slf4j.LoggerFactory;
 
 /**
  * {@link GuaguaWorkerService} is the basic implementation as a worker for whole application process.
+ * 
+ * <p>
+ * All the properties used to create computable instance, intercepter instances are set in {@link #props}.
+ * 
+ * <p>
+ * After {@link #workerComputable}, {@link #workerInterceptors} are constructed, they will be used in {@link #start()},
+ * {@link #run(Progressable)}, {@link #stop()} to do the whole iteration logic.
+ * 
+ * <p>
+ * {@link GuaguaWorkerService} is only a skeleton and all implementations are in the intercepters and computable classes
+ * defined by user.
+ * 
+ * <p>
+ * The execution order of preXXXX is different with postXXXX. For preXXX, the order is FIFO, but for postXXX, the order
+ * is FILO.
  * 
  * @param <MASTER_RESULT>
  *            master computation result in each iteration.
@@ -101,14 +116,14 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     private String workerResultClassName;
 
     /**
-     * Cache for three lines in start, run and stop to buildContext, to make sure they use the same context object.
+     * Cache for worker context in start, run and stop to buildContext, to make sure they use the same context object.
      */
     private WorkerContext<MASTER_RESULT, WORKER_RESULT> context;
 
     /**
      * Which is used in in-memory coordination like unit-test.
      */
-    private MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator;
+    private InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator;
 
     /**
      * If 3 times over threshold, kill itself.
@@ -297,8 +312,8 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                             GuaguaConstants.GUAGUA_IO_DEFAULT_SERIALIZER);
                     Serializer<WORKER_RESULT> workerSerializer = ReflectionUtils.newInstance(serialierClassName);
                     ((BasicCoordinator<MASTER_RESULT, WORKER_RESULT>) instance).setWorkerSerializer(workerSerializer);
-                } else if(instance instanceof InternalWorkerCoordinator) {
-                    ((InternalWorkerCoordinator<MASTER_RESULT, WORKER_RESULT>) instance).setCoordinator(this
+                } else if(instance instanceof LocalWorkerCoordinator) {
+                    ((LocalWorkerCoordinator<MASTER_RESULT, WORKER_RESULT>) instance).setCoordinator(this
                             .getCoordinator());
                 }
                 workerIntercepters.add(instance);
@@ -412,18 +427,11 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         this.workerResultClassName = workerResultClassName;
     }
 
-    /**
-     * @return the coordinator
-     */
-    public MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> getCoordinator() {
+    public InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> getCoordinator() {
         return coordinator;
     }
 
-    /**
-     * @param coordinator
-     *            the coordinator to set
-     */
-    public void setCoordinator(MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator) {
+    public void setCoordinator(InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator) {
         this.coordinator = coordinator;
     }
 

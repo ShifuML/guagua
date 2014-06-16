@@ -45,31 +45,33 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * <p>
- * {@link GuaguaInputFormat} is used to determine how many mappers in our MapReduce job.
+ * {@link GuaguaInputFormat} is used to determine how many mappers in guagua MapReduce job.
  * 
  * <p>
- * In {@link GuaguaInputFormat#getSplits(JobContext)}, we add an {@link GuaguaInputSplit} instance as a master, others
- * are workers.
+ * In {@link GuaguaInputFormat#getSplits(JobContext)}, we add a {@link GuaguaInputSplit} instance as a master, others
+ * are workers. These make sure one master and multiple workers are started as mapper tasks.
  * 
  * <p>
  * If multiple masters are needed, add new {@link GuaguaInputSplit} in {@link GuaguaInputFormat#getSplits(JobContext)}.
  * But sometimes fail-over on multiple masters is not good as master task restarting by hadoop mapper task fail over.
- * Since in multiple masters case: if one master is down, zookeeper will wait for session timeout time setting to find
- * down master. If session timeout is two large, it may be larger than hadoop restarting a task.
+ * Since in multiple masters case: if one master is down, zookeeper will wait for session timeout setting to find failed
+ * master. If session timeout is two large, it may be larger than hadoop restarting a task.
  * 
  * <p>
- * By default guagua depends on hadoop default splits implementation, and guagua also provide a mechanism to support
- * combine several splits together. Set {@link GuaguaConstants#GUAGUA_SPLIT_COMBINABLE} to true and
+ * By default guagua depends on hadoop default splits implementation, while guagua also provide a mechanism to support
+ * combining several splits together. Set {@link GuaguaConstants#GUAGUA_SPLIT_COMBINABLE} to true and
  * {@link GuaguaConstants#GUAGUA_SPLIT_MAX_COMBINED_SPLIT_SIZE} to a number to make splits combine to a given number.
  * 
+ * <pre>
+ * -Dguagua.split.combinable=true -Dguagua.split.maxCombinedSplitSiz=268435456
+ * </pre>
  */
 public class GuaguaInputFormat extends TextInputFormat {
 
     private static final Logger LOG = LoggerFactory.getLogger(GuaguaInputFormat.class);
 
     /**
-     * Splitter building logic including master setting, combining input feature like Pig.
+     * Splitter building logic including master setting, also includes combining input feature like Pig.
      */
     @Override
     public List<InputSplit> getSplits(JobContext job) throws IOException {

@@ -18,7 +18,11 @@ package ml.shifu.guagua.yarn;
 /**
  * Constants in guagua yarn.
  */
-public class GuaguaYarnConstants {
+public final class GuaguaYarnConstants {
+
+    // avoid new
+    private GuaguaYarnConstants() {
+    }
 
     public static final int DEFAULT_IO_BUFFER_SIZE = 64 * 1024;
 
@@ -95,8 +99,7 @@ public class GuaguaYarnConstants {
     public static final long DEFAULT_TIME_OUT = 600 * 1000;
 
     public static final int DEFAULT_STATUS_RPC_SERVER_THREAD_COUNT = 4;
-    
-    public static final String GUAGUA_TASK_TIMEOUT = "guagua.task.timeout";
 
+    public static final String GUAGUA_TASK_TIMEOUT = "guagua.task.timeout";
 
 }

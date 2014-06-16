@@ -20,14 +20,25 @@ import java.util.Properties;
 import ml.shifu.guagua.io.Bytable;
 
 /**
- * {@link MasterContext} is a context to contain all objects used in master computation.
+ * {@link MasterContext} is a context object which contains all useful info used in master computation.
+ * 
+ * <p>
+ * The info includes:
+ * <ul>
+ * <li>Application ID: Job ID for Hadoop mapreduce Job, application ID for YARN application.</li>
+ * <li>Container ID: Task index for Hadoop mapreduce task, Task index for YARN Container.</li>
+ * <li>Total iteration number.</li>
+ * <li>Current iteration number.</li>
+ * <li>Worker result list for current iteration.</li>
+ * <li>Master result for current iteration which is used to be sent to workers in next iteration.</li>
+ * </ul>
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.
  * @param <WORKER_RESULT>
  *            worker result for computation in each iteration.
  */
-// TODO make it readonly, the same as WorkerContext 
+// TODO make it read-only, the same as WorkerContext
 public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
 
     /**
@@ -92,6 +103,14 @@ public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
      * After this time elapsed, we can use {@link #minWorkersRatio} to determine done of that iteration.
      */
     private final long minWorkersTimeOut;
+
+    /**
+     * This attachment is for {@link MasterComputable} and {@link MasterInterceptor} to transfer object. It can be set
+     * by user for running time usage.
+     * 
+     * @since 0.5.0
+     */
+    private Object attachment;
 
     public MasterContext(int totalIteration, int workers, Properties props, String appId, String containerId,
             String masterResultClassName, String workerResultClassName, double minWorkersRatio, long minWorkersTimeOut) {
@@ -166,6 +185,14 @@ public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
         return minWorkersTimeOut;
     }
 
+    public Object getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(Object attachment) {
+        this.attachment = attachment;
+    }
+
     @Override
     public String toString() {
         return String
@@ -173,4 +200,5 @@ public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
                         workerResults, masterResult, currentIteration, totalIteration, workers, appId,
                         masterResultClassName, workerResultClassName, containerId, minWorkersRatio, minWorkersTimeOut);
     }
+
 }

@@ -27,19 +27,19 @@ import java.util.concurrent.TimeUnit;
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.GuaguaService;
-import ml.shifu.guagua.MemoryCoordinator;
+import ml.shifu.guagua.InMemoryCoordinator;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.GuaguaFileSplit;
 import ml.shifu.guagua.master.GuaguaMasterService;
-import ml.shifu.guagua.master.InternalMasterCoordinator;
+import ml.shifu.guagua.master.LocalMasterCoordinator;
 import ml.shifu.guagua.worker.GuaguaWorkerService;
-import ml.shifu.guagua.worker.InternalWorkerCoordinator;
+import ml.shifu.guagua.worker.LocalWorkerCoordinator;
 
 /**
  * {@link GuaguaUnitDriver} is a helper class to run master, worker and intercepters in one jvm instance.
  * 
  * <p>
- * One should provide all the properties by using {@link #GuaguaUnitDriver(Properties)}
+ * One should provide all the properties by using {@link #GuaguaUnitDriver(Properties)}.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.
@@ -50,16 +50,34 @@ public abstract class GuaguaUnitDriver<MASTER_RESULT extends Bytable, WORKER_RES
 
     private static final String GUAGUA_UNIT_TEST = "Guagua Unit Test";
 
+    /**
+     * Properties for all configuration information.
+     */
     private Properties props;
 
+    /**
+     * Master service instance.
+     */
     private GuaguaService masterService;
 
+    /**
+     * This list mocks services for all workers which will be run in different threads.
+     */
     private List<GuaguaService> workerServices;
 
+    /**
+     * The executor used to schedule master and workers in threads.
+     */
     private ExecutorService executor;
 
+    /**
+     * Total iteration.
+     */
     private int iteration;
 
+    /**
+     * File splits used for workers.
+     */
     private List<GuaguaFileSplit[]> fileSplits;
 
     /**
@@ -97,9 +115,9 @@ public abstract class GuaguaUnitDriver<MASTER_RESULT extends Bytable, WORKER_RES
         this.executor = Executors.newFixedThreadPool(this.fileSplits.size() + 1);
         // hard code system interceptors for unit test.
         this.props.setProperty(GuaguaConstants.GUAGUA_MASTER_SYSTEM_INTERCEPTERS,
-                InternalMasterCoordinator.class.getName());
+                LocalMasterCoordinator.class.getName());
         this.props.setProperty(GuaguaConstants.GUAGUA_WORKER_SYSTEM_INTERCEPTERS,
-                InternalWorkerCoordinator.class.getName());
+                LocalWorkerCoordinator.class.getName());
         this.props.setProperty(GuaguaConstants.GUAGUA_WORKER_NUMBER, this.fileSplits.size() + "");
 
         this.iteration = Integer.parseInt(this.props.getProperty(GuaguaConstants.GUAGUA_ITERATION_COUNT));
@@ -107,7 +125,7 @@ public abstract class GuaguaUnitDriver<MASTER_RESULT extends Bytable, WORKER_RES
         this.workerServices = new ArrayList<GuaguaService>();
         this.masterService = new GuaguaMasterService<MASTER_RESULT, WORKER_RESULT>();
 
-        MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator = new MemoryCoordinator<MASTER_RESULT, WORKER_RESULT>(
+        InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator = new InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT>(
                 this.fileSplits.size(), this.iteration);
         this.masterService.setAppId(GUAGUA_UNIT_TEST);
         this.masterService.setContainerId("0");

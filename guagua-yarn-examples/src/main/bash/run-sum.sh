@@ -16,16 +16,23 @@
 
 # please follow ../README.md to run this demo shell.
 
+ZOOKEEPER_SERVERS=
+
+if [ "${ZOOKEEPER_SERVERS}X" == "X" ] ; then
+  echo "Zookeeper server should be provided for guagua coordination. Set 'ZOOKEEPER_SERVERS' at first please."
+  exit 1
+fi
+
 OLD_HADOOP_CLASSPATH="$HADOOP_CLASSPATH"
 
 # set new HADOOP_CLASSPATH to run guagua
-export HADOOP_CLASSPATH="../lib/guagua-yarn-examples-0.4.0.jar:../lib/guagua-yarn-0.4.0.jar:../lib/gson-2.2.2.jar:../lib/guava-11.0.2.jar:../lib/guagua-core-0.4.0.jar:../lib/zookeeper-3.4.5.jar"
+export HADOOP_CLASSPATH="../lib/guagua-yarn-examples-0.4.1.jar:../lib/guagua-yarn-0.4.1.jar:../lib/gson-2.2.2.jar:../lib/guava-11.0.2.jar:../lib/guagua-core-0.4.1.jar:../lib/zookeeper-3.4.5.jar"
 
-hadoop jar ../lib/guagua-yarn-examples-0.4.0.jar \
+hadoop jar ../lib/guagua-yarn-examples-0.4.1.jar \
     ml.shifu.guagua.yarn.GuaguaYarnClient  \
-    -libjars ../lib/guagua-yarn-examples-0.4.0.jar,../lib/guagua-yarn-0.4.0.jar,../lib/gson-2.2.2.jar,../lib/guava-11.0.2.jar,../lib/guagua-core-0.4.0.jar,../lib/zookeeper-3.4.5.jar \
+    -libjars ../lib/guagua-yarn-examples-0.4.1.jar,../lib/guagua-yarn-0.4.1.jar,../lib/gson-2.2.2.jar,../lib/guava-11.0.2.jar,../lib/guagua-core-0.4.1.jar,../lib/zookeeper-3.4.5.jar \
     -i sum  \
-    -z ${zookeeper.server}  \
+    -z ${ZOOKEEPER_SERVERS}  \
     -w ml.shifu.guagua.yarn.example.sum.SumWorker  \
     -m ml.shifu.guagua.yarn.example.sum.SumMaster  \
     -c 10 \
@@ -39,3 +46,4 @@ hadoop jar ../lib/guagua-yarn-examples-0.4.0.jar \
 
 ## restore HADOOP_CLASSPATH 
 export HADOOP_CLASSPATH="$OLD_HADOOP_CLASSPATH"
+

@@ -24,12 +24,32 @@ import ml.shifu.guagua.util.Progressable;
 /**
  * {@link GuaguaService} is a common service interface of both master and worker service implementations.
  * 
- * TODO Define GuaguaServiceListener: 'onInit(Properties), onStart(), onStop()' to make three hooks for
- * GuaguaMasterService and GuaguaWorkerService to scale. GuaguaServiceListener is a list can be configurated by using
- * one parameter. And, we should also add setServiceListeners to set listeners on GuaguaService, which will be invoked
- * at the end of init, start and stop. Example: Master as a RPC server, workers as RPC client, start and stop them here,
- * which can be used to update progress or counter.
+ * <p>
+ * {@link GuaguaService} defines the process to launch a master or worker service in container. {@link GuaguaService}
+ * should be called like code in below:
+ * 
+ * <pre>
+ * {@code 
+ *      try {
+ *          guaguaService.init(props); 
+ *          guaguaService.start(); 
+ *          guaguaService.run(null); 
+ *      } finally { 
+ *          guaguaService.stop(); 
+ *      } 
+ * }
+ * </pre>
+ * 
+ * <p>
+ * {@link #init(Properties)} is used to transfer all properties needed in one guagua application. For Hadoop MapReduce
+ * or YARN job, it includes all the properties copied from Hadoop Configuration instance. And these properties will be
+ * set to MasterContext and WorkerContext for user to use them.
  */
+// TODO Define GuaguaServiceListener: 'onInit(Properties), onStart(), onStop()' to make three hooks for
+// GuaguaMasterService and GuaguaWorkerService to scale. GuaguaServiceListener is a list can be configurated by using
+// one parameter. And, we should also add setServiceListeners to set listeners on GuaguaService, which will be invoked
+// at the end of init, start and stop. Example: Master as a RPC server, workers as RPC client, start and stop them here,
+// which can be used to update progress or counter.
 public interface GuaguaService {
 
     /**
@@ -41,12 +61,12 @@ public interface GuaguaService {
      * @param props
      *            which contains different properties for master and workers to use.
      */
-    public abstract void init(Properties props);
+    void init(Properties props);
 
     /**
      * Start point for the service. For example, setting up connection with zookeeper server.
      */
-    public abstract void start();
+    void start();
 
     /**
      * Real logic implementation, for example, master and worker iteration logic.
@@ -54,28 +74,28 @@ public interface GuaguaService {
      * <p>
      * If {@code progress} is not null, it will be invoked by once per iteration.
      */
-    public abstract void run(Progressable progress);
+    void run(Progressable progress);
 
     /**
      * Stop service, resources cleaning should be added in this function.
      * 
      * <em>Warning</em>: this function should be included in finally segment to make sure resources are cleaning well.
      */
-    public abstract void stop();
+    void stop();
 
     /**
      * Assign splits to each worker to make them load that data.
      */
-    public abstract void setSplits(List<GuaguaFileSplit> splits);
+    void setSplits(List<GuaguaFileSplit> splits);
 
     /**
      * App id for whole application. For example: Job id in MapReduce(hadoop 1.0) or application id in Yarn.
      */
-    public abstract void setAppId(String appId);
+    void setAppId(String appId);
 
     /**
      * Set the unique container id for master or worker. For example: Task id in MapReduce or container id in Yarn.
      */
-    public abstract void setContainerId(String containerId);
+    void setContainerId(String containerId);
 
 }

@@ -15,8 +15,8 @@
 # limitations under the License.
 
 # friendly message for those who forget to tell us what to do
-if [ $# = 0 ]; then
-  echo "Usage: guagua [-y(enable beta guagua-yarn version on hadoop 2.0)] [-D<Hadoop property>] <jar containing master and worker class> <parameters to jar>"
+if [ $# = 0 ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "h" ] || [ "$1" == "help" ] ; then
+  echo "Usage: guagua [-y(enable beta guagua-yarn version on hadoop 2.0)] jar <the jar containing master and worker class> [-D<hadoop/guagua property>] <parameters to jar>"
   exit 1
 fi
 

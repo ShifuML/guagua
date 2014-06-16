@@ -105,7 +105,6 @@ import com.google.common.collect.Maps;
  * 
  * <p>
  * In each container, use a number start from 1 to mark as the id of the container for fail-over.
- * 
  */
 public class GuaguaAppMaster {
 

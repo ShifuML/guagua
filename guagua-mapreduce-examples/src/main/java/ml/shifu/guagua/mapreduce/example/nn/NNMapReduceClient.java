@@ -35,7 +35,6 @@ import org.apache.hadoop.util.GenericOptionsParser;
  * Main class for NN distributed computation.
  * 
  * @Deprecated Use {@link GuaguaMapReduceClient} please.
- * 
  */
 @Deprecated
 public class NNMapReduceClient {

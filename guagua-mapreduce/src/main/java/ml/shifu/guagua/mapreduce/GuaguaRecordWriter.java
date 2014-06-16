@@ -22,7 +22,7 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
- * We don't use {@link GuaguaRecordWriter} but hadoop mapreduce needs it.
+ * We don't use {@link GuaguaRecordWriter} but hadoop MapReduce needs it.
  */
 public class GuaguaRecordWriter extends RecordWriter<Text, Text> {
 

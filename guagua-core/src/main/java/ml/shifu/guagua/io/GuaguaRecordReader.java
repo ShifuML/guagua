@@ -20,7 +20,6 @@ import java.io.IOException;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;
 
 /**
- * 
  * {@link GuaguaRecordReader} is used for consistent interface to iterate data through FileSplit provided. The typical
  * implementation is HDFS implementation in guagua-mapreduce.
  * 
@@ -37,26 +36,26 @@ public interface GuaguaRecordReader<KEY extends Bytable, VALUE extends Bytable> 
     /**
      * Initialize file split for user to create relative reader instance.
      */
-    public abstract void initialize(GuaguaFileSplit genericSplit) throws IOException;
+    void initialize(GuaguaFileSplit genericSplit) throws IOException;
 
     /**
      * Cursor shift to next and set current key value.
      */
-    public abstract boolean nextKeyValue() throws IOException;
+    boolean nextKeyValue() throws IOException;
 
     /**
      * Tmp we only support LongWritable key for byte offset in each line, follow LineRecordReader in hadoop.
      */
-    public abstract KEY getCurrentKey();
+    KEY getCurrentKey();
 
     /**
      * Tmp we only support Text value for whole content in each line, follow LineRecordReader in hadoop.
      */
-    public abstract VALUE getCurrentValue();
+    VALUE getCurrentValue();
 
     /**
      * Close resources at last, for example file descriptors. Should be called in finally segment.
      */
-    public abstract void close() throws IOException;
+    void close() throws IOException;
 
 }

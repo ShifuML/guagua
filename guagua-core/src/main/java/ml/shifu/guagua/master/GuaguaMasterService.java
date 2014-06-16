@@ -24,7 +24,7 @@ import ml.shifu.guagua.BasicCoordinator;
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.GuaguaService;
-import ml.shifu.guagua.MemoryCoordinator;
+import ml.shifu.guagua.InMemoryCoordinator;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.GuaguaFileSplit;
 import ml.shifu.guagua.io.HaltBytable;
@@ -38,8 +38,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link GuaguaMasterService} is the basic implementation as a master to coordinator all workers' work in each
- * iteration.
+ * {@link GuaguaMasterService} is the basic implementation as a master for whole guagua application process.
+ * 
+ * <p>
+ * All the properties used to create computable instance, interceptor instances are set in {@link #props}.
+ * 
+ * <p>
+ * After {@link #masterComputable}, {@link #masterInterceptors} are constructed, they will be used in {@link #start()},
+ * {@link #run(Progressable)}, {@link #stop()} to do the whole iteration logic.
+ * 
+ * <p>
+ * {@link GuaguaMasterService} is only a skeleton and all implementations are in the interceptors and computable classes
+ * defined by user.
+ * 
+ * <p>
+ * The execution order of preXXXX is different with postXXXX. For preXXX, the order is FIFO, but for postXXX, the order
+ * is FILO.
  * 
  * @param <MASTER_RESULT>
  *            master computation result in each iteration.
@@ -57,8 +71,8 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     private Properties props;
 
     /**
-     * All intercepters which includes system intercepters like {@link SyncMasterCoordinator} and customized
-     * intercepters.
+     * All interceptors which includes system interceptors like {@link SyncMasterCoordinator} and customized
+     * interceptors.
      */
     private List<MasterInterceptor<MASTER_RESULT, WORKER_RESULT>> masterInterceptors;
 
@@ -117,7 +131,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     /**
      * Which is used in in-memory coordination like unit-test.
      */
-    private MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator;
+    private InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator;
 
     /*
      * (non-Javadoc)
@@ -134,7 +148,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
             try {
                 masterInterceptor.preApplication(context);
             } catch (Throwable e) {
-                LOG.error("Error in master intercepters starting.", e);
+                LOG.error("Error in master interceptors starting.", e);
                 throw new GuaguaRuntimeException(e);
             }
         }
@@ -161,7 +175,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     }
 
     /**
-     * Call each iteration computation and preIteration, postIteration in intercepters.
+     * Call each iteration computation and preIteration, postIteration in interceptors.
      */
     protected MASTER_RESULT iterate(MasterContext<MASTER_RESULT, WORKER_RESULT> context, int iteration,
             Progressable progress) {
@@ -211,7 +225,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     }
 
     /**
-     * Stop services from intercepters which is used for resource cleaning or servers shutting down.
+     * Stop services from interceptors which is used for resource cleaning or servers shutting down.
      */
     @Override
     public void stop() {
@@ -226,8 +240,8 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
             try {
                 getMasterInterceptors().get(interceptersSize - 1 - i).postApplication(context);
             } catch (Throwable e) {
-                // To make sure all intercepters' post can be invoked.
-                LOG.error("Error in master intercepters cleaning.", e);
+                // To make sure all interceptors' post can be invoked.
+                LOG.error("Error in master interceptors cleaning.", e);
                 if(exception == null) {
                     exception = e;
                 }
@@ -272,7 +286,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         if(systemMasterInterceptersStr != null && systemMasterInterceptersStr.length() != 0) {
             String[] intercepters = systemMasterInterceptersStr.split(GuaguaConstants.GUAGUA_INTERCEPTER_SEPARATOR);
             if(LOG.isInfoEnabled()) {
-                LOG.info("System master intercepters: {}.", Arrays.toString(intercepters));
+                LOG.info("System master interceptors: {}.", Arrays.toString(intercepters));
             }
             for(String intercepter: intercepters) {
                 MasterInterceptor<MASTER_RESULT, WORKER_RESULT> instance = (MasterInterceptor<MASTER_RESULT, WORKER_RESULT>) ReflectionUtils
@@ -288,9 +302,8 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                             GuaguaConstants.GUAGUA_IO_DEFAULT_SERIALIZER);
                     Serializer<WORKER_RESULT> workerSerializer = ReflectionUtils.newInstance(serialierClassName);
                     ((BasicCoordinator<MASTER_RESULT, WORKER_RESULT>) instance).setWorkerSerializer(workerSerializer);
-                } else if(instance instanceof InternalMasterCoordinator) {
-                    ((InternalMasterCoordinator<MASTER_RESULT, WORKER_RESULT>) instance)
-                            .setCoordinator(this.coordinator);
+                } else if(instance instanceof LocalMasterCoordinator) {
+                    ((LocalMasterCoordinator<MASTER_RESULT, WORKER_RESULT>) instance).setCoordinator(this.coordinator);
                 }
                 masterIntercepters.add(instance);
             }
@@ -432,18 +445,11 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         this.minWorkersTimeOut = minWorkersTimeOut;
     }
 
-    /**
-     * @return the coordinator
-     */
-    public MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> getCoordinator() {
+    public InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> getCoordinator() {
         return coordinator;
     }
 
-    /**
-     * @param coordinator
-     *            the coordinator to set
-     */
-    public void setCoordinator(MemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator) {
+    public void setCoordinator(InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator) {
         this.coordinator = coordinator;
     }
 

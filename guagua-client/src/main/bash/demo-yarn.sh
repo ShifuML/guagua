@@ -20,18 +20,42 @@
 
 # please follow ../README.md to run this demo shell.
 
+# Comments for all parameters:
+#  '-i sum': '-i' means guagua application input, should be HDFS input file or folder
+#  '-z ${ZOOKEEPER_SERVERS}': '-z' is used to configure zookeeper server, this should be placed by real zookeeper server.
+#       The format is like '<zkServer1:zkPort1,zkServer2:zkPort2>'
+#  '-w ml.shifu.guagua.yarn.example.sum.SumWorker': Worker computable implementation class setting
+#  '-m ml.shifu.guagua.yarn.example.sum.SumMaster': Master computable implementation class setting
+#  '-c 10': Total iteration number setting
+#  '-n Guagua-Sum-Master-Workers-Job': Hadoop job name or YARN application name specified
+#  '-mr org.apache.hadoop.io.LongWritable': Master result class setting
+#  '-wr org.apache.hadoop.io.LongWritable': Worker result class setting
+#  '../yarn-lib/guagua-yarn-examples-0.4.1.jar': Jar files include master, worker and user intercepters
+#  '-Dmapred.job.queue.name=default': Queue name setting
+#  '-Dguagua.yarn.queue.name=default': Queue name setting for guagua YARN application
+#  '-Dguagua.sum.output=sum-output': Output file, this is used in 'ml.shifu.guagua.yarn.example.sum.SumOutput'
+#  '-Dguagua.master.intercepters=ml.shifu.guagua.yarn.example.sum.SumOutput': User master intercepters, SumOutput is 
+#        used to save global sum result to HDFS.
+
+ZOOKEEPER_SERVERS=
+
+if [ "${ZOOKEEPER_SERVERS}X" == "X" ] ; then
+  echo "Zookeeper server should be provided for guagua coordination. Set 'ZOOKEEPER_SERVERS' at first please."
+  exit 1
+fi
+
 ./guagua -y \
-        -Dmapred.job.queue.name=default \
-        -Dguagua.sum.output=sum-output \
-        -Dguagua.yarn.queue.name=default \
-        -Dguagua.master.intercepters=ml.shifu.guagua.yarn.example.sum.SumOutput \
-        ../yarn-lib/guagua-yarn-examples-0.4.0.jar \
+        jar ../yarn-lib/guagua-yarn-examples-0.4.1.jar \
         -i sum  \
-        -z ${zookeeper.server} \
+        -z ${ZOOKEEPER_SERVERS}  \
         -w ml.shifu.guagua.yarn.example.sum.SumWorker  \
         -m ml.shifu.guagua.yarn.example.sum.SumMaster  \
         -c 10 \
         -n "Guagua-Sum-Master-Workers-Job" \
         -mr org.apache.hadoop.io.LongWritable \
-        -wr org.apache.hadoop.io.LongWritable
-                                           
+        -wr org.apache.hadoop.io.LongWritable \
+        -Dmapred.job.queue.name=default \
+        -Dguagua.sum.output=sum-output \
+        -Dguagua.yarn.queue.name=default \
+        -Dguagua.master.intercepters=ml.shifu.guagua.yarn.example.sum.SumOutput
+

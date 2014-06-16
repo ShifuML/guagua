@@ -18,7 +18,11 @@ package ml.shifu.guagua.mapreduce;
 /**
  * Constants in guagua mapreduce.
  */
-public class GuaguaMapReduceConstants {
+public final class GuaguaMapReduceConstants {
+
+    // avoid new
+    private GuaguaMapReduceConstants() {
+    }
 
     public static final String MAPRED_TASK_PARTITION = "mapred.task.partition";
 

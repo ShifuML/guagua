@@ -18,7 +18,7 @@ package ml.shifu.guagua.master;
 import ml.shifu.guagua.io.Bytable;
 
 /**
- * Empty {@link MasterIntercepter} implementation for user to choose which function should be override.
+ * Empty {@link MasterInterceptor} implementation for user to choose which function should be override.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.

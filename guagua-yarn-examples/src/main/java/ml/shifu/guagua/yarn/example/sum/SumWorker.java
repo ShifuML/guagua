@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
  * 
  * <p>
  * The master sum value will be added to current iteration.
- * 
  */
 public class SumWorker
         extends

@@ -18,44 +18,65 @@ package ml.shifu.guagua.master;
 import ml.shifu.guagua.io.Bytable;
 
 /**
- * <p>
- * {@link MasterInterceptor} is a entry point for all service in master implementation.
+ * {@link MasterInterceptor} defines hook points for each guagua application. Four hooks are defined like hooks before
+ * and after application and hooks after and before each iteration.
  * 
  * <p>
- * You can add your coordinator mechanism by using one {@link MasterInterceptor}; you can also save each iteration
- * result by override {@code MasterInterceptor#postApplication(MasterContext)}.
+ * Almost all services in guagua like coordination, fail-over, profiler are implemented as interceptors. These are
+ * system interceptors can be configured by using command line '-D' parameter.
+ * 
+ * <p>
+ * After system interceptors, user defined interceptors are also supported for user to define his/her own interceptors.
+ * Check <code>SumOutput</code> in examples project to see how interceper is used to save global result at the end of
+ * one guagua application.
  * 
  * <p>
  * For a list of interceptors, the order to call preXXX methods and postXXX methods is different. For example, a and b
  * two interceptors. The order is
- * a.preApplication->b.preApplication->a.preIteration->b.preIteration->computation->b.postIteration
- * ->a.postIteration->b.postApplication->a.postApplication. This is like call stack to make sure each interceptor to
- * intercept the whole other interceptors and computations.
+ * a.preApplication-&gt;b.preApplication-&gt;a.preIteration-&gt;b.preIteration-&gt;computation-&gt;b.postIteration
+ * -&gt;a.postIteration-&gt;b.postApplication-&gt;a.postApplication. This is like call stack to make sure each
+ * interceptor to intercept the whole other interceptors and master computation.
+ * 
+ * <p>
+ * {@link BasicMasterInterceptor} is a empty implementation for user to choose the hooks to override.
  * 
  * @param <MASTER_RESULT>
  *            master computation result in each iteration.
  * @param <WORKER_RESULT>
  *            worker computation result in each iteration.
+ * @see BasicMasterInterceptor
  */
 public interface MasterInterceptor<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
 
     /**
-     * The hook point for each application or each mapreduce job which is before all iterations started.
+     * The hook point before any computation logic.
+     * 
+     * @param context
+     *            the master context instance which includes worker results and other useful parameters.
      */
     void preApplication(MasterContext<MASTER_RESULT, WORKER_RESULT> context);
 
     /**
-     * The hook point for each iteration which is before {@link MasterComputable#compute(MasterContext)}.
+     * The hook point before computation of each iteration.
+     * 
+     * @param context
+     *            the master context instance which includes worker results and other useful parameters.
      */
     void preIteration(MasterContext<MASTER_RESULT, WORKER_RESULT> context);
 
     /**
-     * The hook point for each iteration which is after {@link MasterComputable#compute(MasterContext)}.
+     * The hook point after computation of each iteration.
+     * 
+     * @param context
+     *            the master context instance which includes worker results and other useful parameters.
      */
     void postIteration(MasterContext<MASTER_RESULT, WORKER_RESULT> context);
 
     /**
-     * The hook point for each application or each mapreduce job which is after all iterations completed.
+     * The hook point after any computation logic.
+     * 
+     * @param context
+     *            the master context instance which includes worker results and other useful parameters.
      */
     void postApplication(MasterContext<MASTER_RESULT, WORKER_RESULT> context);
 }

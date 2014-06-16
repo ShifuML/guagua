@@ -23,16 +23,15 @@ import java.io.IOException;
  * Abstract {@link Bytable} implementation to read and store halt status.
  * 
  * <p>
- * One can add halt status for master or worker result. Guagua will determine whether the application should be
- * terminated.
+ * Halt status is used for master or worker result to determine whether the application should be terminated.
  * 
  * <p>
- * By default master has the only right to stop the application if halt status in master result.
+ * By default master is the only one who has the right to stop the application if halt status in master result, no
+ * matter halt status in each worker is true.
  * 
  * <p>
- * One switch in GuaguaConstants#GUAGUA_WORKER_HALT_ENABLE, if this switch is on, application will be terminated if all
- * workers are halted no matter what is the master halt status.
- * 
+ * One switch in GuaguaConstants#GUAGUA_WORKER_HALT_ENABLE, if enabled, application will be terminated if all workers
+ * are halted no matter what is the master halt status.
  */
 public abstract class HaltBytable implements Bytable {
 

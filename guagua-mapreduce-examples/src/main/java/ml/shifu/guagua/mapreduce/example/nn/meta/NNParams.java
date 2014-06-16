@@ -31,8 +31,7 @@ import ml.shifu.guagua.mapreduce.example.nn.NNUtils;
  * 
  * <p>
  * {@link #gradients} is used to accumulate all workers' gradients together in master and then use the accumulated
- * gradients to update weights.
- * 
+ * gradients to update neural network weights.
  */
 public class NNParams extends HaltBytable {
 

@@ -39,10 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Copy from GuaguaInputformat for test scalablity.
- * 
- * TODO change to follow GuaguaInputFormat to make progress
- * 
+ * Copy from GuaguaInputformat for test scalablity. We can set nn.test.scale to use more mappers for test.
  */
 public class NNInputFormat extends TextInputFormat {
 

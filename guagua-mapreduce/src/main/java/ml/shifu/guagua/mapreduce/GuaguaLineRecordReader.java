@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Copy from LineRecordReader to avoid using Mapreduce-related interfaces.
+ * Copy from LineRecordReader but to support {@link GuaguaRecordReader} interface.
  */
 // TODO support more input format
 public class GuaguaLineRecordReader implements
