@@ -16,6 +16,10 @@
  
 Guagua Change Logs
 
+Changes for Guagua-0.4.1
+    * Improve guagua shell to follow hadoop command.
+    * Add kmeans example in guagua-mapreduce-examples.
+    * Improve API java docs
 Changes for Guagua-0.4.0
     * Consistent guagua package in guagua-client. For this package, we have a shell 'guagua' help user select the 
       platform, user only needs to set the jar, the master and worker classes and other guagua or mapred parameters by 

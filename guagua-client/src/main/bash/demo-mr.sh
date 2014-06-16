@@ -17,7 +17,7 @@
 # please follow ../README.md to run this demo shell.
 
 # Comments for all parameters:
-#  '../mapreduce-lib/guagua-mapreduce-examples-0.5.0-SNAPSHOT.jar': Jar files include master, worker and user intercepters
+#  '../mapreduce-lib/guagua-mapreduce-examples-0.4.1.jar': Jar files include master, worker and user intercepters
 #  '-i sum': '-i' means guagua application input, should be HDFS input file or folder
 #  '-z ${ZOOKEEPER_SERVERS}': '-z' is used to configure zookeeper server, this should be placed by real zookeeper server
 #                            The format is like '<zkServer1:zkPort1,zkServer2:zkPort2>'
@@ -38,7 +38,7 @@ if [ "${ZOOKEEPER_SERVERS}X" == "X" ] ; then
   exit 1
 fi
 
-./guagua jar ../mapreduce-lib/guagua-mapreduce-examples-0.5.0-SNAPSHOT.jar \
+./guagua jar ../mapreduce-lib/guagua-mapreduce-examples-0.4.1.jar \
         -i sum  \
         -z ${ZOOKEEPER_SERVERS}  \
         -w ml.shifu.guagua.mapreduce.example.sum.SumWorker  \
