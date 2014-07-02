@@ -327,8 +327,13 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
      * Clean up resources used
      */
     protected void cleanup() {
-        this.rpcClient.shutdown();
-        this.rpcClientChannel.close();
+        if(this.rpcClient != null) {
+            this.rpcClient.shutdown();
+            this.rpcClient.releaseExternalResources();
+        }
+        if(this.rpcClientChannel != null) {
+            this.rpcClientChannel.close();
+        }
         this.getGuaguaService().stop();
     }
 

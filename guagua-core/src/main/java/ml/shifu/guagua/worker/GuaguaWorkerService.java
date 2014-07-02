@@ -43,14 +43,14 @@ import org.slf4j.LoggerFactory;
  * {@link GuaguaWorkerService} is the basic implementation as a worker for whole application process.
  * 
  * <p>
- * All the properties used to create computable instance, intercepter instances are set in {@link #props}.
+ * All the properties used to create computable instance, interceptor instances are set in {@link #props}.
  * 
  * <p>
  * After {@link #workerComputable}, {@link #workerInterceptors} are constructed, they will be used in {@link #start()},
  * {@link #run(Progressable)}, {@link #stop()} to do the whole iteration logic.
  * 
  * <p>
- * {@link GuaguaWorkerService} is only a skeleton and all implementations are in the intercepters and computable classes
+ * {@link GuaguaWorkerService} is only a skeleton and all implementations are in the interceptors and computable classes
  * defined by user.
  * 
  * <p>
@@ -83,8 +83,8 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     private int totalIteration;
 
     /**
-     * All intercepters which includes system intercepters like {@link SyncWorkerCoordinator} and customized
-     * intercepters.
+     * All interceptors which includes system interceptors like {@link SyncWorkerCoordinator} and customized
+     * interceptors.
      */
     private List<WorkerInterceptor<MASTER_RESULT, WORKER_RESULT>> workerInterceptors;
 
@@ -133,20 +133,20 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     private static final int COUNT_THRESHOLD = 3;
 
     /**
-     * Start services from intercepters, all services started logic should be wrapperd in
+     * Start services from interceptors, all services started logic should be wrapperd in
      * {@link WorkerInterceptor#preApplication(WorkerContext)};
      */
     @Override
     public void start() {
         WorkerContext<MASTER_RESULT, WORKER_RESULT> context = buildContext();
         context.setCurrentIteration(GuaguaConstants.GUAGUA_INIT_STEP);
-        for(WorkerInterceptor<MASTER_RESULT, WORKER_RESULT> workerIntercepter: getWorkerInterceptors()) {
-            workerIntercepter.preApplication(context);
+        for(WorkerInterceptor<MASTER_RESULT, WORKER_RESULT> workerInterceptor: getWorkerInterceptors()) {
+            workerInterceptor.preApplication(context);
         }
     }
 
     /**
-     * Stop services from intercepters which is used for resource cleaning or servers shutting down.
+     * Stop services from interceptors which is used for resource cleaning or servers shutting down.
      */
     @Override
     public void stop() {
@@ -154,14 +154,14 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         // the last iteration is used to stop all workers.
         context.setCurrentIteration(context.getCurrentIteration() + 1);
         // the reverse order with preIteration to make sure a complete wrapper for WorkerComputable.
-        int interceptersSize = getWorkerInterceptors().size();
+        int interceptorsSize = getWorkerInterceptors().size();
         Throwable exception = null;
-        for(int i = 0; i < interceptersSize; i++) {
+        for(int i = 0; i < interceptorsSize; i++) {
             try {
-                getWorkerInterceptors().get(interceptersSize - 1 - i).postApplication(context);
+                getWorkerInterceptors().get(interceptorsSize - 1 - i).postApplication(context);
             } catch (Throwable e) {
-                // To make sure all intercepters' post can be invoked.
-                LOG.error("Error in worker intercepters cleaning.", e);
+                // To make sure all interceptors' post can be invoked.
+                LOG.error("Error in worker interceptors cleaning.", e);
                 if(exception == null) {
                     exception = e;
                 }
@@ -193,7 +193,7 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     }
 
     /**
-     * Call each iteration computation and preIteration, postIteration in intercepters.
+     * Call each iteration computation and preIteration, postIteration in interceptors.
      */
     protected WORKER_RESULT iterate(WorkerContext<MASTER_RESULT, WORKER_RESULT> context, int initialIteration,
             Progressable progress) {
@@ -204,8 +204,8 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                     ((iteration - 1) * 100 / getTotalIteration())), false, false);
         }
 
-        for(WorkerInterceptor<MASTER_RESULT, WORKER_RESULT> workerIntercepter: getWorkerInterceptors()) {
-            workerIntercepter.preIteration(context);
+        for(WorkerInterceptor<MASTER_RESULT, WORKER_RESULT> workerInterceptor: getWorkerInterceptors()) {
+            workerInterceptor.preIteration(context);
         }
 
         status = "Start worker computing ( %s/%s ), progress %s%%";
@@ -245,9 +245,9 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
             throw new GuaguaRuntimeException("Error in worker computation", e);
         }
         // the reverse order with preIteration to make sure a complete wrapper for masterComputable.
-        int interceptersSize = getWorkerInterceptors().size();
-        for(int i = 0; i < interceptersSize; i++) {
-            getWorkerInterceptors().get(interceptersSize - 1 - i).postIteration(context);
+        int interceptorsSize = getWorkerInterceptors().size();
+        for(int i = 0; i < interceptorsSize; i++) {
+            getWorkerInterceptors().get(interceptorsSize - 1 - i).postIteration(context);
         }
         // isKill should be set here because of some work on postIteration should be finished.
         status = "Complete worker iteration ( %s/%s ), progress %s%%";
@@ -277,7 +277,7 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     @Override
     public void init(Properties props) {
         this.setProps(props);
-        checkAndSetWorkerIntercepters(props);
+        checkAndSetWorkerInterceptors(props);
 
         this.setWorkerComputable(newWorkerComputable());
         this.setTotalIteration(Integer.valueOf(this.getProps().getProperty(GuaguaConstants.GUAGUA_ITERATION_COUNT,
@@ -287,20 +287,20 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     }
 
     @SuppressWarnings("unchecked")
-    private void checkAndSetWorkerIntercepters(Properties props) {
-        List<WorkerInterceptor<MASTER_RESULT, WORKER_RESULT>> workerIntercepters = new ArrayList<WorkerInterceptor<MASTER_RESULT, WORKER_RESULT>>();
+    private void checkAndSetWorkerInterceptors(Properties props) {
+        List<WorkerInterceptor<MASTER_RESULT, WORKER_RESULT>> workerInterceptors = new ArrayList<WorkerInterceptor<MASTER_RESULT, WORKER_RESULT>>();
 
-        String systemWorkerInterceptersStr = StringUtils.get(
+        String systemWorkerInterceptorsStr = StringUtils.get(
                 props.getProperty(GuaguaConstants.GUAGUA_WORKER_SYSTEM_INTERCEPTERS),
                 GuaguaConstants.GUAGUA_WORKER_DEFAULT_SYSTEM_INTERCEPTERS);
-        if(systemWorkerInterceptersStr != null && systemWorkerInterceptersStr.length() != 0) {
-            String[] intercepters = systemWorkerInterceptersStr.split(GuaguaConstants.GUAGUA_INTERCEPTER_SEPARATOR);
+        if(systemWorkerInterceptorsStr != null && systemWorkerInterceptorsStr.length() != 0) {
+            String[] interceptors = systemWorkerInterceptorsStr.split(GuaguaConstants.GUAGUA_INTERCEPTOR_SEPARATOR);
             if(LOG.isInfoEnabled()) {
-                LOG.info("System worker intercepters: {}.", Arrays.toString(intercepters));
+                LOG.info("System worker interceptors: {}.", Arrays.toString(interceptors));
             }
-            for(String intercepter: intercepters) {
+            for(String interceptor: interceptors) {
                 WorkerInterceptor<MASTER_RESULT, WORKER_RESULT> instance = (WorkerInterceptor<MASTER_RESULT, WORKER_RESULT>) ReflectionUtils
-                        .newInstance(intercepter.trim());
+                        .newInstance(interceptor.trim());
                 if(instance instanceof BasicCoordinator) {
                     String serialierClassName = StringUtils.get(
                             props.getProperty(GuaguaConstants.GUAGUA_MASTER_IO_SERIALIZER),
@@ -316,24 +316,24 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                     ((LocalWorkerCoordinator<MASTER_RESULT, WORKER_RESULT>) instance).setCoordinator(this
                             .getCoordinator());
                 }
-                workerIntercepters.add(instance);
+                workerInterceptors.add(instance);
             }
         }
 
-        String workerInterceptersStr = props.getProperty(GuaguaConstants.GUAGUA_WORKER_INTERCEPTERS);
-        if(workerInterceptersStr != null && workerInterceptersStr.length() != 0) {
-            String[] intercepters = workerInterceptersStr.split(GuaguaConstants.GUAGUA_INTERCEPTER_SEPARATOR);
+        String workerInterceptorsStr = props.getProperty(GuaguaConstants.GUAGUA_WORKER_INTERCEPTERS);
+        if(workerInterceptorsStr != null && workerInterceptorsStr.length() != 0) {
+            String[] interceptors = workerInterceptorsStr.split(GuaguaConstants.GUAGUA_INTERCEPTOR_SEPARATOR);
             if(LOG.isInfoEnabled()) {
-                LOG.info("Customized worker intercepters: {}.", Arrays.toString(intercepters));
+                LOG.info("Customized worker interceptors: {}.", Arrays.toString(interceptors));
             }
-            for(String intercepter: intercepters) {
+            for(String interceptor: interceptors) {
                 WorkerInterceptor<MASTER_RESULT, WORKER_RESULT> instance = (WorkerInterceptor<MASTER_RESULT, WORKER_RESULT>) ReflectionUtils
-                        .newInstance(intercepter.trim());
-                workerIntercepters.add(instance);
+                        .newInstance(interceptor.trim());
+                workerInterceptors.add(instance);
             }
         }
 
-        this.setWorkerInterceptors(workerIntercepters);
+        this.setWorkerInterceptors(workerInterceptors);
     }
 
     @SuppressWarnings("unchecked")

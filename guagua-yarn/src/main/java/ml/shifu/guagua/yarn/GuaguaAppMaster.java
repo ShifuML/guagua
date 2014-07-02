@@ -402,6 +402,7 @@ public class GuaguaAppMaster {
         }
         if(this.rpcServer != null) {
             this.rpcServer.shutdown();
+            this.rpcServer.releaseExternalResources();
         }
         if(this.taskTimeoutExecutor != null) {
             this.taskTimeoutExecutor.shutdownNow();
