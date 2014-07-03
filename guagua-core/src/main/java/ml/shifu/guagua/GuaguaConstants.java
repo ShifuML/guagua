@@ -61,7 +61,7 @@ public final class GuaguaConstants {
 
     public static final String GUAGUA = "guagua";
 
-    public static final String GUAGUA_INTERCEPTER_SEPARATOR = ",";
+    public static final String GUAGUA_INTERCEPTOR_SEPARATOR = ",";
 
     public static final String GUAGUA_INPUT_DIR = "guagua.input.dir";
 
