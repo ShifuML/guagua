@@ -217,7 +217,7 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
                         props.getProperty(GuaguaConstants.GUAGUA_ZK_RETRY_WAIT_MILLS),
                         GuaguaConstants.GUAGUA_ZK_DEFAULT_RETRY_WAIT_MILLS);
                 setZooKeeper(new GuaguaZooKeeper(zkServers, sessionTimeout, maxRetryAttempts, retryWaitMsecs, this));
-                // wait to connect successfull to zookeeper.
+                // wait to connect successful to zookeeper.
                 this.getZkConnLatch().await();
             } catch (IOException e) {
                 throw new GuaguaRuntimeException(e);

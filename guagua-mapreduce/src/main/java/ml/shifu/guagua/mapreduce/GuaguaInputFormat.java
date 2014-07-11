@@ -504,4 +504,5 @@ public class GuaguaInputFormat extends TextInputFormat {
     public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, TaskAttemptContext context) {
         return new GuaguaMRRecordReader(context.getConfiguration().getInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, -1));
     }
+
 }

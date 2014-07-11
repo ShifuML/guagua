@@ -24,6 +24,7 @@
 #  '-i sum': '-i' means guagua application input, should be HDFS input file or folder
 #  '-z ${ZOOKEEPER_SERVERS}': '-z' is used to configure zookeeper server, this should be placed by real zookeeper server.
 #       The format is like '<zkServer1:zkPort1,zkServer2:zkPort2>'
+#      If user doesn't specify this parameter, a zookeeper server in CLI host will be embeded.
 #  '-w ml.shifu.guagua.yarn.example.sum.SumWorker': Worker computable implementation class setting
 #  '-m ml.shifu.guagua.yarn.example.sum.SumMaster': Master computable implementation class setting
 #  '-c 10': Total iteration number setting
@@ -37,17 +38,9 @@
 #  '-Dguagua.master.intercepters=ml.shifu.guagua.yarn.example.sum.SumOutput': User master intercepters, SumOutput is 
 #        used to save global sum result to HDFS.
 
-ZOOKEEPER_SERVERS=
-
-if [ "${ZOOKEEPER_SERVERS}X" == "X" ] ; then
-  echo "Zookeeper server should be provided for guagua coordination. Set 'ZOOKEEPER_SERVERS' at first please."
-  exit 1
-fi
-
 ./guagua -y \
         jar ../yarn-lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar \
         -i sum  \
-        -z ${ZOOKEEPER_SERVERS}  \
         -w ml.shifu.guagua.yarn.example.sum.SumWorker  \
         -m ml.shifu.guagua.yarn.example.sum.SumMaster  \
         -c 10 \
