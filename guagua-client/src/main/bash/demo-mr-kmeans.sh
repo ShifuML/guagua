@@ -16,6 +16,10 @@
 
 # please follow ../README.md to run this demo shell.
 
+# prepare input data
+BIN_DIR="$( cd -P "$( dirname "${BASH_SOURCE:-0}" )" && pwd )"
+hadoop fs -put $BIN_DIR/../data/kmeans /user/$USER/
+
 # Comments for all parameters:
 #  '../mapreduce-lib/guagua-mapreduce-examples-0.5.0-SNAPSHOT.jar': Jar files include master, worker and user intercepters
 #  '-i kmeans': '-i' means guagua application input, should be HDFS input file or folder

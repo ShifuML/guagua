@@ -15,16 +15,17 @@
  */
 package ml.shifu.guagua.mapreduce.example.sum;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Properties;
 
+import junit.framework.Assert;
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.mapreduce.GuaguaMRUnitDriver;
 import ml.shifu.guagua.mapreduce.GuaguaWritableAdapter;
-import ml.shifu.guagua.mapreduce.example.sum.SumMaster;
-import ml.shifu.guagua.mapreduce.example.sum.SumOutput;
-import ml.shifu.guagua.mapreduce.example.sum.SumWorker;
 import ml.shifu.guagua.unit.GuaguaUnitDriver;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.junit.Test;
 
@@ -34,8 +35,10 @@ import org.junit.Test;
  */
 public class SumTest {
 
+    private static final String SUM_OUTPUT = "sum-output";
+
     @Test
-    public void testSumApp() {
+    public void testSumApp() throws IOException {
         Properties props = new Properties();
         props.setProperty(GuaguaConstants.MASTER_COMPUTABLE_CLASS, SumMaster.class.getName());
         props.setProperty(GuaguaConstants.WORKER_COMPUTABLE_CLASS, SumWorker.class.getName());
@@ -47,13 +50,16 @@ public class SumTest {
 
         props.setProperty(GuaguaConstants.GUAGUA_INPUT_DIR, getClass().getResource("/sum").toString());
 
-        // TODO remove this file in tearDown
-        props.setProperty("guagua.sum.output", "sum-output");
+        props.setProperty("guagua.sum.output", SUM_OUTPUT);
 
         GuaguaUnitDriver<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> driver = new GuaguaMRUnitDriver<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>>(
                 props);
 
         driver.run();
+
+        Assert.assertEquals(15345 + "", FileUtils.readLines(new File(SUM_OUTPUT)).get(0));
+        FileUtils.deleteQuietly(new File(System.getProperty("user.dir") + File.separator + SUM_OUTPUT));
+        FileUtils.deleteQuietly(new File(System.getProperty("user.dir") + File.separator + "." + SUM_OUTPUT + ".crc"));
     }
 
 }

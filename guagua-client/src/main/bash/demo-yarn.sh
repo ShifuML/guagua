@@ -20,6 +20,10 @@
 
 # please follow ../README.md to run this demo shell.
 
+# prepare input data
+BIN_DIR="$( cd -P "$( dirname "${BASH_SOURCE:-0}" )" && pwd )"
+hadoop fs -put $BIN_DIR/../data/sum /user/$USER/
+
 # Comments for all parameters:
 #  '-i sum': '-i' means guagua application input, should be HDFS input file or folder
 #  '-z ${ZOOKEEPER_SERVERS}': '-z' is used to configure zookeeper server, this should be placed by real zookeeper server.
