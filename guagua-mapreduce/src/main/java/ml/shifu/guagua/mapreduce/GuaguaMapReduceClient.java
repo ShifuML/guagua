@@ -68,6 +68,8 @@ public class GuaguaMapReduceClient {
 
     private static final String INIT_JOB_ID_PREFIX = "Guagua-MapReduce-";
 
+    private static String embededZooKeeperServer = null;
+
     /**
      * Make guagua run jobs in parallel.
      */
@@ -458,17 +460,21 @@ public class GuaguaMapReduceClient {
             System.err.println("WARN: For big data guagua application, independent ZooKeeper instance is recommended.");
             System.err.println("WARN: Zookeeper servers can be provided by '-z' parameter with non-empty value.");
 
-            // 1. start embed zookeeper server in one thread.
-            int embedZkClientPort = ZooKeeperUtils.startEmbedZooKeeper();
-            // 2. check if it is started.
-            ZooKeeperUtils.checkIfEmbedZooKeeperStarted(embedZkClientPort);
-            // 3. set local embed zookeeper server address
-            try {
-                conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, InetAddress.getLocalHost().getHostName() + ":"
-                        + embedZkClientPort);
-            } catch (UnknownHostException e) {
-                throw new RuntimeException(e);
+            synchronized(GuaguaMapReduceClient.class) {
+                if(embededZooKeeperServer == null) {
+                    // 1. start embed zookeeper server in one thread.
+                    int embedZkClientPort = ZooKeeperUtils.startEmbedZooKeeper();
+                    // 2. check if it is started.
+                    ZooKeeperUtils.checkIfEmbedZooKeeperStarted(embedZkClientPort);
+                    try {
+                        embededZooKeeperServer = InetAddress.getLocalHost().getHostName() + ":" + embedZkClientPort;
+                    } catch (UnknownHostException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
+            // 3. set local embed zookeeper server address
+            conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, embededZooKeeperServer);
             return;
         } else {
             String zkServers = cmdLine.getOptionValue("z");

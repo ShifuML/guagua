@@ -86,12 +86,14 @@ import com.google.common.collect.Maps;
 // TODO create GuaguaConfiguration class for mapreduce and yarn
 public class GuaguaYarnClient extends Configured {
 
-    /** Sleep time between silent progress checks */
-    private static final int JOB_STATUS_INTERVAL_MSECS = 2000;
-
     private static final Logger LOG = LoggerFactory.getLogger(GuaguaYarnClient.class);
 
     private static final DecimalFormat DF = (DecimalFormat) (NumberFormat.getInstance());
+
+    /** Sleep time between silent progress checks */
+    private static final int JOB_STATUS_INTERVAL_MSECS = 2000;
+
+    private static String embededZooKeeperServer = null;
 
     static {
         DF.setMaximumFractionDigits(2);
@@ -416,17 +418,22 @@ public class GuaguaYarnClient extends Configured {
             System.err.println("WARN: For big data guagua application, independent ZooKeeper instance is recommended.");
             System.err.println("WARN: Zookeeper servers can be provided by '-z' parameter with non-empty value.");
 
-            // 1. start embed zookeeper server in one thread.
-            int embedZkClientPort = ZooKeeperUtils.startEmbedZooKeeper();
-            // 2. check if it is started.
-            ZooKeeperUtils.checkIfEmbedZooKeeperStarted(embedZkClientPort);
-            // 3. set local embed zookeeper server address
-            try {
-                conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, InetAddress.getLocalHost().getHostName() + ":"
-                        + embedZkClientPort);
-            } catch (UnknownHostException e) {
-                throw new RuntimeException(e);
+            synchronized(GuaguaYarnClient.class) {
+                if(embededZooKeeperServer == null) {
+                    // 1. start embed zookeeper server in one thread.
+                    int embedZkClientPort = ZooKeeperUtils.startEmbedZooKeeper();
+                    // 2. check if it is started.
+                    ZooKeeperUtils.checkIfEmbedZooKeeperStarted(embedZkClientPort);
+                    try {
+                        embededZooKeeperServer = InetAddress.getLocalHost().getHostName() + ":" + embedZkClientPort;
+                    } catch (UnknownHostException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
+            // 3. set local embed zookeeper server address
+            conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, embededZooKeeperServer);
+
             return;
         } else {
             String zkServers = cmdLine.getOptionValue("z");
