@@ -29,6 +29,7 @@ hadoop fs -put $BIN_DIR/../data/sum /user/$USER/
 #  '-w ml.shifu.guagua.mapreduce.example.sum.SumWorker': Worker computable implementation class setting
 #  '-m ml.shifu.guagua.mapreduce.example.sum.SumMaster': Master computable implementation class setting
 #  '-c 10': Total iteration number setting
+#      If user doesn't specify this parameter, default 10 will be used.
 #  '-n Guagua-Sum-Master-Workers-Job': Hadoop job name or YARN application name specified
 #  '-mr org.apache.hadoop.io.LongWritable': Master result class setting
 #  '-wr org.apache.hadoop.io.LongWritable': Worker result class setting
@@ -40,7 +41,6 @@ hadoop fs -put $BIN_DIR/../data/sum /user/$USER/
         -i sum  \
         -w ml.shifu.guagua.mapreduce.example.sum.SumWorker  \
         -m ml.shifu.guagua.mapreduce.example.sum.SumMaster  \
-        -c 10 \
         -n "Guagua-Sum-Master-Workers-Job" \
         -mr org.apache.hadoop.io.LongWritable \
         -wr org.apache.hadoop.io.LongWritable \

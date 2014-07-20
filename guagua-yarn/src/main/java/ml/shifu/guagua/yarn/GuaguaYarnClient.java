@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright [2013-2014] eBay Software Foundation
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -337,18 +337,19 @@ public class GuaguaYarnClient extends Configured {
 
     private static void checkIterationCountSetting(Configuration conf, CommandLine cmdLine) {
         if(!cmdLine.hasOption("-c")) {
-            printUsage();
-            throw new IllegalArgumentException("Iteration count should be provided by '-c' parameter.");
+            System.err.println("WARN: Total iteration number is not set, default 10 will be used.");
+            System.err.println("WARN: Total iteration number can be provided by '-c' parameter with non-empty value.");
+            conf.setInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, GuaguaConstants.GUAGUA_DEFAULT_ITERATION_COUNT);
+        } else {
+            int totalIteration = 0;
+            try {
+                totalIteration = Integer.parseInt(cmdLine.getOptionValue("c").trim());
+            } catch (NumberFormatException e) {
+                printUsage();
+                throw new IllegalArgumentException("Total iteration number set by '-c' should be a valid number.");
+            }
+            conf.setInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, totalIteration);
         }
-
-        int totalIteration = 0;
-        try {
-            totalIteration = Integer.parseInt(cmdLine.getOptionValue("c").trim());
-        } catch (NumberFormatException e) {
-            printUsage();
-            throw new IllegalArgumentException("Total iteration number set by '-c' should be a valid number.");
-        }
-        conf.setInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, totalIteration);
     }
 
     private static void checkMasterClassName(Configuration conf, CommandLine cmdLine) throws ClassNotFoundException {

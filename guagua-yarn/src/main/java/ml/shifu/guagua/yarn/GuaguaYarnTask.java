@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright [2013-2014] eBay Software Foundation
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -216,13 +216,7 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
 
         // Start the connection attempt.
         ChannelFuture future = this.rpcClient.connect(new InetSocketAddress(this.rpcHostName, this.rpcPort));
-        try {
-            future.await();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        this.rpcClientChannel = future.getChannel();
+        this.rpcClientChannel = future.awaitUninterruptibly().getChannel();
     }
 
     /**

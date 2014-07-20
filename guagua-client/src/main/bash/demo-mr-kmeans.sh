@@ -29,6 +29,7 @@ hadoop fs -put $BIN_DIR/../data/kmeans /user/$USER/
 #  '-w ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorker': Worker computable implementation class setting
 #  '-m ml.shifu.guagua.mapreduce.example.kmeans.KMeansMaster': Master computable implementation class setting
 #  '-c 10': Total iteration number setting
+#      If user doesn't specify this parameter, default 10 will be used.
 #  '-n Guagua-Sum-Master-Workers-Job': Hadoop job name or YARN application name specified
 #  '-mr ml.shifu.guagua.mapreduce.example.kmeans.KMeansMasterParams': Master result class setting
 #  '-wr ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorkerParams': Worker result class setting
