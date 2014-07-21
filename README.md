@@ -1,4 +1,4 @@
-[<img src="images/guagua_duck_50.png" alt="Guagua" align="left">](http://shifu.ml/docs/stable/guide/guagua/) Guagua <div align="right"> [![Build Status](https://travis-ci.org/ShifuML/guagua.svg?branch=master)](https://travis-ci.org/ShifuML/guagua)</div>
+[<img src="images/guagua_duck_50.png" alt="Guagua" align="left">](http://shifu.ml/docs/stable/guide/guagua/)<div align="right"> [![Build Status](https://travis-ci.org/ShifuML/guagua.svg?branch=master)](https://travis-ci.org/ShifuML/guagua)</div>
 
 An iterative computing framework on both Hadoop MapReduce and Hadoop YARN.
 
