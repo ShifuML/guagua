@@ -16,6 +16,10 @@
  
 Guagua Change Logs
 
+Changes for Guagua-0.4.2
+    * Add internal(embeded) ZooKeeper support.
+    * Add default total iteration number if user don't set '-c'.
+    * Improve readme and other guagua docs.
 Changes for Guagua-0.4.1
     * Improve guagua shell to follow hadoop command.
     * Add kmeans example in guagua-mapreduce-examples.
