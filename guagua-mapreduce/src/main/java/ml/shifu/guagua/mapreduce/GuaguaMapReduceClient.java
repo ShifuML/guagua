@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright [2013-2014] eBay Software Foundation
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,15 @@
 package ml.shifu.guagua.mapreduce;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import ml.shifu.guagua.GuaguaConstants;
+import ml.shifu.guagua.coordinator.zk.ZooKeeperUtils;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.master.MasterComputable;
@@ -64,6 +67,8 @@ public class GuaguaMapReduceClient {
     private static final Logger LOG = LoggerFactory.getLogger(GuaguaMapReduceClient.class);
 
     private static final String INIT_JOB_ID_PREFIX = "Guagua-MapReduce-";
+
+    private static String embededZooKeeperServer = null;
 
     /**
      * Make guagua run jobs in parallel.
@@ -369,21 +374,21 @@ public class GuaguaMapReduceClient {
         }
     }
 
-    private static int checkIterationCountSetting(Configuration conf, CommandLine cmdLine) {
+    private static void checkIterationCountSetting(Configuration conf, CommandLine cmdLine) {
         if(!cmdLine.hasOption("-c")) {
-            printUsage();
-            throw new IllegalArgumentException("Iteration count should be provided by '-c' parameter.");
+            System.err.println("WARN: Total iteration number is not set, default 10 will be used.");
+            System.err.println("WARN: Total iteration number can be provided by '-c' parameter with non-empty value.");
+            conf.setInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, GuaguaConstants.GUAGUA_DEFAULT_ITERATION_COUNT);
+        } else {
+            int totalIteration = 0;
+            try {
+                totalIteration = Integer.parseInt(cmdLine.getOptionValue("c").trim());
+            } catch (NumberFormatException e) {
+                printUsage();
+                throw new IllegalArgumentException("Total iteration number set by '-c' should be a valid number.");
+            }
+            conf.setInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, totalIteration);
         }
-
-        int totalIteration = 0;
-        try {
-            totalIteration = Integer.parseInt(cmdLine.getOptionValue("c").trim());
-        } catch (NumberFormatException e) {
-            printUsage();
-            throw new IllegalArgumentException("Total iteration number set by '-c' should be a valid number.");
-        }
-        conf.setInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, totalIteration);
-        return totalIteration;
     }
 
     private static void checkMasterClassSetting(Configuration conf, CommandLine cmdLine) {
@@ -451,16 +456,38 @@ public class GuaguaMapReduceClient {
 
     private static void checkZkServerSetting(Configuration conf, CommandLine cmdLine) {
         if(!cmdLine.hasOption("-z")) {
-            printUsage();
-            throw new IllegalArgumentException("Zookeeper servers should be provided by '-z' parameter.");
+            System.err.println("WARN: ZooKeeper server is not set, embeded ZooKeeper server will be started.");
+            System.err.println("WARN: For big data guagua application, independent ZooKeeper instance is recommended.");
+            System.err.println("WARN: Zookeeper servers can be provided by '-z' parameter with non-empty value.");
+
+            synchronized(GuaguaMapReduceClient.class) {
+                if(embededZooKeeperServer == null) {
+                    // 1. start embed zookeeper server in one thread.
+                    int embedZkClientPort = ZooKeeperUtils.startEmbedZooKeeper();
+                    // 2. check if it is started.
+                    ZooKeeperUtils.checkIfEmbedZooKeeperStarted(embedZkClientPort);
+                    try {
+                        embededZooKeeperServer = InetAddress.getLocalHost().getHostName() + ":" + embedZkClientPort;
+                    } catch (UnknownHostException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+            // 3. set local embed zookeeper server address
+            conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, embededZooKeeperServer);
+            return;
+        } else {
+            String zkServers = cmdLine.getOptionValue("z");
+            if(zkServers == null || zkServers.length() == 0) {
+                throw new IllegalArgumentException(
+                        "Zookeeper servers should be provided by '-z' parameter with non-empty value.");
+            }
+            if(ZooKeeperUtils.checkServers(zkServers)) {
+                conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, zkServers.trim());
+            } else {
+                throw new RuntimeException("Your specifed zookeeper instance is not alive, please check.");
+            }
         }
-        String zkServers = cmdLine.getOptionValue("z");
-        // TODO connect it one time to ensure the zk servers are good??
-        if(zkServers == null || zkServers.length() == 0) {
-            throw new IllegalArgumentException(
-                    "Zookeeper servers should be provided by '-z' parameter with non-empty value.");
-        }
-        conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, zkServers.trim());
     }
 
     private static void checkInputSetting(Configuration conf, CommandLine cmdLine) throws IOException {

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright [2013-2014] eBay Software Foundation
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -504,4 +504,5 @@ public class GuaguaInputFormat extends TextInputFormat {
     public RecordReader<LongWritable, Text> createRecordReader(InputSplit split, TaskAttemptContext context) {
         return new GuaguaMRRecordReader(context.getConfiguration().getInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, -1));
     }
+
 }

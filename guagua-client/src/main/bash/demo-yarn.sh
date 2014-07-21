@@ -20,34 +20,32 @@
 
 # please follow ../README.md to run this demo shell.
 
+# prepare input data
+BIN_DIR="$( cd -P "$( dirname "${BASH_SOURCE:-0}" )" && pwd )"
+hadoop fs -put $BIN_DIR/../data/sum /user/$USER/
+
 # Comments for all parameters:
 #  '-i sum': '-i' means guagua application input, should be HDFS input file or folder
 #  '-z ${ZOOKEEPER_SERVERS}': '-z' is used to configure zookeeper server, this should be placed by real zookeeper server.
 #       The format is like '<zkServer1:zkPort1,zkServer2:zkPort2>'
+#      If user doesn't specify this parameter, a zookeeper server in CLI host will be embeded.
 #  '-w ml.shifu.guagua.yarn.example.sum.SumWorker': Worker computable implementation class setting
 #  '-m ml.shifu.guagua.yarn.example.sum.SumMaster': Master computable implementation class setting
 #  '-c 10': Total iteration number setting
+#      If user doesn't specify this parameter, default 10 will be used.
 #  '-n Guagua-Sum-Master-Workers-Job': Hadoop job name or YARN application name specified
 #  '-mr org.apache.hadoop.io.LongWritable': Master result class setting
 #  '-wr org.apache.hadoop.io.LongWritable': Worker result class setting
-#  '../yarn-lib/guagua-yarn-examples-0.4.1.jar': Jar files include master, worker and user intercepters
+#  '../yarn-lib/guagua-yarn-examples-0.4.2.jar': Jar files include master, worker and user intercepters
 #  '-Dmapred.job.queue.name=default': Queue name setting
 #  '-Dguagua.yarn.queue.name=default': Queue name setting for guagua YARN application
 #  '-Dguagua.sum.output=sum-output': Output file, this is used in 'ml.shifu.guagua.yarn.example.sum.SumOutput'
 #  '-Dguagua.master.intercepters=ml.shifu.guagua.yarn.example.sum.SumOutput': User master intercepters, SumOutput is 
 #        used to save global sum result to HDFS.
 
-ZOOKEEPER_SERVERS=
-
-if [ "${ZOOKEEPER_SERVERS}X" == "X" ] ; then
-  echo "Zookeeper server should be provided for guagua coordination. Set 'ZOOKEEPER_SERVERS' at first please."
-  exit 1
-fi
-
 ./guagua -y \
-        jar ../yarn-lib/guagua-yarn-examples-0.4.1.jar \
+        jar ../yarn-lib/guagua-yarn-examples-0.4.2.jar \
         -i sum  \
-        -z ${ZOOKEEPER_SERVERS}  \
         -w ml.shifu.guagua.yarn.example.sum.SumWorker  \
         -m ml.shifu.guagua.yarn.example.sum.SumMaster  \
         -c 10 \

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright [2013-2014] eBay Software Foundation
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +50,8 @@ public class GuaguaZooKeeper {
     private final int maxRetryAttempts;
     /** Milliseconds to wait before trying again due to connection loss */
     private final long retryWaitMsecs;
+
+    private static final SequenceComparator sequenceComparator = new SequenceComparator();
 
     /**
      * Constructor to connect to ZooKeeper, make progress
@@ -470,7 +472,7 @@ public class GuaguaZooKeeper {
                 List<String> childList = getZooKeeper().getChildren(path, watch);
                 /* Sort children according to the sequence number, if desired */
                 if(sequenceSorted) {
-                    Collections.sort(childList, new SequenceComparator());
+                    Collections.sort(childList, sequenceComparator);
                 }
                 // remove guava dependency to avoid making core depending on two many libs.
                 if(fullPath) {

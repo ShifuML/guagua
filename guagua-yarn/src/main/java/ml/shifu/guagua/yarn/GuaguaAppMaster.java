@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright [2013-2014] eBay Software Foundation
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -402,6 +402,7 @@ public class GuaguaAppMaster {
         }
         if(this.rpcServer != null) {
             this.rpcServer.shutdown();
+            this.rpcServer.releaseExternalResources();
         }
         if(this.taskTimeoutExecutor != null) {
             this.taskTimeoutExecutor.shutdownNow();

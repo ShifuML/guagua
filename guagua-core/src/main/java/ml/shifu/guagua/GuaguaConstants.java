@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright [2013-2014] eBay Software Foundation
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,8 @@ public final class GuaguaConstants {
     public static final String GUAGUA_WORKER_NUMBER = "guagua.worker.number";
 
     public static final String GUAGUA_ITERATION_COUNT = "guagua.iteration.count";
+
+    public static final int GUAGUA_DEFAULT_ITERATION_COUNT = 10;
 
     public static final String WORKER_COMPUTABLE_CLASS = "guagua.worker.computable.class";
 
@@ -61,7 +63,7 @@ public final class GuaguaConstants {
 
     public static final String GUAGUA = "guagua";
 
-    public static final String GUAGUA_INTERCEPTER_SEPARATOR = ",";
+    public static final String GUAGUA_INTERCEPTOR_SEPARATOR = ",";
 
     public static final String GUAGUA_INPUT_DIR = "guagua.input.dir";
 

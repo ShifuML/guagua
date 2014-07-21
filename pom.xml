@@ -3,12 +3,37 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ml.shifu</groupId>
     <artifactId>guagua</artifactId>
-    <version>0.4.1</version>
+    <version>0.4.2</version>
     <packaging>pom</packaging>
+    <name>Guagua</name>
+    <description>An iterative computing framework on both Hadoop MapReduce and Hadoop YARN.</description>
+    <url>http://shifu.ml/docs/stable/guide/guagua/</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Zhang David (Zhang Pengshan)</name>
+            <email>pengzhang@paypal.com</email>
+            <organization>PayPal</organization>
+            <organizationUrl>http://www.paypal.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <developerConnection>scm:git:https://github.com/shifuml/guagua.git</developerConnection>
+        <connection>scm:git:https://github.com/shifuml/guagua.git</connection>
+        <url>https://github.com/shifuml/guagua.git</url>
+    </scm>
 
     <properties>
         <jdk.version>1.6</jdk.version>
-        <guagua.version>0.4.1</guagua.version>
+        <guagua.version>0.4.2</guagua.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
     </properties>
@@ -23,15 +48,13 @@
                     <target>${jdk.version}</target>
                 </configuration>
             </plugin>
-            <!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-checkstyle-plugin</artifactId> 
-                <version>2.12</version> <executions> <execution> <id>verify-style</id> <phase>process-classes</phase> 
-                <goals> <goal>check</goal> </goals> </execution> </executions> <configuration> 
-                <logViolationsToConsole>true</logViolationsToConsole> <checkstyleRules> <module 
-                name="Checker"> <module name="FileLength"> <property name="max" value="5000" 
-                /> <property name="fileExtensions" value="java" /> </module> <module name="FileTabCharacter" 
-                /> <module name="TreeWalker"> <module name="StaticVariableName" /> <module 
-                name="TypeName"> <property name="format" value="^_?[A-Z][a-zA-Z0-9]*$" /> 
-                </module> </module> </module> </checkstyleRules> </configuration> </plugin> -->
+            <!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-checkstyle-plugin</artifactId> <version>2.12</version> 
+                <executions> <execution> <id>verify-style</id> <phase>process-classes</phase> <goals> <goal>check</goal> </goals> </execution> 
+                </executions> <configuration> <logViolationsToConsole>true</logViolationsToConsole> <checkstyleRules> <module name="Checker"> 
+                <module name="FileLength"> <property name="max" value="5000" /> <property name="fileExtensions" value="java" /> </module> 
+                <module name="FileTabCharacter" /> <module name="TreeWalker"> <module name="StaticVariableName" /> <module name="TypeName"> 
+                <property name="format" value="^_?[A-Z][a-zA-Z0-9]*$" /> </module> </module> </module> </checkstyleRules> </configuration> 
+                </plugin> -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -92,6 +115,47 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- Release and Sign -->
+    <profiles>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <maven.test.skip>true</maven.test.skip>
+            </properties>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <name>Central Releases</name>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+                </repository>
+            </distributionManagement>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>

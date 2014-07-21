@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright [2013-2014] eBay Software Foundation
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -201,9 +201,9 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
             progress.progress(iteration - 1, getTotalIteration(), String.format(status, iteration, getTotalIteration(),
                     ((iteration - 1) * 100 / getTotalIteration())), false, false);
         }
-        int interceptersSize = getMasterInterceptors().size();
-        for(int i = 0; i < interceptersSize; i++) {
-            getMasterInterceptors().get(interceptersSize - 1 - i).postIteration(context);
+        int interceptorsSize = getMasterInterceptors().size();
+        for(int i = 0; i < interceptorsSize; i++) {
+            getMasterInterceptors().get(interceptorsSize - 1 - i).postIteration(context);
         }
         status = "Complete master iteration ( %s/%s ), progress %s%%";
         if(progress != null) {
@@ -234,11 +234,11 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         context.setCurrentIteration(context.getCurrentIteration() + 1);
 
         // the reverse order with preIteration to make sure a complete wrapper for masterComputable.
-        int interceptersSize = getMasterInterceptors().size();
+        int interceptorsSize = getMasterInterceptors().size();
         Throwable exception = null;
-        for(int i = 0; i < interceptersSize; i++) {
+        for(int i = 0; i < interceptorsSize; i++) {
             try {
-                getMasterInterceptors().get(interceptersSize - 1 - i).postApplication(context);
+                getMasterInterceptors().get(interceptorsSize - 1 - i).postApplication(context);
             } catch (Throwable e) {
                 // To make sure all interceptors' post can be invoked.
                 LOG.error("Error in master interceptors cleaning.", e);
@@ -259,7 +259,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     @Override
     public void init(Properties props) {
         this.setProps(props);
-        checkAndSetMasterIntercepters(props);
+        checkAndSetMasterInterceptors(props);
         this.setMasterComputable(newMasterComputable());
         this.setTotalIteration(Integer.valueOf(this.getProps().getProperty(GuaguaConstants.GUAGUA_ITERATION_COUNT,
                 Integer.MAX_VALUE + "")));
@@ -277,20 +277,20 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     }
 
     @SuppressWarnings("unchecked")
-    private void checkAndSetMasterIntercepters(Properties props) {
-        List<MasterInterceptor<MASTER_RESULT, WORKER_RESULT>> masterIntercepters = new ArrayList<MasterInterceptor<MASTER_RESULT, WORKER_RESULT>>();
+    private void checkAndSetMasterInterceptors(Properties props) {
+        List<MasterInterceptor<MASTER_RESULT, WORKER_RESULT>> masterInterceptors = new ArrayList<MasterInterceptor<MASTER_RESULT, WORKER_RESULT>>();
 
-        String systemMasterInterceptersStr = StringUtils.get(
+        String systemMasterInterceptorsStr = StringUtils.get(
                 props.getProperty(GuaguaConstants.GUAGUA_MASTER_SYSTEM_INTERCEPTERS),
                 GuaguaConstants.GUAGUA_MASTER_DEFAULT_SYSTEM_INTERCEPTERS);
-        if(systemMasterInterceptersStr != null && systemMasterInterceptersStr.length() != 0) {
-            String[] intercepters = systemMasterInterceptersStr.split(GuaguaConstants.GUAGUA_INTERCEPTER_SEPARATOR);
+        if(systemMasterInterceptorsStr != null && systemMasterInterceptorsStr.length() != 0) {
+            String[] interceptors = systemMasterInterceptorsStr.split(GuaguaConstants.GUAGUA_INTERCEPTOR_SEPARATOR);
             if(LOG.isInfoEnabled()) {
-                LOG.info("System master interceptors: {}.", Arrays.toString(intercepters));
+                LOG.info("System master interceptors: {}.", Arrays.toString(interceptors));
             }
-            for(String intercepter: intercepters) {
+            for(String interceptor: interceptors) {
                 MasterInterceptor<MASTER_RESULT, WORKER_RESULT> instance = (MasterInterceptor<MASTER_RESULT, WORKER_RESULT>) ReflectionUtils
-                        .newInstance(intercepter.trim());
+                        .newInstance(interceptor.trim());
                 if(instance instanceof BasicCoordinator) {
                     String serialierClassName = StringUtils.get(
                             props.getProperty(GuaguaConstants.GUAGUA_MASTER_IO_SERIALIZER),
@@ -305,24 +305,24 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                 } else if(instance instanceof LocalMasterCoordinator) {
                     ((LocalMasterCoordinator<MASTER_RESULT, WORKER_RESULT>) instance).setCoordinator(this.coordinator);
                 }
-                masterIntercepters.add(instance);
+                masterInterceptors.add(instance);
             }
         }
 
-        String masterInterceptersStr = props.getProperty(GuaguaConstants.GUAGUA_MASTER_INTERCEPTERS);
-        if(masterInterceptersStr != null && masterInterceptersStr.length() != 0) {
-            String[] intercepters = masterInterceptersStr.split(GuaguaConstants.GUAGUA_INTERCEPTER_SEPARATOR);
+        String masterInterceptorsStr = props.getProperty(GuaguaConstants.GUAGUA_MASTER_INTERCEPTERS);
+        if(masterInterceptorsStr != null && masterInterceptorsStr.length() != 0) {
+            String[] interceptors = masterInterceptorsStr.split(GuaguaConstants.GUAGUA_INTERCEPTOR_SEPARATOR);
             if(LOG.isInfoEnabled()) {
-                LOG.info("Customized master intercepters: {}.", Arrays.toString(intercepters));
+                LOG.info("Customized master interceptors: {}.", Arrays.toString(interceptors));
             }
-            for(String intercepter: intercepters) {
+            for(String interceptor: interceptors) {
                 MasterInterceptor<MASTER_RESULT, WORKER_RESULT> instance = (MasterInterceptor<MASTER_RESULT, WORKER_RESULT>) ReflectionUtils
-                        .newInstance(intercepter.trim());
-                masterIntercepters.add(instance);
+                        .newInstance(interceptor.trim());
+                masterInterceptors.add(instance);
             }
         }
 
-        this.setMasterIntercepters(masterIntercepters);
+        this.setMasterInterceptors(masterInterceptors);
     }
 
     @SuppressWarnings("unchecked")
@@ -381,12 +381,12 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         return masterInterceptors;
     }
 
-    public void setMasterIntercepters(List<MasterInterceptor<MASTER_RESULT, WORKER_RESULT>> masterInterceptors) {
+    public void setMasterInterceptors(List<MasterInterceptor<MASTER_RESULT, WORKER_RESULT>> masterInterceptors) {
         this.masterInterceptors = masterInterceptors;
     }
 
-    public void addMasterInterceptors(MasterInterceptor<MASTER_RESULT, WORKER_RESULT> masterIntercepter) {
-        getMasterInterceptors().add(masterIntercepter);
+    public void addMasterInterceptors(MasterInterceptor<MASTER_RESULT, WORKER_RESULT> masterInterceptor) {
+        getMasterInterceptors().add(masterInterceptor);
     }
 
     public int getTotalIteration() {

@@ -16,14 +16,20 @@
 
 # please follow ../README.md to run this demo shell.
 
+# prepare input data
+BIN_DIR="$( cd -P "$( dirname "${BASH_SOURCE:-0}" )" && pwd )"
+hadoop fs -put $BIN_DIR/../data/kmeans /user/$USER/
+
 # Comments for all parameters:
-#  '../mapreduce-lib/guagua-mapreduce-examples-0.4.1.jar': Jar files include master, worker and user intercepters
+#  '../mapreduce-lib/guagua-mapreduce-examples-0.4.2.jar': Jar files include master, worker and user intercepters
 #  '-i kmeans': '-i' means guagua application input, should be HDFS input file or folder
 #  '-z ${ZOOKEEPER_SERVERS}': '-z' is used to configure zookeeper server, this should be placed by real zookeeper server
 #                            The format is like '<zkServer1:zkPort1,zkServer2:zkPort2>'
+#      If user doesn't specify this parameter, a zookeeper server in CLI host will be embeded.
 #  '-w ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorker': Worker computable implementation class setting
 #  '-m ml.shifu.guagua.mapreduce.example.kmeans.KMeansMaster': Master computable implementation class setting
 #  '-c 10': Total iteration number setting
+#      If user doesn't specify this parameter, default 10 will be used.
 #  '-n Guagua-Sum-Master-Workers-Job': Hadoop job name or YARN application name specified
 #  '-mr ml.shifu.guagua.mapreduce.example.kmeans.KMeansMasterParams': Master result class setting
 #  '-wr ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorkerParams': Worker result class setting
@@ -36,15 +42,8 @@
 #  '-Dkmeans.data.output=kmeans-tags': new data file folder with tag at last column
 #  '-Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansCentriodsOutput': User master interceptors
 
-ZOOKEEPER_SERVERS=
-if [ "${ZOOKEEPER_SERVERS}X" == "X" ] ; then
-  echo "Zookeeper server should be provided for guagua coordination. Set 'ZOOKEEPER_SERVERS' at first please."
-  exit 1
-fi
-
-./guagua jar ../mapreduce-lib/guagua-mapreduce-examples-0.4.1.jar \
+./guagua jar ../mapreduce-lib/guagua-mapreduce-examples-0.4.2.jar \
         -i kmeans  \
-        -z ${ZOOKEEPER_SERVERS}  \
         -w ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorker  \
         -m ml.shifu.guagua.mapreduce.example.kmeans.KMeansMaster  \
         -c 10 \
