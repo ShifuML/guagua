@@ -1,10 +1,12 @@
-<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+<assembly
+    xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd"
+>
     <id>${user.name}</id>
     <formats>
         <format>tar.gz</format>
     </formats>
-
     <fileSets>
         <fileSet>
             <directory>${project.basedir}/../</directory>
@@ -15,7 +17,6 @@
                 <include>NOTICE*</include>
             </includes>
         </fileSet>
-
         <fileSet>
             <directory>${project.basedir}/</directory>
             <outputDirectory>/</outputDirectory>
@@ -23,7 +24,6 @@
                 <include>README*</include>
             </includes>
         </fileSet>
-
         <fileSet>
             <directory>${project.basedir}/src/main/bash</directory>
             <outputDirectory>/bin</outputDirectory>
@@ -37,7 +37,6 @@
                 <include>*</include>
             </includes>
         </fileSet>
-
         <fileSet>
             <directory>${project.basedir}/doc</directory>
             <outputDirectory>/doc</outputDirectory>
@@ -45,7 +44,6 @@
                 <include>*</include>
             </includes>
         </fileSet>
-
         <fileSet>
             <directory>${project.basedir}/data</directory>
             <outputDirectory>/data</outputDirectory>
@@ -53,7 +51,13 @@
                 <include>*/**</include>
             </includes>
         </fileSet>
-
+        <fileSet>
+            <directory>${project.basedir}/conf</directory>
+            <outputDirectory>/conf</outputDirectory>
+            <includes>
+                <include>*/**</include>
+            </includes>
+        </fileSet>
         <fileSet>
             <directory>${project.basedir}/../guagua-mapreduce/target</directory>
             <outputDirectory>mapreduce-hadoop1-lib</outputDirectory>
@@ -61,7 +65,6 @@
                 <include>guagua-mapreduce-*hadoop1*.jar</include>
             </includes>
         </fileSet>
-
         <fileSet>
             <directory>${project.basedir}/../guagua-mapreduce/target</directory>
             <outputDirectory>mapreduce-hadoop2-lib</outputDirectory>
@@ -69,9 +72,7 @@
                 <include>guagua-mapreduce-*hadoop2*.jar</include>
             </includes>
         </fileSet>
-
     </fileSets>
-
     <dependencySets>
         <dependencySet>
             <outputDirectory>common-lib</outputDirectory>
@@ -107,5 +108,4 @@
         </dependencySet>
     </dependencySets>
 </assembly>
-
 </assembly>

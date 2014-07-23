@@ -52,7 +52,9 @@ else
   CLASSPATH=${USER_JAR}
 fi
 
-# ---------------- HADOOP Environment Detection ----------------------------------#
+# ---------------- Setting conf folder ----------------------------------------------#
+CLASSPATH=$CLASSPATH:$GUAGUA_HOME/conf/
+# ---------------- HADOOP Environment Detection -------------------------------------#
 HADOOP_ROOT=""
     
 # locate HADOOP_ROOT "which hadoop"

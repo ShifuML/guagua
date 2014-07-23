@@ -132,4 +132,6 @@ public final class GuaguaConstants {
 
     public static final long GUAGUA_DEFAULT_COMPUTATION_TIME_THRESHOLD = 60 * 1000l;
 
+    public static final String GUAGUA_SITE_FILE = "guagua-site.xml";
+
 }

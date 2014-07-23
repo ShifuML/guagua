@@ -87,6 +87,11 @@ import com.google.common.collect.Maps;
 public class GuaguaYarnClient extends Configured {
 
     private static final Logger LOG = LoggerFactory.getLogger(GuaguaYarnClient.class);
+    
+    static {
+        // pick up new conf XML file and populate it with stuff exported from client
+        Configuration.addDefaultResource(GuaguaConstants.GUAGUA_SITE_FILE);
+    }
 
     private static final DecimalFormat DF = (DecimalFormat) (NumberFormat.getInstance());
 
