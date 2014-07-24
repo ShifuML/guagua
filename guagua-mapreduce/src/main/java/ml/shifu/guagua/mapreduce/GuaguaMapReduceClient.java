@@ -244,10 +244,8 @@ public class GuaguaMapReduceClient {
         Configuration conf = new Configuration();
         // set it here to make it can be over-written. Set task timeout to a long period 15 minutes.
         conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 900000);
-        System.out.println(conf.get("mapred.job.queue.name"));
         GuaguaOptionsParser parser = new GuaguaOptionsParser(conf, args);
         CommandLine cmdLine = parser.getCommandLine();
-        System.out.println(conf.get("mapred.job.queue.name"));
         checkInputSetting(conf, cmdLine);
         checkZkServerSetting(conf, cmdLine);
         checkWorkerClassSetting(conf, cmdLine);

@@ -34,9 +34,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Copy from LineRecordReader but to support {@link GuaguaRecordReader} interface.
+ * A reader read HDFS file line by line.
+ * 
+ * <p>
+ * Copy some code from {@link org.apache.hadoop.mapred.LineRecordReader} but to support {@link GuaguaRecordReader}
+ * interface.
+ * 
+ * <p>
+ * If use default constructor, user should also call {@link #initialize(GuaguaFileSplit)} like in below:
+ * 
+ * <pre>
+ * this.setRecordReader(new GuaguaLineRecordReader());
+ * this.getRecordReader().initialize(fileSplit);
+ * </pre>
+ * 
+ * or directly use other constructors:
+ * 
+ * <pre>
+ * this.setRecordReader(new GuaguaLineRecordReader(fileSplit));
+ * </pre>
  */
-// TODO support more input format
 public class GuaguaLineRecordReader implements
         GuaguaRecordReader<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<Text>> {
 
@@ -50,8 +67,19 @@ public class GuaguaLineRecordReader implements
     private int maxLineLength;
     private GuaguaWritableAdapter<LongWritable> key = null;
     private GuaguaWritableAdapter<Text> value = null;
+    private Configuration conf;
 
     public GuaguaLineRecordReader() {
+        this.conf = new Configuration();
+    }
+
+    public GuaguaLineRecordReader(GuaguaFileSplit split) throws IOException {
+        this(new Configuration(), split);
+    }
+
+    public GuaguaLineRecordReader(Configuration conf, GuaguaFileSplit split) throws IOException {
+        this.conf = conf;
+        initialize(split);
     }
 
     /*
@@ -60,12 +88,12 @@ public class GuaguaLineRecordReader implements
      * @see ml.shifu.guagua.mapreduce.RecordReader#initialize(ml.shifu.guagua.io.GuaguaFileSplit)
      */
     @Override
-    public void initialize(GuaguaFileSplit genericSplit) throws IOException {
+    public void initialize(GuaguaFileSplit split) throws IOException {
         this.maxLineLength = Integer.MAX_VALUE;
-        start = genericSplit.getOffset();
-        end = start + genericSplit.getLength();
-        final Path file = new Path(genericSplit.getPath());
-        compressionCodecs = new CompressionCodecFactory(new Configuration());
+        start = split.getOffset();
+        end = start + split.getLength();
+        final Path file = new Path(split.getPath());
+        compressionCodecs = new CompressionCodecFactory(this.conf);
         final CompressionCodec codec = compressionCodecs.getCodec(file);
 
         // open the file and seek to the start of the split

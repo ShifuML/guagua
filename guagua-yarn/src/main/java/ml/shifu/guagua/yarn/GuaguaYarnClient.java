@@ -83,7 +83,6 @@ import com.google.common.collect.Maps;
  * <p>
  * TODO clean app resources in HDFS no matter successful or not
  */
-// TODO create GuaguaConfiguration class for mapreduce and yarn
 public class GuaguaYarnClient extends Configured {
 
     private static final Logger LOG = LoggerFactory.getLogger(GuaguaYarnClient.class);
