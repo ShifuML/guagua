@@ -74,5 +74,6 @@ public class SumSequenceFileWorker
     @Override
     public void initRecordReader(GuaguaFileSplit fileSplit) throws IOException {
         this.setRecordReader(new GuaguaSequenceRecordReader<Text, Text>(fileSplit, Text.class, Text.class));
+        // this.setRecordReader(new GuaguaSequenceAsTextRecordReader(fileSplit));
     }
 }

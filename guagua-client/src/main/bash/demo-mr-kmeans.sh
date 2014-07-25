@@ -46,7 +46,6 @@ hadoop fs -put $BIN_DIR/../data/kmeans /user/$USER/
         -i kmeans  \
         -w ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorker  \
         -m ml.shifu.guagua.mapreduce.example.kmeans.KMeansMaster  \
-        -c 10 \
         -n "Guagua-KMeans-Master-Workers-Job" \
         -mr ml.shifu.guagua.mapreduce.example.kmeans.KMeansMasterParams \
         -wr ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorkerParams \

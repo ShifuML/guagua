@@ -21,10 +21,7 @@ import ml.shifu.guagua.io.GuaguaFileSplit;
 import ml.shifu.guagua.io.GuaguaRecordReader;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.mapred.FileSplit;
-import org.apache.hadoop.mapred.SequenceFileAsBinaryInputFormat.SequenceFileAsBinaryRecordReader;
 
 /**
  * A reader read HDFS sequence file key by key. The sequence key and value types are both {@link BytesWritable}.
@@ -47,71 +44,18 @@ import org.apache.hadoop.mapred.SequenceFileAsBinaryInputFormat.SequenceFileAsBi
  * this.setRecordReader(new GuaguaSequenceAsBinaryRecordReader(fileSplit));
  * </pre>
  */
-public class GuaguaSequenceAsBinaryRecordReader implements
-        GuaguaRecordReader<GuaguaWritableAdapter<BytesWritable>, GuaguaWritableAdapter<BytesWritable>> {
+public class GuaguaSequenceAsBinaryRecordReader extends GuaguaSequenceRecordReader<BytesWritable, BytesWritable> {
 
-    private SequenceFileAsBinaryRecordReader sequenceReader;
-
-    private Configuration conf;
-
-    private GuaguaWritableAdapter<BytesWritable> key = null;
-    private GuaguaWritableAdapter<BytesWritable> value = null;
-
-    public GuaguaSequenceAsBinaryRecordReader() {
-        this.conf = new Configuration();
+    public GuaguaSequenceAsBinaryRecordReader() throws IOException {
+        super(BytesWritable.class, BytesWritable.class);
     }
 
     public GuaguaSequenceAsBinaryRecordReader(GuaguaFileSplit split) throws IOException {
-        this(new Configuration(), split);
+        super(split, BytesWritable.class, BytesWritable.class);
     }
 
     public GuaguaSequenceAsBinaryRecordReader(Configuration conf, GuaguaFileSplit split) throws IOException {
-        this.conf = conf;
-        initialize(split);
-    }
-
-    /**
-     * Return the progress within the input split
-     * 
-     * @return 0.0 to 1.0 of the input byte range
-     */
-    public float getProgress() throws IOException {
-        return sequenceReader.getProgress();
-    }
-
-    @Override
-    public void initialize(GuaguaFileSplit split) throws IOException {
-        FileSplit fileSplit = new FileSplit(new Path(split.getPath()), split.getOffset(), split.getLength(),
-                (String[]) null);
-        this.sequenceReader = new SequenceFileAsBinaryRecordReader(conf, fileSplit);
-    }
-
-    @Override
-    public boolean nextKeyValue() throws IOException {
-        if(key == null) {
-            key = new GuaguaWritableAdapter<BytesWritable>(new BytesWritable());
-        }
-        if(value == null) {
-            value = new GuaguaWritableAdapter<BytesWritable>(new BytesWritable());
-        }
-        return this.sequenceReader.next(key.getWritable(), value.getWritable());
-    }
-
-    @Override
-    public GuaguaWritableAdapter<BytesWritable> getCurrentKey() {
-        return key;
-    }
-
-    @Override
-    public GuaguaWritableAdapter<BytesWritable> getCurrentValue() {
-        return value;
-    }
-
-    @Override
-    public synchronized void close() throws IOException {
-        if(sequenceReader != null) {
-            sequenceReader.close();
-        }
+        super(conf, split, BytesWritable.class, BytesWritable.class);
     }
 
 }

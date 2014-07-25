@@ -48,7 +48,6 @@ hadoop fs -put $BIN_DIR/../data/sum /user/$USER/
         -i sum  \
         -w ml.shifu.guagua.yarn.example.sum.SumWorker  \
         -m ml.shifu.guagua.yarn.example.sum.SumMaster  \
-        -c 10 \
         -n "Guagua-Sum-Master-Workers-Job" \
         -mr org.apache.hadoop.io.LongWritable \
         -wr org.apache.hadoop.io.LongWritable \

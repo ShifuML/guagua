@@ -27,6 +27,7 @@ import ml.shifu.guagua.unit.GuaguaUnitDriver;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.io.LongWritable;
+import org.junit.After;
 import org.junit.Test;
 
 /**
@@ -58,6 +59,10 @@ public class SumTest {
         driver.run();
 
         Assert.assertEquals(15345 + "", FileUtils.readLines(new File(SUM_OUTPUT)).get(0));
+    }
+    
+    @After
+    public void tearDown(){
         FileUtils.deleteQuietly(new File(System.getProperty("user.dir") + File.separator + SUM_OUTPUT));
         FileUtils.deleteQuietly(new File(System.getProperty("user.dir") + File.separator + "." + SUM_OUTPUT + ".crc"));
     }
