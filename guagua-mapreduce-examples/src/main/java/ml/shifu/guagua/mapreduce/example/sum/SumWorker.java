@@ -18,7 +18,9 @@ package ml.shifu.guagua.mapreduce.example.sum;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import ml.shifu.guagua.ComputableMonitor;
 import ml.shifu.guagua.io.GuaguaFileSplit;
 import ml.shifu.guagua.mapreduce.GuaguaLineRecordReader;
 import ml.shifu.guagua.mapreduce.GuaguaWritableAdapter;
@@ -39,6 +41,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * The master's sum value will be added to current iteration.
  */
+ @ComputableMonitor(timeUnit = TimeUnit.SECONDS, duration = 60)
 public class SumWorker
         extends
         AbstractWorkerComputable<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<Text>> {
@@ -73,7 +76,6 @@ public class SumWorker
 
     @Override
     public void initRecordReader(GuaguaFileSplit fileSplit) throws IOException {
-        this.setRecordReader(new GuaguaLineRecordReader());
-        this.getRecordReader().initialize(fileSplit);
+        this.setRecordReader(new GuaguaLineRecordReader(fileSplit));
     }
 }

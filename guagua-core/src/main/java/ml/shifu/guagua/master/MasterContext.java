@@ -17,6 +17,7 @@ package ml.shifu.guagua.master;
 
 import java.util.Properties;
 
+import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.io.Bytable;
 
 /**
@@ -38,11 +39,15 @@ import ml.shifu.guagua.io.Bytable;
  * @param <WORKER_RESULT>
  *            worker result for computation in each iteration.
  */
-// TODO make it read-only, the same as WorkerContext
 public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
 
     /**
-     * Worker results for current iteration, should be set in coordination preIteration function.
+     * Worker results for current iteration, should be set in coordination preIteration function. Type of
+     * {@link #workerResults} is set as {@link Iterable} to save memory. If type is set as list, all results of workers
+     * should be set into memory while by using {@link Iterable}, only one worker result when iterating is set into
+     * memory, this is optimization for memory consumption in master.
+     * 
+     * @see AbstractMasterCoordinator#setWorkerResults
      */
     private Iterable<WORKER_RESULT> workerResults;
 
@@ -108,7 +113,7 @@ public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
      * This attachment is for {@link MasterComputable} and {@link MasterInterceptor} to transfer object. It can be set
      * by user for running time usage.
      * 
-     * @since 0.5.0
+     * @since 0.4.1
      */
     private Object attachment;
 
@@ -191,6 +196,10 @@ public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
 
     public void setAttachment(Object attachment) {
         this.attachment = attachment;
+    }
+
+    public boolean isFirstIteration() {
+        return getCurrentIteration() == GuaguaConstants.GUAGUA_FIRST_ITERATION;
     }
 
     @Override

@@ -28,8 +28,8 @@ import ml.shifu.guagua.io.Bytable;
  * 
  * <p>
  * To get global properties like Hadoop and YARN configuration properties, {@link WorkerContext#getProps()} is a wrapper
- * for Hadoop Configuration. Anything configurated by using '-D' in command line or by internal Hadoop/YARN filling can
- * be got from these properties.
+ * for Hadoop Configuration. Any configuration by using '-D' in command line or by internal Hadoop/YARN filling can be
+ * got from these properties.
  * 
  * <p>
  * {@link WorkerContext#getLastMasterResult()} is the master result from last iteration. For first iteration (current
@@ -65,10 +65,9 @@ public interface WorkerComputable<MASTER_RESULT extends Bytable, WORKER_RESULT e
      * @param context
      *            the worker context instance which includes worker info, master result of last iteration or other
      *            useful into for each iteration.
-     * @return
-     *         the worker result of each iteration.
+     * @return the worker result of each iteration.
      * @throws IOException
-     *             any io exception in computation, for example, IOException in reading data.
+     *             if any io exception in computation, for example, IOException in reading data.
      */
     WORKER_RESULT compute(WorkerContext<MASTER_RESULT, WORKER_RESULT> context) throws IOException;
 

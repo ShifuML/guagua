@@ -86,7 +86,7 @@ import com.google.common.collect.Maps;
 public class GuaguaYarnClient extends Configured {
 
     private static final Logger LOG = LoggerFactory.getLogger(GuaguaYarnClient.class);
-    
+
     static {
         // pick up new conf XML file and populate it with stuff exported from client
         Configuration.addDefaultResource(GuaguaConstants.GUAGUA_SITE_FILE);
@@ -130,6 +130,8 @@ public class GuaguaYarnClient extends Configured {
      * Application starting time.
      */
     private long startTime;
+
+    private List<InputSplit> inputSplits;
 
     /**
      * Default constructor. Use {@link YarnConfiguration} as default conf setting.
@@ -633,8 +635,6 @@ public class GuaguaYarnClient extends Configured {
             return -1;
         }
     }
-
-    private List<InputSplit> inputSplits;
 
     /**
      * Prepare input splits for containers

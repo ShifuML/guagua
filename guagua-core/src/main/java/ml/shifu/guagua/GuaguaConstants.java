@@ -97,7 +97,10 @@ public final class GuaguaConstants {
 
     public static final String GUAGUA_WORKER_HALT_ENABLE = "guagua.worker.halt.enable";
 
-    public static final String GUAGUA_WORKER_DEFAULT_HALT_ENABLE = "true";
+    /**
+     * @since 0.5.0, change from true to false.
+     */
+    public static final String GUAGUA_WORKER_DEFAULT_HALT_ENABLE = "false";
 
     public static final String GUAGUA_SPLIT_MAX_COMBINED_SPLIT_SIZE = "guagua.split.maxCombinedSplitSize";
 
@@ -133,5 +136,7 @@ public final class GuaguaConstants {
     public static final long GUAGUA_DEFAULT_COMPUTATION_TIME_THRESHOLD = 60 * 1000l;
 
     public static final String GUAGUA_SITE_FILE = "guagua-site.xml";
+
+    public static final int GUAGUA_FIRST_ITERATION = 1;
 
 }

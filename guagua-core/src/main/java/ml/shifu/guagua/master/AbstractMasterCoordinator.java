@@ -17,11 +17,13 @@ package ml.shifu.guagua.master;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import ml.shifu.guagua.BasicCoordinator;
 import ml.shifu.guagua.GuaguaConstants;
+import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.util.NumberFormatUtils;
@@ -57,11 +59,12 @@ public abstract class AbstractMasterCoordinator<MASTER_RESULT extends Bytable, W
             @Override
             public void doExecute() throws KeeperException, InterruptedException {
                 // update master halt status.
+                // commented this line: since 0.5.0 only master will be allowed to halt whole guagua app, no matter what
+                // halt status in worker result, it will be ingnored.
                 updateMasterHaltStatus(context);
 
                 // create worker znode in next iteration: '/_guagua/<jobId>/workers/2' to avoid re-create znode from
                 // workers
-
                 String workerBaseNode = null;
                 try {
                     workerBaseNode = getWorkerBaseNode(context.getAppId(), context.getCurrentIteration() + 1)
@@ -226,31 +229,70 @@ public abstract class AbstractMasterCoordinator<MASTER_RESULT extends Bytable, W
     }
 
     /**
-     * Set worker result from znodes.
+     * Set worker results from znodes.
      */
     protected void setWorkerResults(final MasterContext<MASTER_RESULT, WORKER_RESULT> context,
-            final String appCurrentWorkersNode, String appId, int iteration) throws KeeperException,
+            final String appCurrentWorkersNode, final String appId, final int iteration) throws KeeperException,
             InterruptedException {
         // No need to get data from init step since in that step there is no results setting.
         if(context.getCurrentIteration() == GuaguaConstants.GUAGUA_INIT_STEP) {
             return;
         }
-        List<String> workerChildern = getZooKeeper().getChildrenExt(appCurrentWorkersNode, false, false, false);
-        List<WORKER_RESULT> workerResults = new LinkedList<WORKER_RESULT>();
-        for(String worker: workerChildern) {
-            String appCurrentWorkerSplitNode = getCurrentWorkerSplitNode(appId, worker, iteration).toString();
-            byte[] data = getBytesFromZNode(appCurrentWorkersNode + GuaguaConstants.ZOOKEEPER_SEPARATOR + worker,
-                    appCurrentWorkerSplitNode);
-            if(data != null) {
-                WORKER_RESULT workerResult = getWorkerSerializer().bytesToObject(data,
-                        context.getWorkerResultClassName());
-                workerResults.add(workerResult);
+        final List<String> workerChildern = getZooKeeper().getChildrenExt(appCurrentWorkersNode, false, false, false);
+
+        context.setWorkerResults(new Iterable<WORKER_RESULT>() {
+            @Override
+            public Iterator<WORKER_RESULT> iterator() {
+                return new Iterator<WORKER_RESULT>() {
+
+                    private Iterator<String> itr;
+
+                    private volatile AtomicBoolean isStart = new AtomicBoolean();
+
+                    @Override
+                    public boolean hasNext() {
+                        if(this.isStart.compareAndSet(false, true)) {
+                            this.itr = workerChildern.iterator();
+                        }
+                        boolean hasNext = this.itr.hasNext();
+                        if(!hasNext) {
+                            // to make sure it can be iterated again, it shouldn't be a good case for iterator, we will
+                            // iterate again to check if all workers are halt.
+                            this.itr = workerChildern.iterator();
+                            return false;
+                        }
+                        return hasNext;
+                    }
+
+                    @Override
+                    public WORKER_RESULT next() {
+                        String worker = this.itr.next();
+                        String appCurrentWorkerSplitNode = getCurrentWorkerSplitNode(appId, worker, iteration)
+                                .toString();
+                        byte[] data = null;
+                        try {
+                            data = getBytesFromZNode(appCurrentWorkersNode + GuaguaConstants.ZOOKEEPER_SEPARATOR
+                                    + worker, appCurrentWorkerSplitNode);
+                        } catch (KeeperException e) {
+                            throw new GuaguaRuntimeException(e);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                        if(data != null) {
+                            WORKER_RESULT workerResult = getWorkerSerializer().bytesToObject(data,
+                                    context.getWorkerResultClassName());
+                            return workerResult;
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
             }
-            data = null;
-        }
-        context.setWorkerResults(workerResults);
-        // change it to debug because of workerResult is very big for over thousands workers
-        LOG.debug("worker results got in master:{}", workerResults);
+        });
     }
 
     /**
@@ -274,12 +316,15 @@ public abstract class AbstractMasterCoordinator<MASTER_RESULT extends Bytable, W
      * Check whether all workers are halted.
      */
     protected boolean isAllWorkersHalt(final Iterable<WORKER_RESULT> workerResults) {
+        // This boolean is for a bug, if no element in worker results, return true is not correct, should return false.
+        boolean isHasWorkerResults = false;
         for(WORKER_RESULT workerResult: workerResults) {
+            isHasWorkerResults = true;
             if(!(workerResult instanceof HaltBytable) || !((HaltBytable) workerResult).isHalt()) {
                 return false;
             }
         }
-        return true;
+        return isHasWorkerResults ? true : false;
     }
 
     /**
