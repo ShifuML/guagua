@@ -213,12 +213,17 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         MASTER_RESULT masterResult = null;
 
         if(this.isMonitored) {
+            if(this.executor.isTerminated() || this.executor.isShutdown()) {
+                // rebuild this executor if executor is shutdown
+                this.executor = Executors.newSingleThreadExecutor();
+            }
+
             ComputableMonitor monitor = masterComputable.getClass().getAnnotation(ComputableMonitor.class);
             TimeUnit unit = monitor.timeUnit();
             long duration = monitor.duration();
 
             try {
-                masterResult = executor.submit(new Callable<MASTER_RESULT>() {
+                masterResult = this.executor.submit(new Callable<MASTER_RESULT>() {
                     @Override
                     public MASTER_RESULT call() throws Exception {
                         return masterComputable.compute(context);
@@ -230,6 +235,8 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                 LOG.error("Error in master computation:", e);
             } catch (TimeoutException e) {
                 LOG.warn("Time out for master computation, null will be returned");
+                // We should use shutdown to terminate computation in current iteration
+                executor.shutdownNow();
                 masterResult = null;
             }
 

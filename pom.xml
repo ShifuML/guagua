@@ -181,6 +181,7 @@
         <module>guagua-mapreduce</module>
         <module>guagua-yarn</module>
         <module>guagua-client</module>
+        <!-- <module>guagua-examples</module> -->
         <module>guagua-mapreduce-examples</module>
         <module>guagua-yarn-examples</module>
     </modules>

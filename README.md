@@ -6,7 +6,7 @@ An iterative computing framework on both Hadoop MapReduce and Hadoop YARN.
 
 ## Getting Started
 
-Please visit [Guagua site](http://shifu.ml/docs/stable/guide/guagua/) for tutorials.
+Please visit [Guagua site](http://shifu.ml/docs/guagua/) for tutorials.
 
 ## What is Guagua?
 **Guagua**, a sub-project of Shifu, is a distributed, pluggable and scalable iterative computing framework based on Hadoop MapReduce and YARN.
