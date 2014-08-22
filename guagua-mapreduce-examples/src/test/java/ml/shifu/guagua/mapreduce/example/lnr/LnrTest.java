@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ml.shifu.guagua.mapreduce.example.lr;
+package ml.shifu.guagua.mapreduce.example.lnr;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -25,22 +25,22 @@ import ml.shifu.guagua.unit.GuaguaUnitDriver;
 import org.junit.Test;
 
 /**
- * {@link LrTest} is used to test out logistic regression implementation.
+ * {@link LnrTest} TODO
  */
-public class LrTest {
+public class LnrTest {
 
     @Test
     public void testLrApp() throws IOException {
         Properties props = new Properties();
-        props.setProperty(GuaguaConstants.MASTER_COMPUTABLE_CLASS, LogisticRegressionMaster.class.getName());
-        props.setProperty(GuaguaConstants.WORKER_COMPUTABLE_CLASS, LogisticRegressionWorker.class.getName());
+        props.setProperty(GuaguaConstants.MASTER_COMPUTABLE_CLASS, LinearRegressionMaster.class.getName());
+        props.setProperty(GuaguaConstants.WORKER_COMPUTABLE_CLASS, LinearRegressionWorker.class.getName());
         props.setProperty(GuaguaConstants.GUAGUA_ITERATION_COUNT, "20");
-        props.setProperty(GuaguaConstants.GUAGUA_MASTER_RESULT_CLASS, LogisticRegressionParams.class.getName());
-        props.setProperty(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS, LogisticRegressionParams.class.getName());
+        props.setProperty(GuaguaConstants.GUAGUA_MASTER_RESULT_CLASS, LinearRegressionParams.class.getName());
+        props.setProperty(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS, LinearRegressionParams.class.getName());
 
-        props.setProperty(GuaguaConstants.GUAGUA_INPUT_DIR, getClass().getResource("/lr").toString());
+        props.setProperty(GuaguaConstants.GUAGUA_INPUT_DIR, getClass().getResource("/lnr").toString());
 
-        GuaguaUnitDriver<LogisticRegressionParams, LogisticRegressionParams> driver = new GuaguaMRUnitDriver<LogisticRegressionParams, LogisticRegressionParams>(
+        GuaguaUnitDriver<LinearRegressionParams, LinearRegressionParams> driver = new GuaguaMRUnitDriver<LinearRegressionParams, LinearRegressionParams>(
                 props);
 
         driver.run();
