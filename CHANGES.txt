@@ -16,6 +16,15 @@
  
 Guagua Change Logs
 
+Changes for Guagua-0.5.0
+    * Add annotation ComputableMonitor to support worker time out for each iteration. 
+    * Change worker results in MasterContext from a List to Iteratable to save memory in master.
+    * Add logistic regression example in guagua-mapreduce-examples.
+	* Add linear regression example in guagua-mapreduce-examples.
+Changes for Guagua-0.4.2
+    * Add internal(embeded) ZooKeeper support.
+    * Add default total iteration number if user don't set '-c'.
+    * Improve readme and other guagua docs.
 Changes for Guagua-0.4.1
     * Improve guagua shell to follow hadoop command.
     * Add kmeans example in guagua-mapreduce-examples.
