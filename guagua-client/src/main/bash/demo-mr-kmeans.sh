@@ -42,7 +42,7 @@ hadoop fs -put $BIN_DIR/../data/kmeans /user/$USER/
 #  '-Dkmeans.data.output=kmeans-tags': new data file folder with tag at last column
 #  '-Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansCentriodsOutput': User master interceptors
 
-./guagua jar ../mapreduce-lib/guagua-mapreduce-examples-0.5.0-SNAPSHOT.jar \
+$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-mapreduce-examples-0.5.0-SNAPSHOT.jar \
         -i kmeans  \
         -w ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorker  \
         -m ml.shifu.guagua.mapreduce.example.kmeans.KMeansMaster  \

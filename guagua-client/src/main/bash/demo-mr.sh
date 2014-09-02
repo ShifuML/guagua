@@ -37,7 +37,7 @@ hadoop fs -put $BIN_DIR/../data/sum /user/$USER/
 #  '-Dguagua.sum.output=sum-output': Output file, this is used in 'ml.shifu.guagua.mapreduce.example.sum.SumOutput'
 #  '-Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.sum.SumOutput': User master intercepters
 
-./guagua jar ../mapreduce-lib/guagua-mapreduce-examples-0.5.0-SNAPSHOT.jar \
+$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-mapreduce-examples-0.5.0-SNAPSHOT.jar \
         -i sum  \
         -w ml.shifu.guagua.mapreduce.example.sum.SumWorker  \
         -m ml.shifu.guagua.mapreduce.example.sum.SumMaster  \

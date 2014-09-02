@@ -43,8 +43,8 @@ hadoop fs -put $BIN_DIR/../data/sum /user/$USER/
 #  '-Dguagua.master.intercepters=ml.shifu.guagua.yarn.example.sum.SumOutput': User master intercepters, SumOutput is 
 #        used to save global sum result to HDFS.
 
-./guagua -y \
-        jar ../yarn-lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar \
+$BIN_DIR/guagua -y \
+        jar $BIN_DIR/../yarn-lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar \
         -i sum  \
         -w ml.shifu.guagua.yarn.example.sum.SumWorker  \
         -m ml.shifu.guagua.yarn.example.sum.SumMaster  \
