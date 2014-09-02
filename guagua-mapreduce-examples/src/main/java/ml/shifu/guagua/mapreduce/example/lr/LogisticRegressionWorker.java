@@ -28,9 +28,10 @@ import ml.shifu.guagua.worker.WorkerContext;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.thirdparty.guava.common.base.Splitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Splitter;
 
 /**
  * {@link LogisticRegressionWorker} defines logic to accumulate local <a
