@@ -66,19 +66,19 @@ public abstract class AbstractWorkerComputable<MASTER_RESULT extends Bytable, WO
      * @see ml.shifu.guagua.worker.WorkerComputable#compute(ml.shifu.guagua.worker.WorkerContext)
      */
     @Override
-    public WORKER_RESULT compute(WorkerContext<MASTER_RESULT, WORKER_RESULT> workerContext) throws IOException {
+    public WORKER_RESULT compute(WorkerContext<MASTER_RESULT, WORKER_RESULT> context) throws IOException {
         if(this.isLoaded.compareAndSet(false, true)) {
-            init(workerContext);
+            init(context);
 
             long start = System.nanoTime();
-            preLoad(workerContext);
+            preLoad(context);
             long count = 0;
-            for(GuaguaFileSplit fileSplit: workerContext.getFileSplits()) {
+            for(GuaguaFileSplit fileSplit: context.getFileSplits()) {
                 LOG.info("Loading filesplit: {}", fileSplit);
                 try {
                     initRecordReader(fileSplit);
                     while(getRecordReader().nextKeyValue()) {
-                        load(getRecordReader().getCurrentKey(), getRecordReader().getCurrentValue(), workerContext);
+                        load(getRecordReader().getCurrentKey(), getRecordReader().getCurrentValue(), context);
                         ++count;
                     }
                 } finally {
@@ -87,17 +87,17 @@ public abstract class AbstractWorkerComputable<MASTER_RESULT extends Bytable, WO
                     }
                 }
             }
-            postLoad(workerContext);
+            postLoad(context);
             LOG.info("Load {} records.", count);
             LOG.info("Data loading time:{}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
         }
 
         long start = System.nanoTime();
         try {
-            return doCompute(workerContext);
+            return doCompute(context);
         } finally {
-            LOG.info("Computation time for application {} container {} iteration {}: {}ms.", workerContext.getAppId(),
-                    workerContext.getContainerId(), workerContext.getCurrentIteration(),
+            LOG.info("Computation time for application {} container {} iteration {}: {}ms.", context.getAppId(),
+                    context.getContainerId(), context.getCurrentIteration(),
                     TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
         }
     }
@@ -105,13 +105,13 @@ public abstract class AbstractWorkerComputable<MASTER_RESULT extends Bytable, WO
     /**
      * Do some pre work before loading data.
      */
-    protected void preLoad(WorkerContext<MASTER_RESULT, WORKER_RESULT> workerContext) {
+    protected void preLoad(WorkerContext<MASTER_RESULT, WORKER_RESULT> context) {
     }
 
     /**
      * Do some post work before loading data.
      */
-    protected void postLoad(WorkerContext<MASTER_RESULT, WORKER_RESULT> workerContext) {
+    protected void postLoad(WorkerContext<MASTER_RESULT, WORKER_RESULT> context) {
     }
 
     /**
@@ -122,18 +122,17 @@ public abstract class AbstractWorkerComputable<MASTER_RESULT extends Bytable, WO
     /**
      * Initialization work for the whole computation
      */
-    public abstract void init(WorkerContext<MASTER_RESULT, WORKER_RESULT> workerContext);
+    public abstract void init(WorkerContext<MASTER_RESULT, WORKER_RESULT> context);
 
     /**
      * Real computation logic after data loading.
      */
-    public abstract WORKER_RESULT doCompute(WorkerContext<MASTER_RESULT, WORKER_RESULT> workerContext);
+    public abstract WORKER_RESULT doCompute(WorkerContext<MASTER_RESULT, WORKER_RESULT> context);
 
     /**
      * Load data one by one before computation.
      */
-    public abstract void load(KEY currentKey, VALUE currentValue,
-            WorkerContext<MASTER_RESULT, WORKER_RESULT> workerContext);
+    public abstract void load(KEY currentKey, VALUE currentValue, WorkerContext<MASTER_RESULT, WORKER_RESULT> context);
 
     public GuaguaRecordReader<KEY, VALUE> getRecordReader() {
         return recordReader;

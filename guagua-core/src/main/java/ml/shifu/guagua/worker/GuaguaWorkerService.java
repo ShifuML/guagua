@@ -20,9 +20,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import ml.shifu.guagua.BasicCoordinator;
+import ml.shifu.guagua.ComputableMonitor;
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.GuaguaService;
@@ -133,6 +139,16 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     private static final int COUNT_THRESHOLD = 3;
 
     /**
+     * Single thread executor to execute master computation if {@link #masterComputable} is monitored.
+     */
+    private ExecutorService executor;
+
+    /**
+     * If {@link #masterComputable} is monitored by {@link ComputableMonitor}.
+     */
+    private boolean isMonitored;
+
+    /**
      * Start services from interceptors, all services started logic should be wrapperd in
      * {@link WorkerInterceptor#preApplication(WorkerContext)};
      */
@@ -150,6 +166,11 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
      */
     @Override
     public void stop() {
+        // shut down executor firstly
+        if(this.isMonitored && this.executor != null) {
+            this.executor.shutdown();
+        }
+
         WorkerContext<MASTER_RESULT, WORKER_RESULT> context = buildContext();
         // the last iteration is used to stop all workers.
         context.setCurrentIteration(context.getCurrentIteration() + 1);
@@ -195,7 +216,7 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     /**
      * Call each iteration computation and preIteration, postIteration in interceptors.
      */
-    protected WORKER_RESULT iterate(WorkerContext<MASTER_RESULT, WORKER_RESULT> context, int initialIteration,
+    protected WORKER_RESULT iterate(final WorkerContext<MASTER_RESULT, WORKER_RESULT> context, int initialIteration,
             Progressable progress) {
         int iteration = context.getCurrentIteration();
         String status = "Start worker iteration ( %s/%s ), progress %s%%";
@@ -214,11 +235,41 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                     ((iteration - 1) * 100 / getTotalIteration())), false, false);
         }
         long start = System.nanoTime();
-        WORKER_RESULT workerResult;
+        WORKER_RESULT workerResult = null;
         boolean isKill = false;
         try {
-            workerResult = this.workerComputable.compute(context);
-            // Set worker result for
+
+            if(this.isMonitored) {
+                if(this.executor.isTerminated() || this.executor.isShutdown()) {
+                    // rebuild this executor if executor is shutdown
+                    this.executor = Executors.newSingleThreadExecutor();
+                }
+
+                ComputableMonitor monitor = workerComputable.getClass().getAnnotation(ComputableMonitor.class);
+                TimeUnit unit = monitor.timeUnit();
+                long duration = monitor.duration();
+
+                try {
+                    workerResult = executor.submit(new Callable<WORKER_RESULT>() {
+                        @Override
+                        public WORKER_RESULT call() throws Exception {
+                            return workerComputable.compute(context);
+                        }
+                    }).get(duration, unit);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException e) {
+                    LOG.error("Error in master computation:", e);
+                } catch (TimeoutException e) {
+                    LOG.warn("Time out for master computation, null will be returned");
+                    // We should use shutdown to terminate computation in current iteration
+                    executor.shutdownNow();
+                    workerResult = null;
+                }
+            } else {
+                workerResult = this.workerComputable.compute(context);
+            }
+            // Set worker result
             context.setWorkerResult(workerResult);
 
             long time = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
@@ -280,6 +331,11 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         checkAndSetWorkerInterceptors(props);
 
         this.setWorkerComputable(newWorkerComputable());
+        this.isMonitored = this.getWorkerComputable().getClass().isAnnotationPresent(ComputableMonitor.class);
+        if(this.isMonitored) {
+            this.executor = Executors.newSingleThreadExecutor();
+        }
+
         this.setTotalIteration(Integer.valueOf(this.getProps().getProperty(GuaguaConstants.GUAGUA_ITERATION_COUNT,
                 Integer.MAX_VALUE + "")));
         this.setMasterResultClassName(this.getProps().getProperty(GuaguaConstants.GUAGUA_MASTER_RESULT_CLASS));

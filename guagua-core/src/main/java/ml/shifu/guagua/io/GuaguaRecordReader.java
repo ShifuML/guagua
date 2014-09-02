@@ -36,7 +36,7 @@ public interface GuaguaRecordReader<KEY extends Bytable, VALUE extends Bytable> 
     /**
      * Initialize file split for user to create relative reader instance.
      */
-    void initialize(GuaguaFileSplit genericSplit) throws IOException;
+    void initialize(GuaguaFileSplit split) throws IOException;
 
     /**
      * Cursor shift to next and set current key value.

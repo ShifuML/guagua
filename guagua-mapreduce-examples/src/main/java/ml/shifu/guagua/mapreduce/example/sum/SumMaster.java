@@ -15,6 +15,7 @@
  */
 package ml.shifu.guagua.mapreduce.example.sum;
 
+import ml.shifu.guagua.ComputableMonitor;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.mapreduce.GuaguaWritableAdapter;
 import ml.shifu.guagua.master.MasterComputable;
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * If sum value is larger than 1000000L, use {@link HaltBytable} to stop iteration.
  */
+@ComputableMonitor
 public class SumMaster implements
         MasterComputable<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> {
 
@@ -54,6 +56,7 @@ public class SumMaster implements
         if(sum > 1000000L) {
             result.setHalt(true);
         }
+
         return result;
     }
 

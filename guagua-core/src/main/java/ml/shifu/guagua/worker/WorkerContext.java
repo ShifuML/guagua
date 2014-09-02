@@ -18,6 +18,7 @@ package ml.shifu.guagua.worker;
 import java.util.List;
 import java.util.Properties;
 
+import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.GuaguaFileSplit;
 
@@ -99,7 +100,7 @@ public class WorkerContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
      * This attachment is for {@link WorkerComputable} and {@link WorkerInterceptor} to transfer object. It can be set
      * by user for running time usage.
      * 
-     * @since 0.5.0
+     * @since 0.4.1
      */
     private Object attachment;
 
@@ -172,6 +173,10 @@ public class WorkerContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
 
     public void setAttachment(Object attachment) {
         this.attachment = attachment;
+    }
+
+    public boolean isFirstIteration() {
+        return getCurrentIteration() == GuaguaConstants.GUAGUA_FIRST_ITERATION;
     }
 
     @Override

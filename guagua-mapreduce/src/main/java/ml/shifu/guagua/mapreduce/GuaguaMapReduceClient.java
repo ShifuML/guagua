@@ -64,6 +64,11 @@ import org.slf4j.LoggerFactory;
  */
 public class GuaguaMapReduceClient {
 
+    static {
+        // pick up new conf XML file and populate it with stuff exported from client
+        Configuration.addDefaultResource(GuaguaConstants.GUAGUA_SITE_FILE);
+    }
+
     private static final Logger LOG = LoggerFactory.getLogger(GuaguaMapReduceClient.class);
 
     private static final String INIT_JOB_ID_PREFIX = "Guagua-MapReduce-";
@@ -239,10 +244,8 @@ public class GuaguaMapReduceClient {
         Configuration conf = new Configuration();
         // set it here to make it can be over-written. Set task timeout to a long period 15 minutes.
         conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 900000);
-
         GuaguaOptionsParser parser = new GuaguaOptionsParser(conf, args);
         CommandLine cmdLine = parser.getCommandLine();
-
         checkInputSetting(conf, cmdLine);
         checkZkServerSetting(conf, cmdLine);
         checkWorkerClassSetting(conf, cmdLine);

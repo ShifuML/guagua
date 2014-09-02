@@ -201,7 +201,6 @@ public class GuaguaAppMaster {
      */
     private static Map<String, LocalResource> localResources;
 
-    // TODO
     /**
      * For status update for clients - yet to be implemented\\
      * Hostname of the container

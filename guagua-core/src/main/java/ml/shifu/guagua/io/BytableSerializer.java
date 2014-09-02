@@ -29,7 +29,7 @@ import ml.shifu.guagua.util.ReflectionUtils;
  * {@link BytableSerializer} is used to write {@link Bytable} object to bytes and read bytes to {@link Bytable} object.
  * 
  * <p>
- * This is the default serializer for guagua.
+ * This is the default serializer in guagua.
  */
 public class BytableSerializer<RESULT extends Bytable> implements Serializer<RESULT> {
 

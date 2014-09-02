@@ -55,7 +55,7 @@ public class NNMaster implements MasterComputable<NNParams, NNParams> {
     private AtomicBoolean isInitialized = new AtomicBoolean(false);
 
     /**
-     * To calculate weights according to last weights and accumulated gradients
+     * To calculate weights according to last weights and accumulated gradients.
      */
     private Weight weightCalculator = null;
 

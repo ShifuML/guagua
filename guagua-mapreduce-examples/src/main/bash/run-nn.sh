@@ -19,11 +19,11 @@
 OLD_HADOOP_CLASSPATH="$HADOOP_CLASSPATH"
 
 # set new HADOOP_CLASSPATH to run guagua
-export HADOOP_CLASSPATH="../lib/guagua-mapreduce-examples-0.4.2.jar:../lib/guava-14.0.1.jar:../lib/encog-core-3.0.0.jar:../lib/guagua-mapreduce-0.4.2.jar:../lib/guagua-core-0.4.2.jar:../lib/zookeeper-3.4.5.jar"
+export HADOOP_CLASSPATH="../lib/guagua-mapreduce-examples-0.5.0.jar:../lib/guava-14.0.1.jar:../lib/encog-core-3.0.0.jar:../lib/guagua-mapreduce-0.5.0.jar:../lib/guagua-core-0.5.0.jar:../lib/zookeeper-3.4.5.jar"
 
-hadoop jar ../lib/guagua-mapreduce-0.4.2.jar \
+hadoop jar ../lib/guagua-mapreduce-0.5.0.jar \
     ml.shifu.guagua.mapreduce.GuaguaMapReduceClient   \
-    -libjars ../lib/guagua-mapreduce-examples-0.4.2.jar,../lib/guava-14.0.1.jar,../lib/encog-core-3.0.0.jar,../lib/guagua-mapreduce-0.4.2.jar,../lib/guagua-core-0.4.2.jar,../lib/zookeeper-3.4.5.jar \
+    -libjars ../lib/guagua-mapreduce-examples-0.5.0.jar,../lib/guava-14.0.1.jar,../lib/encog-core-3.0.0.jar,../lib/guagua-mapreduce-0.5.0.jar,../lib/guagua-core-0.5.0.jar,../lib/zookeeper-3.4.5.jar \
     -i nn  \
     -inputformat ml.shifu.guagua.mapreduce.example.nn.NNInputFormat \
     -w ml.shifu.guagua.mapreduce.example.nn.NNWorker  \

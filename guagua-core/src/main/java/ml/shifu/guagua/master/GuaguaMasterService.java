@@ -19,8 +19,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import ml.shifu.guagua.BasicCoordinator;
+import ml.shifu.guagua.ComputableMonitor;
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.GuaguaService;
@@ -133,6 +140,16 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
      */
     private InMemoryCoordinator<MASTER_RESULT, WORKER_RESULT> coordinator;
 
+    /**
+     * Single thread executor to execute master computation if {@link #masterComputable} is monitored.
+     */
+    private ExecutorService executor;
+
+    /**
+     * If {@link #masterComputable} is monitored by {@link ComputableMonitor}.
+     */
+    private boolean isMonitored;
+
     /*
      * (non-Javadoc)
      * 
@@ -177,7 +194,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     /**
      * Call each iteration computation and preIteration, postIteration in interceptors.
      */
-    protected MASTER_RESULT iterate(MasterContext<MASTER_RESULT, WORKER_RESULT> context, int iteration,
+    protected MASTER_RESULT iterate(final MasterContext<MASTER_RESULT, WORKER_RESULT> context, int iteration,
             Progressable progress) {
         String status = "Start master iteration ( %s/%s ), progress %s%%";
         if(progress != null) {
@@ -193,8 +210,41 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                     ((iteration - 1) * 100 / getTotalIteration())), false, false);
         }
 
-        MASTER_RESULT masterResult = masterComputable.compute(context);
+        MASTER_RESULT masterResult = null;
+
+        if(this.isMonitored) {
+            if(this.executor.isTerminated() || this.executor.isShutdown()) {
+                // rebuild this executor if executor is shutdown
+                this.executor = Executors.newSingleThreadExecutor();
+            }
+
+            ComputableMonitor monitor = masterComputable.getClass().getAnnotation(ComputableMonitor.class);
+            TimeUnit unit = monitor.timeUnit();
+            long duration = monitor.duration();
+
+            try {
+                masterResult = this.executor.submit(new Callable<MASTER_RESULT>() {
+                    @Override
+                    public MASTER_RESULT call() throws Exception {
+                        return masterComputable.compute(context);
+                    }
+                }).get(duration, unit);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                LOG.error("Error in master computation:", e);
+            } catch (TimeoutException e) {
+                LOG.warn("Time out for master computation, null will be returned");
+                // We should use shutdown to terminate computation in current iteration
+                executor.shutdownNow();
+                masterResult = null;
+            }
+
+        } else {
+            masterResult = masterComputable.compute(context);
+        }
         context.setMasterResult(masterResult);
+
         // the reverse order with preIteration to make sure a complete wrapper for masterComputable.
         status = "Complete master computing ( %s/%s ), progress %s%%";
         if(progress != null) {
@@ -229,6 +279,11 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
      */
     @Override
     public void stop() {
+        // shut down executor firstly
+        if(this.isMonitored && this.executor != null) {
+            this.executor.shutdown();
+        }
+
         MasterContext<MASTER_RESULT, WORKER_RESULT> context = buildContext();
         // the last iteration is used to stop all workers.
         context.setCurrentIteration(context.getCurrentIteration() + 1);
@@ -261,6 +316,10 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         this.setProps(props);
         checkAndSetMasterInterceptors(props);
         this.setMasterComputable(newMasterComputable());
+        this.isMonitored = this.getMasterComputable().getClass().isAnnotationPresent(ComputableMonitor.class);
+        if(this.isMonitored) {
+            this.executor = Executors.newSingleThreadExecutor();
+        }
         this.setTotalIteration(Integer.valueOf(this.getProps().getProperty(GuaguaConstants.GUAGUA_ITERATION_COUNT,
                 Integer.MAX_VALUE + "")));
         this.setWorkers(Integer.valueOf(this.getProps().getProperty(GuaguaConstants.GUAGUA_WORKER_NUMBER)));
