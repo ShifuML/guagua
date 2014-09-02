@@ -321,8 +321,6 @@ public final class ZooKeeperUtils {
                     host = server;
                     port = DEFAULT_ZK_PORT + "";
                 }
-                System.out.println(host);
-                System.out.println(port);
                 if(isServerAlive(host, Integer.parseInt(port))) {
                     return true;
                 }
