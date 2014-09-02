@@ -192,7 +192,7 @@ public final class ZooKeeperUtils {
             }
         }
 
-        return i == RETRY_COUNT;
+        return i < RETRY_COUNT;
     }
 
     /**
@@ -319,7 +319,10 @@ public final class ZooKeeperUtils {
                     port = hostAndPort[1].trim();
                 } else {
                     host = server;
+                    port = DEFAULT_ZK_PORT + "";
                 }
+                System.out.println(host);
+                System.out.println(port);
                 if(isServerAlive(host, Integer.parseInt(port))) {
                     return true;
                 }
@@ -327,4 +330,5 @@ public final class ZooKeeperUtils {
         }
         return false;
     }
+
 }
