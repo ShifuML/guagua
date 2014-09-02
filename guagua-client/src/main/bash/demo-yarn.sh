@@ -36,7 +36,7 @@ hadoop fs -put $BIN_DIR/../data/sum /user/$USER/
 #  '-n Guagua-Sum-Master-Workers-Job': Hadoop job name or YARN application name specified
 #  '-mr org.apache.hadoop.io.LongWritable': Master result class setting
 #  '-wr org.apache.hadoop.io.LongWritable': Worker result class setting
-#  '../yarn-lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar': Jar files include master, worker and user intercepters
+#  '../yarn-lib/guagua-yarn-examples-0.5.0.jar': Jar files include master, worker and user intercepters
 #  '-Dmapred.job.queue.name=default': Queue name setting
 #  '-Dguagua.yarn.queue.name=default': Queue name setting for guagua YARN application
 #  '-Dguagua.sum.output=sum-output': Output file, this is used in 'ml.shifu.guagua.yarn.example.sum.SumOutput'
@@ -44,7 +44,7 @@ hadoop fs -put $BIN_DIR/../data/sum /user/$USER/
 #        used to save global sum result to HDFS.
 
 $BIN_DIR/guagua -y \
-        jar $BIN_DIR/../yarn-lib/guagua-yarn-examples-0.5.0-SNAPSHOT.jar \
+        jar $BIN_DIR/../yarn-lib/guagua-yarn-examples-0.5.0.jar \
         -i sum  \
         -w ml.shifu.guagua.yarn.example.sum.SumWorker  \
         -m ml.shifu.guagua.yarn.example.sum.SumMaster  \
