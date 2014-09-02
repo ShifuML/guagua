@@ -131,12 +131,10 @@ public class LogisticRegressionWorker
         double[] inputData = new double[inputNum + 1];
         double[] outputData = new double[outputNum];
         int count = 0, inputIndex = 0, outputIndex = 0;
+        inputData[inputIndex++] = 1.0d;
         for(String unit: splitter.split(line)) {
             if(count < inputNum) {
                 inputData[inputIndex++] = Double.valueOf(unit);
-                if(count == inputNum - 1) {
-                    inputData[inputIndex++] = 1.0d;
-                }
             } else if(count >= inputNum && count < (inputNum + outputNum)) {
                 outputData[outputIndex++] = Double.valueOf(unit);
             } else {
@@ -144,7 +142,6 @@ public class LogisticRegressionWorker
             }
             count++;
         }
-
         this.dataList.add(new Data(inputData, outputData));
     }
 

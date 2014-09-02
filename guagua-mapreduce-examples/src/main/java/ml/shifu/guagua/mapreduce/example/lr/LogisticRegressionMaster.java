@@ -41,6 +41,8 @@ import org.slf4j.LoggerFactory;
  * <li>3. Send new global model to workers by returning model parameters.</li>
  * </ul>
  */
+// FIXME miss one parameter: size, the formula should be weights[i] -= learnRate * (1/size) * gradients[i]; pass from
+// workers
 public class LogisticRegressionMaster implements MasterComputable<LogisticRegressionParams, LogisticRegressionParams> {
 
     private static final Logger LOG = LoggerFactory.getLogger(LogisticRegressionMaster.class);
@@ -82,7 +84,7 @@ public class LogisticRegressionMaster implements MasterComputable<LogisticRegres
                 size++;
             }
             for(int i = 0; i < weights.length; i++) {
-                weights[i] = weights[i] - learnRate * gradients[i];
+                weights[i] -= learnRate * gradients[i];
             }
             LOG.debug("DEBUG: Weights: {}", Arrays.toString(this.weights));
             LOG.info("Iteration {} with error {}", context.getCurrentIteration(), sumError / size);

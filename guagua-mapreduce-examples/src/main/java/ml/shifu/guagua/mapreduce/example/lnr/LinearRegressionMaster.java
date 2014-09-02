@@ -81,7 +81,7 @@ public class LinearRegressionMaster implements MasterComputable<LinearRegression
                 size++;
             }
             for(int i = 0; i < weights.length; i++) {
-                weights[i] = weights[i] - learnRate * gradients[i];
+                weights[i] -= learnRate * gradients[i];
             }
             LOG.info("DEBUG: Weights: {}", Arrays.toString(this.weights));
             LOG.info("Iteration {} with error {}", context.getCurrentIteration(), sumError / size);
