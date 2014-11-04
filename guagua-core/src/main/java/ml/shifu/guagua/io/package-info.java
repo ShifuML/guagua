@@ -25,7 +25,6 @@
  * <p>
  * Compressed serialzer like {@link com.paypal.guagua.io.GZIPBytableSerializer} is used to support gz format. And 
  * {@link com.paypal.guagua.io.Bzip2BytableSerializer} is for bz2 format.
- * 
  */
 package ml.shifu.guagua.io;
 

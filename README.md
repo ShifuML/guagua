@@ -20,4 +20,4 @@ Typical use cases for **Guagua** are distributed machine learning model training
 
 ## Copyright and License
 
-Copyright 2013-2014, eBay Software Foundation under [the Apache License](LICENSE.txt).
+Copyright 2013-2014, eBay Software Foundation under [Apache License V2.0](LICENSE.txt).

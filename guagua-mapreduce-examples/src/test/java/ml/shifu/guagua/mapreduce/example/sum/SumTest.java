@@ -53,7 +53,8 @@ public class SumTest {
 
         props.setProperty("guagua.sum.output", SUM_OUTPUT);
 
-        GuaguaUnitDriver<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> driver = new GuaguaMRUnitDriver<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>>(
+        GuaguaUnitDriver<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> driver = 
+                new GuaguaMRUnitDriver<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>>(
                 props);
 
         driver.run();

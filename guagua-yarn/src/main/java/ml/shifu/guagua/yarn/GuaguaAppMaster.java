@@ -320,7 +320,6 @@ public class GuaguaAppMaster {
     public boolean run() throws YarnException, IOException {
         boolean success = false;
         try {
-
             // 1. get input from conf, generate input splits like GuaguaMapReduce
             // 2. store all splits into conf and export to hdfs
             // 3. for each conntainer, according to container host and split host to select a partition to the container

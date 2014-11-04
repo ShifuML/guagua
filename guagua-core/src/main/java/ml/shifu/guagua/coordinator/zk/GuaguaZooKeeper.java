@@ -474,7 +474,6 @@ public class GuaguaZooKeeper {
                 if(sequenceSorted) {
                     Collections.sort(childList, sequenceComparator);
                 }
-                // remove guava dependency to avoid making core depending on two many libs.
                 if(fullPath) {
                     List<String> fullChildList = new ArrayList<String>();
                     for(String child: childList) {
@@ -483,6 +482,49 @@ public class GuaguaZooKeeper {
                     return fullChildList;
                 }
                 return childList;
+            }
+        });
+    }
+
+    /**
+     * Get the children of the path with extensions.
+     * Extension 1: Sort the children based on sequence number
+     * Extension 2: Get the full path instead of relative path
+     * Extension 3: Filter some path out
+     * 
+     * @param path
+     *            path to znode
+     * @param watch
+     *            set the watch?
+     * @param sequenceSorted
+     *            sort by the sequence number
+     * @param fullPath
+     *            if true, get the fully znode path back
+     * @param filter
+     *            filter some path out if not null.
+     * @return list of children
+     * @throws InterruptedException
+     * @throws KeeperException
+     *             Both KeeperException InterruptedException are thrown from {@link ZooKeeper} methods.
+     */
+    public List<String> getChildrenExt(final String path, final boolean watch, final boolean sequenceSorted,
+            final boolean fullPath, final Filter filter) throws KeeperException, InterruptedException {
+        return retryOperation(new GuaguaZooKeeperOperation<List<String>>() {
+            @Override
+            public List<String> execute() throws KeeperException, InterruptedException {
+                List<String> childList = getZooKeeper().getChildren(path, watch);
+                /* Sort children according to the sequence number, if desired */
+                if(sequenceSorted) {
+                    Collections.sort(childList, sequenceComparator);
+                }
+                List<String> result = new ArrayList<String>();
+                for(String child: childList) {
+                    String realPath = fullPath ? (path + GuaguaConstants.ZOOKEEPER_SEPARATOR + child) : child;
+                    if(filter == null || !filter.filter(realPath)) {
+                        result.add(realPath);
+                    }
+                }
+                return result;
             }
         });
     }
@@ -566,5 +608,12 @@ public class GuaguaZooKeeper {
 
     public long getRetryWaitMsecs() {
         return retryWaitMsecs;
+    }
+
+    /**
+     * Filter path out {@link #filter(String)} return true.
+     */
+    public static interface Filter {
+        boolean filter(String path);
     }
 }

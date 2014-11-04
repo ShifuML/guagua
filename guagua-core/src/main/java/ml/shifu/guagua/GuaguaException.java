@@ -53,7 +53,6 @@ public class GuaguaException extends IOException {
      * @param cause
      *            The cause (which is saved for later retrieval by the {@link #getCause()} method). (A null value is
      *            permitted, and indicates that the cause is nonexistent or unknown.)
-     * 
      */
     public GuaguaException(String message, Throwable cause) {
         super(message, cause);
@@ -68,7 +67,6 @@ public class GuaguaException extends IOException {
      * @param cause
      *            The cause (which is saved for later retrieval by the {@link #getCause()} method). (A null value is
      *            permitted, and indicates that the cause is nonexistent or unknown.)
-     * 
      */
     public GuaguaException(Throwable cause) {
         super(cause);

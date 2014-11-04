@@ -283,7 +283,6 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
             Deserializer<T> deserializer = (Deserializer<T>) factory.getDeserializer(cls);
             deserializer.open(inFile);
             split = deserializer.deserialize(null);
-            // long pos = inFile.getPos();
         } finally {
             IOUtils.closeStream(inFile);
         }
@@ -300,6 +299,10 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
                 @Override
                 public void progress(int currentIteration, int totalIteration, String status, boolean isLastUpdate,
                         boolean isKill) {
+                    //if(isKill){
+                        // TODO how to kill current container
+                        // return;
+                    //}
                     if(isLastUpdate) {
                         LOG.info("Application progress: {}%.", (currentIteration * 100 / totalIteration));
                         GuaguaIterationStatus gi = new GuaguaIterationStatus(GuaguaYarnTask.this.partition,

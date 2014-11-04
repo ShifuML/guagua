@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
@@ -180,7 +181,7 @@ public class GuaguaInputFormat extends TextInputFormat {
 
     private static final class ComparableSplit implements Comparable<ComparableSplit> {
         private InputSplit rawInputSplit;
-        private HashSet<Node> nodes;
+        private Set<Node> nodes;
         // id used as a tie-breaker when two splits are of equal size.
         private long id;
 
@@ -249,7 +250,7 @@ public class GuaguaInputFormat extends TextInputFormat {
 
     private static class Node {
         private long length = 0;
-        private ArrayList<ComparableSplit> splits;
+        private List<ComparableSplit> splits;
         private boolean sorted;
 
         Node() throws IOException, InterruptedException {
@@ -280,7 +281,7 @@ public class GuaguaInputFormat extends TextInputFormat {
             }
         }
 
-        ArrayList<ComparableSplit> getSplits() {
+        List<ComparableSplit> getSplits() {
             return splits;
         }
 
@@ -356,11 +357,11 @@ public class GuaguaInputFormat extends TextInputFormat {
                 // sort the splits on this node in descending order
                 node.sort();
                 long totalSize = 0;
-                ArrayList<ComparableSplit> splits = node.getSplits();
+                List<ComparableSplit> splits = node.getSplits();
                 int idx;
                 int lenSplits;
-                ArrayList<InputSplit> combinedSplits = new ArrayList<InputSplit>();
-                ArrayList<ComparableSplit> combinedComparableSplits = new ArrayList<ComparableSplit>();
+                List<InputSplit> combinedSplits = new ArrayList<InputSplit>();
+                List<ComparableSplit> combinedComparableSplits = new ArrayList<ComparableSplit>();
                 while(!splits.isEmpty()) {
                     combinedSplits.add(splits.get(0).getSplit());
                     combinedComparableSplits.add(splits.get(0));
@@ -404,8 +405,8 @@ public class GuaguaInputFormat extends TextInputFormat {
                 }
             }
             // handle leftovers
-            ArrayList<ComparableSplit> leftoverSplits = new ArrayList<ComparableSplit>();
-            HashSet<InputSplit> seen = new HashSet<InputSplit>();
+            List<ComparableSplit> leftoverSplits = new ArrayList<ComparableSplit>();
+            Set<InputSplit> seen = new HashSet<InputSplit>();
             for(Node node: nodes) {
                 for(ComparableSplit split: node.getSplits()) {
                     if(!seen.contains(split.getSplit())) {
