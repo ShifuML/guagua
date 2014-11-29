@@ -78,7 +78,7 @@ public class GuaguaWritableAdapter<W extends Writable> extends HaltBytable {
     private W writable;
 
     /**
-     * Contructor with Hadoop Writable setting.
+     * Constructor with Hadoop Writable setting.
      * 
      * @param writable
      *            Hadoop Writable instance

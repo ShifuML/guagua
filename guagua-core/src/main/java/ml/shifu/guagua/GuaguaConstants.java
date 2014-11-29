@@ -25,7 +25,7 @@ public final class GuaguaConstants {
 
     public static final String GUAGUA_ITERATION_COUNT = "guagua.iteration.count";
 
-    public static final int GUAGUA_DEFAULT_ITERATION_COUNT = 10;
+    public static final int GUAGUA_DEFAULT_ITERATION_COUNT = 50;
 
     public static final String WORKER_COMPUTABLE_CLASS = "guagua.worker.computable.class";
 

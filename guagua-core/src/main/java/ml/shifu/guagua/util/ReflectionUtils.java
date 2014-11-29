@@ -90,4 +90,16 @@ public final class ReflectionUtils {
             throw new GuaguaRuntimeException(e);
         }
     }
+
+    /**
+     * Check if there is empty-parameter constructor in one {@code clazz}.
+     */
+    public static boolean hasEmptyParameterConstructor(Class<?> clazz) {
+        try {
+            Constructor<?> met = clazz.getDeclaredConstructor(EMPTY_ARRAY);
+            return met != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

@@ -28,6 +28,7 @@ import ml.shifu.guagua.coordinator.zk.ZooKeeperUtils;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.master.MasterComputable;
+import ml.shifu.guagua.util.ReflectionUtils;
 import ml.shifu.guagua.worker.WorkerComputable;
 
 import org.apache.commons.cli.CommandLine;
@@ -336,6 +337,10 @@ public class GuaguaMapReduceClient {
                 conf.set(GuaguaConstants.GUAGUA_MASTER_RESULT_CLASS, resultClassName);
             } else if(Bytable.class.isAssignableFrom(masterResultClass)) {
                 conf.set(GuaguaConstants.GUAGUA_MASTER_RESULT_CLASS, resultClassName);
+                if(!ReflectionUtils.hasEmptyParameterConstructor(masterResultClass)) {
+                    throw new IllegalArgumentException(
+                            "Master result class should have default constuctor without any parameters.");
+                }
             } else {
                 printUsage();
                 throw new IllegalArgumentException(
@@ -361,6 +366,10 @@ public class GuaguaMapReduceClient {
                 conf.set(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS, resultClassName);
             } else if(Bytable.class.isAssignableFrom(workerResultClass)) {
                 conf.set(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS, resultClassName);
+                if(!ReflectionUtils.hasEmptyParameterConstructor(workerResultClass)) {
+                    throw new IllegalArgumentException(
+                            "Worker result class should have default constuctor without any parameters.");
+                }
             } else {
                 printUsage();
                 throw new IllegalArgumentException(
@@ -379,7 +388,7 @@ public class GuaguaMapReduceClient {
 
     private static void checkIterationCountSetting(Configuration conf, CommandLine cmdLine) {
         if(!cmdLine.hasOption("-c")) {
-            System.err.println("WARN: Total iteration number is not set, default 10 will be used.");
+            System.err.println("WARN: Total iteration number is not set, default 50 will be used.");
             System.err.println("WARN: Total iteration number can be provided by '-c' parameter with non-empty value.");
             conf.setInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, GuaguaConstants.GUAGUA_DEFAULT_ITERATION_COUNT);
         } else {
@@ -420,6 +429,9 @@ public class GuaguaMapReduceClient {
             throw new IllegalArgumentException(
                     "Master class name provided by '-m' should implement 'com.paypal.guagua.master.MasterComputable' interface.");
         }
+        if(!ReflectionUtils.hasEmptyParameterConstructor(masterClass)) {
+            throw new IllegalArgumentException("Master class should have default constuctor without any parameters.");
+        }
 
         conf.set(GuaguaConstants.MASTER_COMPUTABLE_CLASS, masterClassOptionValue.trim());
     }
@@ -449,6 +461,10 @@ public class GuaguaMapReduceClient {
             throw new IllegalArgumentException(
                     "Worker class name provided by '-w' should implement 'com.paypal.guagua.worker.WorkerComputable' interface.");
         }
+        if(!ReflectionUtils.hasEmptyParameterConstructor(workerClass)) {
+            throw new IllegalArgumentException("Worker class should have default constuctor without any parameters.");
+        }
+
         conf.set(GuaguaConstants.WORKER_COMPUTABLE_CLASS, workerClassOptionValue.trim());
     }
 
