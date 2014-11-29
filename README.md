@@ -4,6 +4,10 @@
 
 An iterative computing framework on both Hadoop MapReduce and Hadoop YARN.
 
+## Conference
+
+[QCON Shanghai 2014](http://2014.qconshanghai.com/node/474) [Slides](http://vdisk.weibo.com/s/A0GI9rXObFgy?category_id=35&parents_ref=A0GI9rXObTJj)
+
 ## Getting Started
 
 Please visit [Guagua site](http://shifu.ml/docs/guagua/) for tutorials.
