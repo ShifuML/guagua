@@ -18,7 +18,9 @@ package ml.shifu.guagua.mapreduce;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -132,11 +134,20 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
     }
 
     /**
-     * This is just a mock. TODO, maybe in the future we should use block location.
+     * Data locality functions, return all hosts for all file splits.
      */
     @Override
     public String[] getLocations() throws IOException, InterruptedException {
-        return new String[0];
+        if(this.getFileSplits() == null || this.getFileSplits().length == 0) {
+            return new String[0];
+        }
+
+        List<String> hosts = new ArrayList<String>();
+        for(FileSplit fileSplit: this.getFileSplits()) {
+            hosts.addAll(Arrays.asList(fileSplit.getLocations()));
+        }
+
+        return hosts.toArray(new String[0]);
     }
 
     public boolean isMaster() {

@@ -562,9 +562,9 @@ public class GuaguaAppMaster {
      * @return the setup ResourceRequest to be sent to RM
      */
     private ContainerRequest setupContainerAskForRM() {
-        // setup requirements for hosts
-        // TODO temp use * for host selection. should be better for data localization. add vcore
-        // set the priority for the request
+        // setup requirements for hosts, request containers firstly and then check allocated containers and splits to
+        // get data locality.
+        // TODO, better here to requests according to hosts of splits.
         Priority pri = Records.newRecord(Priority.class);
         pri.setPriority(GuaguaYarnConstants.GUAGUA_YARN_DEFAULT_PRIORITY);
 
@@ -762,6 +762,8 @@ public class GuaguaAppMaster {
     /**
      * Find a container with the same host for input split. Not a good implementation for data locality. Check
      * map-reduce implementation.
+     * 
+     * TODO RACK-LOCAL implementation
      */
     private Container getDataLocalityContainer(Map<String, List<Container>> hostContainterMap, int currentPartition) {
         GuaguaInputSplit inputSplit = (GuaguaInputSplit) (this.inputSplits.get(currentPartition - 1));

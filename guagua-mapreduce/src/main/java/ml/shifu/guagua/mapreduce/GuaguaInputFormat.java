@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import ml.shifu.guagua.GuaguaConstants;
@@ -293,8 +294,8 @@ public class GuaguaInputFormat extends TextInputFormat {
 
     public static List<List<InputSplit>> getCombineGuaguaSplits(List<InputSplit> oneInputSplits,
             long maxCombinedSplitSize) throws IOException, InterruptedException {
-        ArrayList<Node> nodes = new ArrayList<Node>();
-        HashMap<String, Node> nodeMap = new HashMap<String, Node>();
+        List<Node> nodes = new ArrayList<Node>();
+        Map<String, Node> nodeMap = new HashMap<String, Node>();
         List<List<InputSplit>> result = new ArrayList<List<InputSplit>>();
         List<Long> resultLengths = new ArrayList<Long>();
         long comparableSplitId = 0;
@@ -309,7 +310,7 @@ public class GuaguaInputFormat extends TextInputFormat {
             }
             if(split.getLength() >= maxCombinedSplitSize) {
                 comparableSplitId++;
-                ArrayList<InputSplit> combinedSplits = new ArrayList<InputSplit>();
+                List<InputSplit> combinedSplits = new ArrayList<InputSplit>();
                 combinedSplits.add(split);
                 result.add(combinedSplits);
                 resultLengths.add(split.getLength());
@@ -340,11 +341,11 @@ public class GuaguaInputFormat extends TextInputFormat {
         if(nSplits > 0 && emptyCnt == nSplits) {
             // if all splits are empty, add a single empty split as currently an empty directory is
             // not properly handled somewhere
-            ArrayList<InputSplit> combinedSplits = new ArrayList<InputSplit>();
+            List<InputSplit> combinedSplits = new ArrayList<InputSplit>();
             combinedSplits.add(oneInputSplits.get(0));
             result.add(combinedSplits);
         } else if(size == 1) {
-            ArrayList<InputSplit> combinedSplits = new ArrayList<InputSplit>();
+            List<InputSplit> combinedSplits = new ArrayList<InputSplit>();
             combinedSplits.add(lastSplit);
             result.add(combinedSplits);
         } else if(size > 1) {
@@ -421,8 +422,8 @@ public class GuaguaInputFormat extends TextInputFormat {
 
             if(!leftoverSplits.isEmpty()) {
                 long totalSize = 0;
-                ArrayList<InputSplit> combinedSplits = new ArrayList<InputSplit>();
-                ArrayList<ComparableSplit> combinedComparableSplits = new ArrayList<ComparableSplit>();
+                List<InputSplit> combinedSplits = new ArrayList<InputSplit>();
+                List<ComparableSplit> combinedComparableSplits = new ArrayList<ComparableSplit>();
 
                 int splitLen = leftoverSplits.size();
                 for(int i = 0; i < splitLen; i++) {

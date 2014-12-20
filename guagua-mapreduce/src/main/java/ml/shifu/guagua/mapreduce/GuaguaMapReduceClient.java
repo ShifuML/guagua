@@ -133,7 +133,7 @@ public class GuaguaMapReduceClient {
             for(ControlledJob controlledJob: successfulJobs) {
                 String jobId = controlledJob.getJob().getJobID().toString();
                 if(!sucessfulJobs.contains(jobId)) {
-                    LOG.info("Job {} is sucessful.", jobId);
+                    LOG.info("Job {} is successful.", jobId);
                     sucessfulJobs.add(jobId);
                 }
             }
