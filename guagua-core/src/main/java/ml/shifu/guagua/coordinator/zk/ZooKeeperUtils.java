@@ -223,6 +223,10 @@ public final class ZooKeeperUtils {
         props.put("clientPort", clientPort);
         props.put("minSessionTimeout", "10000");
         props.put("maxSessionTimeout", "30000000");
+        // The number of snapshots to retain in dataDir
+        props.put("autopurge.snapRetainCount", "3");
+        // Purge task interval in hours set to "0" to disable auto purge feature
+        props.put("autopurge.purgeInterval", "1");
         populateZooKeeperConfFile(fileName, props);
     }
 

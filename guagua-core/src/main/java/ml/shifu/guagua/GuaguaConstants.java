@@ -139,4 +139,6 @@ public final class GuaguaConstants {
 
     public static final int GUAGUA_FIRST_ITERATION = 1;
 
+    public static final String GUAGUA_STRAGGLER_ITERATORS = "guagua.straggler.iterators";
+
 }

@@ -138,6 +138,8 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
 
     private static final int COUNT_THRESHOLD = 3;
 
+    private int countThresholdDefined = COUNT_THRESHOLD;
+
     /**
      * Single thread executor to execute master computation if {@link #masterComputable} is monitored.
      */
@@ -279,7 +281,7 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
             // in init iteration, we need load data, so it is ok to use lots of time.
             if(time >= threashold && iteration > initialIteration) {
                 this.overThresholdCount++;
-                if(this.overThresholdCount >= COUNT_THRESHOLD) {
+                if(this.overThresholdCount >= this.countThresholdDefined) {
                     this.overThresholdCount = 0;
                     LOG.warn("Computation time is too long:{}, kill itself to make fail-over work. ", time);
                     isKill = true;
@@ -335,6 +337,9 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         if(this.isMonitored) {
             this.executor = Executors.newSingleThreadExecutor();
         }
+
+        this.countThresholdDefined = Integer.valueOf(this.getProps().getProperty(
+                GuaguaConstants.GUAGUA_STRAGGLER_ITERATORS, COUNT_THRESHOLD + ""));
 
         this.setTotalIteration(Integer.valueOf(this.getProps().getProperty(GuaguaConstants.GUAGUA_ITERATION_COUNT,
                 Integer.MAX_VALUE + "")));
