@@ -78,7 +78,9 @@ public class GuaguaSequenceRecordReader<KEY extends Writable, VALUE extends Writ
         this.conf = conf;
         this.keyClass = keyClass;
         this.valueClass = valueClass;
-        initialize(split);
+        if(split != null) {
+            initialize(split);
+        }
     }
 
     /**

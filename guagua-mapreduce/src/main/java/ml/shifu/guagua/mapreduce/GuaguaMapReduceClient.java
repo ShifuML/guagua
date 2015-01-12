@@ -98,7 +98,7 @@ public class GuaguaMapReduceClient {
     /**
      * Run all jobs added to JobControl.
      */
-    public synchronized void run() throws IOException {
+    public void run() throws IOException {
         // Initially, all jobs are in wait state.
         List<ControlledJob> jobsWithoutIds = this.jc.getWaitingJobList();
         int totalMRJobs = jobsWithoutIds.size();

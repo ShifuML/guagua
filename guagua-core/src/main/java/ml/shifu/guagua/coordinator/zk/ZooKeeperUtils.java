@@ -99,9 +99,14 @@ public final class ZooKeeperUtils {
         try {
             File file = new File(fileName);
             if(file.exists()) {
-                file.delete();
+                if(!file.delete()) {
+                    throw new IllegalStateException("Error to delete file or folder " + fileName);
+                }
             }
-            file.createNewFile();
+
+            if(!file.createNewFile()) {
+                throw new IllegalStateException("Error to create new file " + fileName);
+            }
 
             OutputStream outputStream = new FileOutputStream(file);
             writer = new OutputStreamWriter(outputStream, "utf-8");
@@ -201,9 +206,13 @@ public final class ZooKeeperUtils {
     private static void createFolder(String folder) {
         File file = new File(folder);
         if(file.exists()) {
-            file.delete();
+            if(!file.delete()) {
+                throw new IllegalStateException("Error to delete file or folder " + folder);
+            }
         }
-        file.mkdir();
+        if(!file.mkdir()) {
+            throw new IllegalStateException("Error to mkdir for folder " + folder);
+        }
     }
 
     /**

@@ -17,6 +17,7 @@ package ml.shifu.guagua.yarn;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -674,7 +675,10 @@ public class GuaguaYarnClient extends Configured {
         LOG.info("Input split size including master: {}", this.inputSplits.size());
     }
 
-    private static class SplitComparator implements Comparator<InputSplit> {
+    private static class SplitComparator implements Comparator<InputSplit>, Serializable {
+        
+        private static final long serialVersionUID = 8176767139729612657L;
+
         @Override
         public int compare(InputSplit o1, InputSplit o2) {
             try {
