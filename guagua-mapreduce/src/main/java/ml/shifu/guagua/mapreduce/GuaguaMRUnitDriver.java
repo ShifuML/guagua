@@ -31,7 +31,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
-import org.apache.hadoop.mapreduce.lib.input.InvalidInputException;
 import org.apache.hadoop.util.StringUtils;
 
 /**
@@ -43,7 +42,10 @@ import org.apache.hadoop.util.StringUtils;
  *            worker result for computation in each iteration.
  * 
  * @see ml.shifu.guagua.mapreduce.example.sum.SumTest in guagua-mapreduce-examples project.
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaMRUnitDriver}
  */
+@Deprecated
 public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> extends
         GuaguaUnitDriver<MASTER_RESULT, WORKER_RESULT> {
 
@@ -163,9 +165,7 @@ public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT ext
      *            the job to list input paths for
      * @return array of FileStatus objects
      * @throws IOException
-     *             if zero items.
-     * @throws InvalidInputException
-     *             If any IOException for input files.
+     *             if zero items or any IOException for input files.
      */
     protected List<FileStatus> listStatus(Configuration conf, String input) throws IOException {
         List<FileStatus> result = new ArrayList<FileStatus>();
@@ -204,7 +204,7 @@ public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT ext
         }
 
         if(!errors.isEmpty()) {
-            throw new InvalidInputException(errors);
+            throw new IOException(errors.toString());
         }
         return result;
     }

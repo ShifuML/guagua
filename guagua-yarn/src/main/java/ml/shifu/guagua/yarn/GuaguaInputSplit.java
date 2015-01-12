@@ -29,7 +29,10 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 /**
  * {@link InputSplit} implementation in guagua. If mapper with {@link GuaguaInputSplit#isMaster} true means it is
  * master, and the master's FileSplit is {@code null}.
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaInputSplit}
  */
+@Deprecated
 public class GuaguaInputSplit extends InputSplit implements Writable {
 
     /**
@@ -137,7 +140,9 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
 
         List<String> hosts = new ArrayList<String>();
         for(FileSplit fileSplit: this.getFileSplits()) {
-            hosts.addAll(Arrays.asList(fileSplit.getLocations()));
+            if(fileSplit != null) {
+                hosts.addAll(Arrays.asList(fileSplit.getLocations()));
+            }
         }
 
         return hosts.toArray(new String[0]);

@@ -69,7 +69,10 @@ import org.apache.hadoop.io.Writable;
  * </pre>
  * 
  * @see GuaguaWritableSerializer
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter}
  */
+@Deprecated
 public class GuaguaWritableAdapter<W extends Writable> extends HaltBytable {
 
     /**

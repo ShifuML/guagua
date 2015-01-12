@@ -15,16 +15,11 @@
  */
 
 /**
- * This package contains all the guagua-mapreduce implementation details based one only mapper hadoop job.
+ * This package contains guagua-mapreduce implementation details based one only mapper hadoop job.
  * 
  * <p>
  * {@link com.paypal.guagua.mapreduce.GuaguaMapReduceClient} is the entry point to trigger a guagua job by invoking its 
  * <code>main</code> method. 
- * 
- * <p>
- * IO related classes including {@link com.paypal.guagua.mapreduce.GuaguaWritableAdapter} and 
- * {@link com.paypal.guagua.mapreduce.GuaguaWritableSerializer} can be used to combine hadoop 
- * {@link org.apache.hadoop.io.Writable} with guagua {@link com.paypal.guagua.io.Bytable}.
  * 
  * <p>
  * {@link com.paypal.guagua.mapreduce.GuaguaMRUnitDriver} is a class for unit test, it will run guagua master-workers in 

@@ -25,6 +25,8 @@ import java.util.Set;
 
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.coordinator.zk.ZooKeeperUtils;
+import ml.shifu.guagua.hadoop.io.GuaguaOptionsParser;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableSerializer;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.master.MasterComputable;
@@ -482,7 +484,12 @@ public class GuaguaMapReduceClient {
             synchronized(GuaguaMapReduceClient.class) {
                 if(embededZooKeeperServer == null) {
                     // 1. start embed zookeeper server in one thread.
-                    int embedZkClientPort = ZooKeeperUtils.startEmbedZooKeeper();
+                    int embedZkClientPort = 0;
+                    try {
+                        embedZkClientPort = ZooKeeperUtils.startEmbedZooKeeper();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                     // 2. check if it is started.
                     ZooKeeperUtils.checkIfEmbedZooKeeperStarted(embedZkClientPort);
                     try {

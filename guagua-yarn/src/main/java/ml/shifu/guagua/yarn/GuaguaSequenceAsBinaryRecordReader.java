@@ -46,7 +46,10 @@ import org.apache.hadoop.mapred.SequenceFileAsBinaryInputFormat.SequenceFileAsBi
  * <pre>
  * this.setRecordReader(new GuaguaSequenceAsBinaryRecordReader(fileSplit));
  * </pre>
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaSequenceAsBinaryRecordReader}
  */
+@Deprecated
 public class GuaguaSequenceAsBinaryRecordReader implements
         GuaguaRecordReader<GuaguaWritableAdapter<BytesWritable>, GuaguaWritableAdapter<BytesWritable>> {
 

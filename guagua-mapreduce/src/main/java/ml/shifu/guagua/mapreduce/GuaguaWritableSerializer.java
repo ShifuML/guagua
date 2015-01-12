@@ -38,7 +38,10 @@ import org.apache.hadoop.io.Writable;
  *      conf.set(GuaguaConstants.GUAGUA_RESULT_CLASS, LongWritable.class.getName());
  * }
  * </pre>
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaWritableSerializer}
  */
+@Deprecated
 public class GuaguaWritableSerializer<RESULT extends Bytable> extends BytableSerializer<RESULT> {
 
     /**

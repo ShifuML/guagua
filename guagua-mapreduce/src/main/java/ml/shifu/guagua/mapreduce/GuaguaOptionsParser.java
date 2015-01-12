@@ -50,7 +50,10 @@ import org.slf4j.LoggerFactory;
  * 
  * @see Tool
  * @see ToolRunner
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaOptionsParser}
  */
+@Deprecated
 public class GuaguaOptionsParser {
 
     private static final Logger LOG = LoggerFactory.getLogger(GuaguaOptionsParser.class);

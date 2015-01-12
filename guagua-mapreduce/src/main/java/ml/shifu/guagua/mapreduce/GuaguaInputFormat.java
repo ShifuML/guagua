@@ -28,6 +28,7 @@ import java.util.Set;
 
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
+import ml.shifu.guagua.hadoop.io.GuaguaInputSplit;
 
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;

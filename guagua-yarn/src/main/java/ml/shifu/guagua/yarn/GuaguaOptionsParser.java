@@ -127,7 +127,10 @@ import org.slf4j.LoggerFactory;
  * 
  * @see Tool
  * @see ToolRunner
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaOptionsParser}
  */
+@Deprecated
 public class GuaguaOptionsParser {
 
     private static final Logger LOG = LoggerFactory.getLogger(GuaguaOptionsParser.class);
@@ -380,7 +383,6 @@ public class GuaguaOptionsParser {
      * specified do not have a scheme. it returns the paths uri converted defaulting to file:///. So an input of
      * /home/user/file1,/home/user/file2 would return file:///home/user/file1,file:///home/user/file2
      */
-    @SuppressWarnings("deprecation")
     private String validateFiles(String files, Configuration conf) throws IOException {
         if(files == null)
             return null;

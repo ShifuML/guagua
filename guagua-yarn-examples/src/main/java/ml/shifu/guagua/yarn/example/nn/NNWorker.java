@@ -18,12 +18,12 @@ package ml.shifu.guagua.yarn.example.nn;
 import java.io.IOException;
 
 import ml.shifu.guagua.GuaguaRuntimeException;
+import ml.shifu.guagua.hadoop.io.GuaguaLineRecordReader;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.io.GuaguaFileSplit;
 import ml.shifu.guagua.util.NumberFormatUtils;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;
 import ml.shifu.guagua.worker.WorkerContext;
-import ml.shifu.guagua.yarn.GuaguaLineRecordReader;
-import ml.shifu.guagua.yarn.GuaguaWritableAdapter;
 import ml.shifu.guagua.yarn.example.nn.meta.NNParams;
 
 import org.apache.hadoop.io.LongWritable;

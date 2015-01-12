@@ -18,13 +18,13 @@
 BIN_DIR="$( cd -P "$( dirname "${BASH_SOURCE:-0}" )" && pwd )"
 hadoop fs -put $BIN_DIR/../data/lr /user/$USER/
 
-$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-mapreduce-examples-0.6.0-SNAPSHOT.jar \
+$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-examples-0.6.0-SNAPSHOT.jar \
         -i lr  \
-        -w ml.shifu.guagua.mapreduce.example.lr.LogisticRegressionWorker  \
-        -m ml.shifu.guagua.mapreduce.example.lr.LogisticRegressionMaster  \
+        -w ml.shifu.guagua.example.lr.LogisticRegressionWorker  \
+        -m ml.shifu.guagua.example.lr.LogisticRegressionMaster  \
         -n "Guagua-Logistic-Regression-Master-Workers-Job" \
-        -mr ml.shifu.guagua.mapreduce.example.lr.LogisticRegressionParams \
-        -wr ml.shifu.guagua.mapreduce.example.lr.LogisticRegressionParams \
+        -mr ml.shifu.guagua.example.lr.LogisticRegressionParams \
+        -wr ml.shifu.guagua.example.lr.LogisticRegressionParams \
         -Dmapred.job.queue.name=default \
         -Dlr.model.output=lr-output \
-        -Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.lr.LogisticRegressionOutput
+        -Dguagua.master.intercepters=ml.shifu.guagua.example.lr.LogisticRegressionOutput

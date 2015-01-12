@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ml.shifu.guagua.GuaguaConstants;
-import ml.shifu.guagua.mapreduce.GuaguaInputSplit;
+import ml.shifu.guagua.hadoop.io.GuaguaInputSplit;
 import ml.shifu.guagua.mapreduce.GuaguaMRRecordReader;
 import ml.shifu.guagua.mapreduce.GuaguaMapReduceConstants;
 

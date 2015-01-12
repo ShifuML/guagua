@@ -99,9 +99,7 @@ public final class ZooKeeperUtils {
         try {
             File file = new File(fileName);
             if(file.exists()) {
-                if(!file.delete()) {
-                    throw new IllegalStateException("Error to delete file or folder " + fileName);
-                }
+                FileUtils.deleteDirectory(file);
             }
 
             if(!file.createNewFile()) {
@@ -203,12 +201,10 @@ public final class ZooKeeperUtils {
     /**
      * Create a folder with folder name, if exist, delete it firstly.
      */
-    private static void createFolder(String folder) {
+    private static void createFolder(String folder) throws IOException {
         File file = new File(folder);
         if(file.exists()) {
-            if(!file.delete()) {
-                throw new IllegalStateException("Error to delete file or folder " + folder);
-            }
+            FileUtils.deleteDirectory(file);
         }
         if(!file.mkdir()) {
             throw new IllegalStateException("Error to mkdir for folder " + folder);
@@ -218,7 +214,7 @@ public final class ZooKeeperUtils {
     /**
      * Create zookeeper file with specified name and client port setting.
      */
-    public static void prepZooKeeperConf(String fileName, String clientPort) {
+    public static void prepZooKeeperConf(String fileName, String clientPort) throws IOException {
         Map<String, String> props = new HashMap<String, String>();
         String dataDir = getZooKeeperWorkingDir() + File.separator + "zkdata";
         createFolder(dataDir);
@@ -283,7 +279,7 @@ public final class ZooKeeperUtils {
     /**
      * Start embed zookeeper server in a daemon thread.
      */
-    public static int startEmbedZooKeeper() {
+    public static int startEmbedZooKeeper() throws IOException {
         final String zooKeeperWorkingDir = getZooKeeperWorkingDir();
         createFolder(zooKeeperWorkingDir);
 

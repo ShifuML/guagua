@@ -8,14 +8,12 @@
     <name>Guagua</name>
     <description>An iterative computing framework on both Hadoop MapReduce and Hadoop YARN.</description>
     <url>http://shifu.ml/docs/stable/guide/guagua/</url>
-
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
-
     <developers>
         <developer>
             <name>Zhang David (Zhang Pengshan)</name>
@@ -24,20 +22,17 @@
             <organizationUrl>http://www.paypal.com</organizationUrl>
         </developer>
     </developers>
-
     <scm>
         <developerConnection>scm:git:https://github.com/shifuml/guagua.git</developerConnection>
         <connection>scm:git:https://github.com/shifuml/guagua.git</connection>
         <url>https://github.com/shifuml/guagua.git</url>
     </scm>
-
     <properties>
         <jdk.version>1.6</jdk.version>
         <guagua.version>0.6.0-SNAPSHOT</guagua.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
     </properties>
-
     <build>
         <plugins>
             <plugin>
@@ -115,7 +110,6 @@
             </plugin>
         </plugins>
     </build>
-
     <!-- Release and Sign -->
     <profiles>
         <profile>
@@ -156,7 +150,6 @@
             </distributionManagement>
         </profile>
     </profiles>
-
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -175,13 +168,13 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
     <modules>
         <module>guagua-core</module>
         <module>guagua-mapreduce</module>
         <module>guagua-yarn</module>
         <module>guagua-client</module>
-        <!-- <module>guagua-examples</module> -->
+        <module>guagua-examples</module>
+        <!-- These two modules will be replaced by guagua-examples -->
         <module>guagua-mapreduce-examples</module>
         <module>guagua-yarn-examples</module>
     </modules>

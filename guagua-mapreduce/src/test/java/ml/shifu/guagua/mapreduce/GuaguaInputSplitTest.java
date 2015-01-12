@@ -25,7 +25,7 @@ import java.util.Arrays;
 import junit.framework.Assert;
 
 import ml.shifu.guagua.GuaguaRuntimeException;
-import ml.shifu.guagua.mapreduce.GuaguaInputSplit;
+import ml.shifu.guagua.hadoop.io.GuaguaInputSplit;
 import ml.shifu.guagua.util.ReflectionUtils;
 
 import org.apache.hadoop.fs.Path;
