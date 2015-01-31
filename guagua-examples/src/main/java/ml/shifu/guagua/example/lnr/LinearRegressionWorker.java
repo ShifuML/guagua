@@ -15,13 +15,14 @@
  */
 package ml.shifu.guagua.example.lnr;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+import java.io.Serializable;
 
 import ml.shifu.guagua.hadoop.io.GuaguaLineRecordReader;
 import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.io.GuaguaFileSplit;
+import ml.shifu.guagua.util.MemoryDiskList;
 import ml.shifu.guagua.util.NumberFormatUtils;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;
 import ml.shifu.guagua.worker.WorkerContext;
@@ -69,7 +70,7 @@ public class LinearRegressionWorker
     /**
      * In-memory data which located in memory at the first iteration.
      */
-    private List<Data> dataList;
+    private MemoryDiskList<Data> dataList;
 
     /**
      * Local linear regression model.
@@ -91,7 +92,10 @@ public class LinearRegressionWorker
         this.inputNum = NumberFormatUtils.getInt(LinearRegressionContants.LR_INPUT_NUM,
                 LinearRegressionContants.LR_INPUT_DEFAULT_NUM);
         this.outputNum = 1;
-        this.dataList = new LinkedList<Data>();
+        double memoryFraction = Double.valueOf(context.getProps().getProperty("guagua.data.memoryFraction", "0.5"));
+        String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", "tmp");
+        this.dataList = new MemoryDiskList<Data>((long) (Runtime.getRuntime().maxMemory() * memoryFraction), tmpFolder
+                + File.separator + System.currentTimeMillis());
     }
 
     @Override
@@ -103,6 +107,7 @@ public class LinearRegressionWorker
             double[] gradients = new double[this.inputNum + 1];
             double finalError = 0.0d;
             int size = 0;
+            this.dataList.reOpen();
             for(Data data: dataList) {
                 double error = dot(data.inputs, this.weights) - data.outputs[0];
                 finalError += error * error / 2;
@@ -114,6 +119,11 @@ public class LinearRegressionWorker
             LOG.info("Iteration {} with error {}", context.getCurrentIteration(), finalError / size);
             return new LinearRegressionParams(gradients, finalError / size);
         }
+    }
+
+    @Override
+    protected void postLoad(WorkerContext<LinearRegressionParams, LinearRegressionParams> context) {
+        this.dataList.switchState();
     }
 
     /**
@@ -145,10 +155,13 @@ public class LinearRegressionWorker
             }
             count++;
         }
-        this.dataList.add(new Data(inputData, outputData));
+        this.dataList.append(new Data(inputData, outputData));
     }
 
-    private static class Data {
+    private static class Data implements Serializable {
+
+        private static final long serialVersionUID = 3739632336801994754L;
+
         public Data(double[] inputs, double[] outputs) {
             this.inputs = inputs;
             this.outputs = outputs;

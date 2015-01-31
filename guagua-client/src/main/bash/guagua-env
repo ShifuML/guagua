@@ -12,23 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # ---------------- resolve links - $0 may be a softlink -----------------------------#
 THIS="${BASH_SOURCE:-0}"
 while [ -h "$THIS" ]; do
-  ls=`ls -ld "$THIS"`
-  link=`expr "$ls" : '.*-> \(.*\)$'`
-  if expr "$link" : '.*/.*' > /dev/null; then
-    THIS="$link"
-  else
-    THIS=`dirname "$THIS"`/"$link"
-  fi
+    ls=`ls -ld "$THIS"`
+    link=`expr "$ls" : '.*-> \(.*\)$'`
+    if expr "$link" : '.*/.*' > /dev/null; then
+        THIS="$link"
+    else
+        THIS=`dirname "$THIS"`/"$link"
+    fi
 done
 
 # ---------------- Home directory this directory ------------------------------------#
 THIS_DIR=`dirname "$THIS"`
 GUAGUA_HOME=`cd "$THIS_DIR/.." ; pwd`
-
 # ---------------- Check whether enabled yarn ---------------------------------------#
 YARN_ENABLE=false
 if [ "$1" = "-y" -o "$1" = "-yarn" ]; then
@@ -45,18 +43,27 @@ fi
 USER_JAR=$1
 shift
 if [ ! -e "$USER_JAR" ]; then
-  echo "No user jar found at $USER_JAR"
-  exit 1
+    echo "No user jar found at $USER_JAR"
+    exit 1
 else
-  # add user jar to classpath
-  CLASSPATH=${USER_JAR}
+    # add user jar to classpath
+    CLASSPATH=${USER_JAR}
 fi
-
+# ---------------- Setting GUAGUA_OPTS ----------------------------------------------#
+GUAGUA_OPTS=${GUAGUA_OPTS:=-Xms1G -Xmx1G}
+HADOOP_OPTS="${HADOOP_OPTS} ${GUAGUA_OPTS}"
+# ---------------- Setting GUAGUA_CLASSPATH -----------------------------------------#
+if [ "${GUAGUA_CLASSPATH}" != "" ]; then
+    CLASSPATH=$CLASSPATH:${GUAGUA_CLASSPATH}
+fi
 # ---------------- Setting conf folder ----------------------------------------------#
-CLASSPATH=$CLASSPATH:$GUAGUA_HOME/conf/
+GUAGUA_CONF_DIR=${GUAGUA_CONF_DIR:=$GUAGUA_HOME/conf/}
+if [ "${GUAGUA_CONF_DIR}" != "" -a -d "${GUAGUA_CONF_DIR}" ]; then
+    CLASSPATH=$CLASSPATH:${GUAGUA_CONF_DIR}
+fi
 # ---------------- HADOOP Environment Detection -------------------------------------#
 HADOOP_ROOT=""
-    
+
 # locate HADOOP_ROOT "which hadoop"
 HADOOP_CMD_PATH=`which hadoop 2>/dev/null`
 # Check whether hadoop is installed under /usr/bin or not
@@ -105,7 +112,7 @@ fi
 export LD_LIBRARY_PATH
 # ---------------- Detection End ---------------------------------------------------#
 
-# ---------------- Check Hadoop version  --------------------------------------------#
+# ---------------- Check Hadoop version  -------------------------------------------#
 VERSION=`${HADOOP_ROOT}/bin/hadoop version | head -n 1 | awk '{ print $2 }'`
 VERSION_23=${VERSION:0:4}
 VERSION_2=${VERSION:0:1}
@@ -118,15 +125,10 @@ VERSION_2=${VERSION:0:1}
 #    shift
 #done
 
-# ---------------- add Guagua conf dir to classpath----------------------------------#
-# add Guagua conf dir to classpath
-if [ -d "${GUAGUA_HOME}/conf" ]; then
-    CLASSPATH=$CLASSPATH:$GUAGUA_HOME/conf
-fi
 
+# ---------------- set IFS ----------------------------------------------------------#
 # so that filenames w/ spaces are handled correctly in loops below
 IFS=
-
 # ---------------- add Guagua common-lib jars to classpath---------------------------#
 GUAGUA_COMMON_LIB="$GUAGUA_HOME/common-lib"
 # add common lib dependencies to CLASSPATH

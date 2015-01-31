@@ -240,7 +240,6 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         WORKER_RESULT workerResult = null;
         boolean isKill = false;
         try {
-
             if(this.isMonitored) {
                 if(this.executor.isTerminated() || this.executor.isShutdown()) {
                     // rebuild this executor if executor is shutdown
@@ -283,7 +282,7 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                 this.overThresholdCount++;
                 if(this.overThresholdCount >= this.countThresholdDefined) {
                     this.overThresholdCount = 0;
-                    LOG.warn("Computation time is too long:{}, kill itself to make fail-over work. ", time);
+                    LOG.warn("Computation time is too long:{}, kill itself to make fail-over work.", time);
                     isKill = true;
                 }
             }

@@ -445,8 +445,16 @@ public class GuaguaAppMaster {
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
             GuaguaIterationStatus status = GsonUtils.fromJson(e.getMessage().toString(), GuaguaIterationStatus.class);
-            LOG.debug("Receive RPC status:{}", status);
+            LOG.info("Receive RPC status:{}", status);
             GuaguaAppMaster.this.partitionProgress.put(status.getPartition(), status);
+            if(status.isKillContainer()) {
+                List<Container> containers = GuaguaAppMaster.this.partitionContainerMap.get(status.getPartition());
+                LOG.info("containers:{}", containers);
+                Container container = containers.get(containers.size() - 1);
+                LOG.info("Container {} in node {} is killed because of straggler condition.", container.getId(),
+                        container.getNodeId());
+                GuaguaAppMaster.this.getNmClientAsync().stopContainerAsync(container.getId(), container.getNodeId());
+            }
         }
 
         @Override
@@ -626,6 +634,13 @@ public class GuaguaAppMaster {
                 LOG.info("Got container status for containerID={}, state={}, exitStatus={}, diagnostics={}.",
                         containerStatus.getContainerId(), containerStatus.getState(), containerStatus.getExitStatus(),
                         containerStatus.getDiagnostics());
+                if(!GuaguaAppMaster.this.containerPartitionMap.containsKey(containerStatus.getContainerId().toString())) {
+                    getCompletedCount().incrementAndGet();
+                    LOG.info("Why such container {} is started, no partition. Exited with status:{}",
+                            containerStatus.getContainerId(), containerStatus.getExitStatus());
+                    continue;
+                }
+
                 int partition = GuaguaAppMaster.this.containerPartitionMap.get(containerStatus.getContainerId()
                         .toString());
                 if(GuaguaAppMaster.this.partitionContainerMap.get(partition).size() >= GuaguaAppMaster.this.maxContainerAttempts) {
@@ -716,6 +731,9 @@ public class GuaguaAppMaster {
             int currentPartition = getCurrentPartition();
             if(currentPartition == -1) {
                 LOG.warn("Request too many resources. TODO, remove containers no needed.");
+                for(Container container: allocatedContainers) {
+                    GuaguaAppMaster.this.getAmRMClient().releaseAssignedContainer(container.getId());
+                }
                 break;
             }
             Container container = getDataLocalityContainer(hostContainterMap, currentPartition);

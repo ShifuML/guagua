@@ -15,13 +15,14 @@
  */
 package ml.shifu.guagua.example.lr;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+import java.io.Serializable;
 
 import ml.shifu.guagua.hadoop.io.GuaguaLineRecordReader;
 import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.io.GuaguaFileSplit;
+import ml.shifu.guagua.util.MemoryDiskList;
 import ml.shifu.guagua.util.NumberFormatUtils;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;
 import ml.shifu.guagua.worker.WorkerContext;
@@ -67,7 +68,7 @@ public class LogisticRegressionWorker
     /**
      * In-memory data which located in memory at the first iteration.
      */
-    private List<Data> dataList;
+    private MemoryDiskList<Data> dataList;
 
     /**
      * Local logistic regression model.
@@ -89,7 +90,10 @@ public class LogisticRegressionWorker
         this.inputNum = NumberFormatUtils.getInt(LogisticRegressionContants.LR_INPUT_NUM,
                 LogisticRegressionContants.LR_INPUT_DEFAULT_NUM);
         this.outputNum = 1;
-        this.dataList = new LinkedList<Data>();
+        double memoryFraction = Double.valueOf(context.getProps().getProperty("guagua.data.memoryFraction", "0.5"));
+        String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", "tmp");
+        this.dataList = new MemoryDiskList<Data>((long) (Runtime.getRuntime().maxMemory() * memoryFraction), tmpFolder
+                + File.separator + System.currentTimeMillis());
     }
 
     @Override
@@ -101,6 +105,7 @@ public class LogisticRegressionWorker
             double[] gradients = new double[this.inputNum + 1];
             double finalError = 0.0d;
             int size = 0;
+            this.dataList.reOpen();
             for(Data data: dataList) {
                 double error = sigmoid(data.inputs, this.weights) - data.outputs[0];
                 finalError += error * error / 2;
@@ -126,6 +131,11 @@ public class LogisticRegressionWorker
     }
 
     @Override
+    protected void postLoad(WorkerContext<LogisticRegressionParams, LogisticRegressionParams> context) {
+        this.dataList.switchState();
+    }
+
+    @Override
     public void load(GuaguaWritableAdapter<LongWritable> currentKey, GuaguaWritableAdapter<Text> currentValue,
             WorkerContext<LogisticRegressionParams, LogisticRegressionParams> context) {
         String line = currentValue.getWritable().toString();
@@ -143,10 +153,13 @@ public class LogisticRegressionWorker
             }
             count++;
         }
-        this.dataList.add(new Data(inputData, outputData));
+        this.dataList.append(new Data(inputData, outputData));
     }
 
-    private static class Data {
+    private static class Data implements Serializable {
+
+        private static final long serialVersionUID = 903201066309036170L;
+
         public Data(double[] inputs, double[] outputs) {
             this.inputs = inputs;
             this.outputs = outputs;

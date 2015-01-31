@@ -15,15 +15,15 @@
  */
 package ml.shifu.guagua.example.sum;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import ml.shifu.guagua.ComputableMonitor;
 import ml.shifu.guagua.hadoop.io.GuaguaLineRecordReader;
 import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.io.GuaguaFileSplit;
+import ml.shifu.guagua.util.MemoryDiskList;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;
 import ml.shifu.guagua.worker.WorkerContext;
 
@@ -48,30 +48,48 @@ public class SumWorker
 
     private static final Logger LOG = LoggerFactory.getLogger(SumWorker.class);
 
-    private List<Long> list;
+    /**
+     * A list to store data into memory and disk.
+     */
+    private MemoryDiskList<Long> list;
 
     @Override
-    public void init(
-            WorkerContext<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> workerContext) {
-        this.list = new LinkedList<Long>();
+    public void init(WorkerContext<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> context) {
+        double memoryFraction = Double.valueOf(context.getProps().getProperty("guagua.data.memoryFraction", "0.5"));
+        String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", "tmp");
+        this.list = new MemoryDiskList<Long>((long) (Runtime.getRuntime().maxMemory() * memoryFraction), tmpFolder
+                + File.separator + System.currentTimeMillis());
     }
 
     @Override
     public GuaguaWritableAdapter<LongWritable> doCompute(
-            WorkerContext<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> workerContext) {
-        long sum = workerContext.getLastMasterResult() == null ? 0l : workerContext.getLastMasterResult().getWritable()
-                .get();
-        for(long longValue: this.list) {
+            WorkerContext<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> context) {
+        long sum = context.getLastMasterResult() == null ? 0l : context.getLastMasterResult().getWritable().get();
+        this.list.reOpen();
+
+        for(Long longValue: this.list) {
             sum += longValue;
         }
-        LOG.info("worker: {} ; sum: {}", workerContext, sum);
+
+        // try {
+        // Thread.sleep(10 * 1000);
+        // } catch (InterruptedException e) {
+        // e.printStackTrace();
+        // }
+        LOG.info("worker: {} ; sum: {}", context, sum);
         return new GuaguaWritableAdapter<LongWritable>(new LongWritable(sum));
     }
 
     @Override
     public void load(GuaguaWritableAdapter<LongWritable> currentKey, GuaguaWritableAdapter<Text> currentValue,
-            WorkerContext<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> workerContext) {
-        this.list.add(Long.parseLong(currentValue.getWritable().toString()));
+            WorkerContext<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> context) {
+        this.list.append(Long.parseLong(currentValue.getWritable().toString()));
+    }
+
+    @Override
+    protected void postLoad(
+            WorkerContext<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> context) {
+        this.list.switchState();
     }
 
     @Override

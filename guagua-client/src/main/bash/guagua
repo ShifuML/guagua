@@ -14,6 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# The Guagua command script
+#
+# Environment Variables
+#
+#   GUAGUA_OPTS         Extra Java runtime options.
+#
+#   GUAGUA_CLASSPATH    Extra Java CLASSPATH entries.
+#
+#   GUAGUA_CONF_DIR     Guagua conf folder, default is in GUAUGA_HOME/conf
+
 # friendly message for those who forget to tell us what to do
 if [ $# = 0 ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "h" ] || [ "$1" == "help" ] ; then
   echo "Usage: guagua [-y(enable beta guagua-yarn version on hadoop 2.0)] jar <the jar containing master and worker class> [-D<hadoop/guagua property>] <parameters to jar>"

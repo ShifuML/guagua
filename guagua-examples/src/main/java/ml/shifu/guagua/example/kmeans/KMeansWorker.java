@@ -15,6 +15,7 @@
  */
 package ml.shifu.guagua.example.kmeans;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -23,6 +24,7 @@ import java.util.List;
 import ml.shifu.guagua.hadoop.io.GuaguaLineRecordReader;
 import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.io.GuaguaFileSplit;
+import ml.shifu.guagua.util.MemoryDiskList;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;
 import ml.shifu.guagua.worker.WorkerContext;
 
@@ -49,7 +51,7 @@ public class KMeansWorker
     /**
      * Data list of current worker cached in memory.
      */
-    private List<TaggedRecord> dataList;
+    private MemoryDiskList<TaggedRecord> dataList;
 
     /**
      * K categories pre-defined
@@ -76,24 +78,29 @@ public class KMeansWorker
     }
 
     @Override
-    public void init(WorkerContext<KMeansMasterParams, KMeansWorkerParams> workerContext) {
-        this.k = Integer.parseInt(workerContext.getProps().getProperty(KMeansContants.KMEANS_K_NUMBER));
-        this.c = Integer.parseInt(workerContext.getProps().getProperty(KMeansContants.KMEANS_COLUMN_NUMBER));
-        this.separator = workerContext.getProps().getProperty(KMeansContants.KMEANS_DATA_SEPERATOR);
-        this.dataList = new LinkedList<TaggedRecord>();
+    public void init(WorkerContext<KMeansMasterParams, KMeansWorkerParams> context) {
+        this.k = Integer.parseInt(context.getProps().getProperty(KMeansContants.KMEANS_K_NUMBER));
+        this.c = Integer.parseInt(context.getProps().getProperty(KMeansContants.KMEANS_COLUMN_NUMBER));
+        this.separator = context.getProps().getProperty(KMeansContants.KMEANS_DATA_SEPERATOR);
+
+        double memoryFraction = Double.valueOf(context.getProps().getProperty("guagua.data.memoryFraction", "0.5"));
+        String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", "tmp");
+        this.dataList = new MemoryDiskList<TaggedRecord>((long) (Runtime.getRuntime().maxMemory() * memoryFraction),
+                tmpFolder + File.separator + System.currentTimeMillis());
         // just set into worker context for data output interceptor usage.
-        workerContext.setAttachment(this.dataList);
+        context.setAttachment(this.dataList);
     }
 
     /**
      * Using the new k centers to tag each record with index denoting the record belongs to which category.
      */
     @Override
-    public KMeansWorkerParams doCompute(WorkerContext<KMeansMasterParams, KMeansWorkerParams> workerContext) {
-        if(workerContext.getCurrentIteration() == 1) {
-            return doFirstIteration(workerContext);
+    public KMeansWorkerParams doCompute(WorkerContext<KMeansMasterParams, KMeansWorkerParams> context) {
+        if(context.getCurrentIteration() == 1) {
+            return doFirstIteration(context);
         } else {
-            return doOtherIterations(workerContext);
+            this.dataList.reOpen();
+            return doOtherIterations(context);
         }
     }
 
@@ -102,7 +109,7 @@ public class KMeansWorker
         workerResult.setK(this.k);
         workerResult.setC(this.c);
         workerResult.setFirstIteration(true);
-        int dataSize = this.dataList.size();
+        int dataSize = (int) this.dataList.size();
         List<double[]> pointList = new ArrayList<double[]>(dataSize);
         if(this.k >= dataSize) {
             for(TaggedRecord record: this.dataList) {
@@ -110,8 +117,12 @@ public class KMeansWorker
             }
         } else {
             int m = dataSize / this.k;
-            for(int i = 0; i < this.k; i++) {
-                pointList.add(toDouble(this.dataList.get(m * i)));
+            int i = 0;
+            this.dataList.reOpen();
+            for(TaggedRecord record: this.dataList) {
+                if(i++ % m == 0) {
+                    pointList.add(toDouble(record));
+                }
             }
         }
         workerResult.setPointList(pointList);
@@ -165,6 +176,11 @@ public class KMeansWorker
         return workerResult;
     }
 
+    @Override
+    protected void postLoad(WorkerContext<KMeansMasterParams, KMeansWorkerParams> context) {
+        this.dataList.switchState();
+    }
+
     /**
      * Finding closed center from all the k centers. Return the index of finding center.
      */
@@ -216,7 +232,7 @@ public class KMeansWorker
                 record[i++] = null;
             }
         }
-        this.dataList.add(new TaggedRecord(record));
+        this.dataList.append(new TaggedRecord(record));
     }
 
 }

@@ -33,7 +33,6 @@ import org.encog.ml.data.MLDataPair;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLData;
 import org.encog.ml.data.basic.BasicMLDataPair;
-import org.encog.ml.data.basic.BasicMLDataSet;
 import org.encog.neural.error.LinearErrorFunction;
 import org.encog.neural.flat.FlatNetwork;
 import org.encog.neural.networks.BasicNetwork;
@@ -81,49 +80,55 @@ public class NNWorker extends
 
     private int outputs;
 
-    /**
-     * Create memory data set object
-     */
-    private void initMemoryDataSet() {
-        this.trainingData = new BasicMLDataSet();
-        this.testingData = new BasicMLDataSet();
-    }
-
     @Override
-    public void init(WorkerContext<NNParams, NNParams> workerContext) {
-        inputs = NumberFormatUtils.getInt(workerContext.getProps().getProperty(NNConstants.GUAGUA_NN_INPUT_NODES),
+    public void init(WorkerContext<NNParams, NNParams> context) {
+        inputs = NumberFormatUtils.getInt(context.getProps().getProperty(NNConstants.GUAGUA_NN_INPUT_NODES),
                 NNConstants.GUAGUA_NN_DEFAULT_INPUT_NODES);
-        hiddens = NumberFormatUtils.getInt(workerContext.getProps().getProperty(NNConstants.GUAGUA_NN_HIDDEN_NODES),
+        hiddens = NumberFormatUtils.getInt(context.getProps().getProperty(NNConstants.GUAGUA_NN_HIDDEN_NODES),
                 NNConstants.GUAGUA_NN_DEFAULT_HIDDEN_NODES);
-        outputs = NumberFormatUtils.getInt(workerContext.getProps().getProperty(NNConstants.GUAGUA_NN_OUTPUT_NODES),
+        outputs = NumberFormatUtils.getInt(context.getProps().getProperty(NNConstants.GUAGUA_NN_OUTPUT_NODES),
                 NNConstants.GUAGUA_NN_DEFAULT_OUTPUT_NODES);
 
-        LOG.info("NNWorker is loading data into memory.");
-        initMemoryDataSet();
+        LOG.info("NNWorker is loading data into memory and disk.");
+
+        double memoryFraction = Double.valueOf(context.getProps().getProperty("guagua.data.memoryFraction", "0.5"));
+        long memoryStoreSize = (long) (Runtime.getRuntime().maxMemory() * memoryFraction);
+        this.trainingData = new MemoryDiskMLDataSet((long) (memoryStoreSize * 0.5), "train.egb", this.inputs,
+                this.outputs);
+        this.testingData = new MemoryDiskMLDataSet((long) (memoryStoreSize * 0.5), "test.egb", this.inputs,
+                this.outputs);
+        // cannot find a good place to close these two data set, using Shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ((MemoryDiskMLDataSet) (NNWorker.this.trainingData)).close();
+                ((MemoryDiskMLDataSet) (NNWorker.this.testingData)).close();
+            }
+        }));
     }
 
     @Override
-    public NNParams doCompute(WorkerContext<NNParams, NNParams> workerContext) {
+    public NNParams doCompute(WorkerContext<NNParams, NNParams> context) {
         // For first iteration, we don't do anything, just wait for master to update weights in next iteration. This
         // make sure all workers in the 1st iteration to get the same weights.
-        if(workerContext.getCurrentIteration() == 1) {
-            return buildEmptyNNParams(workerContext);
+        if(context.getCurrentIteration() == 1) {
+            return buildEmptyNNParams(context);
         }
 
-        if(workerContext.getLastMasterResult() == null) {
+        if(context.getLastMasterResult() == null) {
             // This may not happen since master will set initialization weights firstly.
             LOG.warn("Master result of last iteration is null.");
             return null;
         }
-        LOG.debug("Set current model with params {}", workerContext.getLastMasterResult());
+        LOG.debug("Set current model with params {}", context.getLastMasterResult());
 
         // initialize gradients if null
         if(gradient == null) {
-            initGradient(this.trainingData, workerContext.getLastMasterResult().getWeights());
+            initGradient(this.trainingData, context.getLastMasterResult().getWeights());
         }
 
         // using the weights from master to train model in current iteration
-        this.gradient.setWeights(workerContext.getLastMasterResult().getWeights());
+        this.gradient.setWeights(context.getLastMasterResult().getWeights());
 
         this.gradient.run();
 
@@ -132,7 +137,7 @@ public class NNWorker extends
         double testError = this.testingData.getRecordCount() > 0 ? (this.gradient.getNetwork()
                 .calculateError(this.testingData)) : 0;
         LOG.info("NNWorker compute iteration {} (train error {} validation error {})",
-                new Object[] { workerContext.getCurrentIteration(), trainError, testError });
+                new Object[] { context.getCurrentIteration(), trainError, testError });
 
         NNParams params = new NNParams();
         params.setTestError(testError);
@@ -170,6 +175,8 @@ public class NNWorker extends
 
     @Override
     protected void postLoad(WorkerContext<NNParams, NNParams> workerContext) {
+        ((MemoryDiskMLDataSet) this.trainingData).endLoad();
+        ((MemoryDiskMLDataSet) this.testingData).endLoad();
         LOG.info("- # Records of the whole data set: {}.", this.count);
         LOG.info("- # Records of the training data set: {}.", this.trainingData.getRecordCount());
         LOG.info("- # Records of the testing data set: {}.", this.testingData.getRecordCount());

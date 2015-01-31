@@ -300,14 +300,12 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
                 @Override
                 public void progress(int currentIteration, int totalIteration, String status, boolean isLastUpdate,
                         boolean isKill) {
-                    //if(isKill){
-                        // TODO how to kill current container
-                        // return;
-                    //}
+                    // if is last update in current iteration, progress and status should be updated
                     if(isLastUpdate) {
                         LOG.info("Application progress: {}%.", (currentIteration * 100 / totalIteration));
                         GuaguaIterationStatus gi = new GuaguaIterationStatus(GuaguaYarnTask.this.partition,
                                 currentIteration, totalIteration);
+                        gi.setKillContainer(isKill);
                         rpcClientChannel.write(GsonUtils.toJson(gi));
                     }
                 }

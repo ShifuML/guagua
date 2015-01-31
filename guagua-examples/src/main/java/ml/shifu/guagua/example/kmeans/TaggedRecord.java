@@ -15,12 +15,15 @@
  */
 package ml.shifu.guagua.example.kmeans;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * Data records with tag. The tag is the index of the k categories range from 0 to k-1.
  */
-public class TaggedRecord {
+public class TaggedRecord implements Serializable {
+
+    private static final long serialVersionUID = -7663764463842894467L;
 
     public static final int INVALID_TAG = -1;
 
@@ -76,7 +79,7 @@ public class TaggedRecord {
     public String toString() {
         return this.toString("|");
     }
-    
+
     public static void main(String[] args) {
         System.out.println(Arrays.toString("aaa\u0010bbb".split("\u0010")));
     }
