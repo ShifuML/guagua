@@ -96,6 +96,13 @@ public class LinearRegressionWorker
         String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", "tmp");
         this.dataList = new MemoryDiskList<Data>((long) (Runtime.getRuntime().maxMemory() * memoryFraction), tmpFolder
                 + File.separator + System.currentTimeMillis());
+        // cannot find a good place to close these two data set, using Shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                LinearRegressionWorker.this.dataList.close();
+            }
+        }));
     }
 
     @Override

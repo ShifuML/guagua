@@ -161,7 +161,7 @@ public class NNWorker extends
             flatSpot[i] = flat.getActivationFunctions()[i] instanceof ActivationSigmoid ? 0.1 : 0.0;
         }
 
-        this.gradient = new Gradient(flat, training.openAdditional(), flatSpot, new LinearErrorFunction());
+        this.gradient = new Gradient(flat, training, flatSpot, new LinearErrorFunction());
     }
 
     private NNParams buildEmptyNNParams(WorkerContext<NNParams, NNParams> workerContext) {

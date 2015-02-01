@@ -17,8 +17,8 @@ package ml.shifu.guagua.example.kmeans;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 
+import ml.shifu.guagua.util.MemoryDiskList;
 import ml.shifu.guagua.worker.BasicWorkerInterceptor;
 import ml.shifu.guagua.worker.WorkerContext;
 
@@ -44,7 +44,7 @@ public class KMeansDataOutput extends BasicWorkerInterceptor<KMeansMasterParams,
         String separator = context.getProps().getProperty(KMeansContants.KMEANS_DATA_SEPERATOR);
 
         @SuppressWarnings("unchecked")
-        List<TaggedRecord> dataList = (List<TaggedRecord>) context.getAttachment();
+        MemoryDiskList<TaggedRecord> dataList = (MemoryDiskList<TaggedRecord>) context.getAttachment();
 
         PrintWriter pw = null;
         try {

@@ -59,6 +59,13 @@ public class SumWorker
         String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", "tmp");
         this.list = new MemoryDiskList<Long>((long) (Runtime.getRuntime().maxMemory() * memoryFraction), tmpFolder
                 + File.separator + System.currentTimeMillis());
+        // cannot find a good place to close these two data set, using Shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                SumWorker.this.list.close();
+            }
+        }));
     }
 
     @Override
