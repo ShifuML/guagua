@@ -24,11 +24,11 @@ import java.io.ObjectOutputStream;
 import ml.shifu.guagua.GuaguaRuntimeException;
 
 /**
- * TODO
+ * Default object serialization by using java serialization implementation.
  * 
  * @author Zhang David (pengzhang@paypal.com)
  */
-public class JavaSerializer<T> implements Serializer<T> {
+public class JavaObjectSerializer<T> implements ObjectSerializer<T> {
 
     /*
      * (non-Javadoc)

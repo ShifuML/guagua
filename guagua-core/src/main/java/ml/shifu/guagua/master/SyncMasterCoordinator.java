@@ -15,6 +15,8 @@
  */
 package ml.shifu.guagua.master;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -91,6 +93,7 @@ public class SyncMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT 
                             if(System.nanoTime() % 20 == 0) {
                                 LOG.info("workers already initialized: {}, still {} workers are not synced.",
                                         initDoneWorkers, (context.getWorkers() - initDoneWorkers));
+                                LOG.info("DEBUG: left workers:{}", notInList(childrenExt, context.getWorkers()));
                             }
                             return isTerminated(initDoneWorkers, workers, context.getMinWorkersRatio(),
                                     context.getMinWorkersTimeOut());
@@ -145,6 +148,7 @@ public class SyncMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT 
                             if(System.nanoTime() % 20 == 0) {
                                 LOG.info("iteration {}, workers compelted: {}, still {} workers are not synced.",
                                         currentIteration, workersCompleted, (workers - workersCompleted));
+                                LOG.info("DEBUG: left workers:{}", notInList(workerChildern, context.getWorkers()));
                             }
 
                             return isTerminated(workersCompleted, workers, context.getMinWorkersRatio(),
@@ -167,6 +171,22 @@ public class SyncMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT 
             }
 
         }.execute();
+    }
+
+    /**
+     * This is a debug method used by master to check which partition still not synced. Shouldn't be used outside.
+     */
+    private static List<Integer> notInList(List<String> inputs, int num) {
+        List<Integer> set = new ArrayList<Integer>();
+        for(int i = 1; i <= num; i++) {
+            set.add(Integer.valueOf(i));
+        }
+        for(String string: inputs) {
+            Integer n = Integer.valueOf(string);
+            set.remove(n);
+        }
+        Collections.sort(set);
+        return set;
     }
 
 }

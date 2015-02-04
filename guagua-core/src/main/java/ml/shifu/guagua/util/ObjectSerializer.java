@@ -16,14 +16,19 @@
 package ml.shifu.guagua.util;
 
 /**
- * 
- * TODO
+ * To serialize object to byte array and de-serialize bytes to an instance.
  * 
  * @author Zhang David (pengzhang@paypal.com)
  */
-public interface Serializer<T> {
+public interface ObjectSerializer<T> {
 
+    /**
+     * Serialize an instance to byte array.
+     */
     byte[] serialize(T t);
 
+    /**
+     * De-serialize byte array to an instance.
+     */
     T deserialize(byte[] bytes, Class<?> clazz);
 }

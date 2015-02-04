@@ -43,7 +43,7 @@ public class DiskList<T extends Serializable> implements AppendList<T> {
     /**
      * Serializer instance to serialize object to bytes or verse visa.
      */
-    private Serializer<T> serializer = new JavaSerializer<T>();
+    private ObjectSerializer<T> serializer = new JavaObjectSerializer<T>();
 
     private OutputStream outputStream;
 
@@ -147,14 +147,14 @@ public class DiskList<T extends Serializable> implements AppendList<T> {
     /**
      * @return the serializer
      */
-    public Serializer<T> getSerializer() {
+    public ObjectSerializer<T> getSerializer() {
         return serializer;
     }
 
     /**
      * @param serializer the serializer to set
      */
-    public void setSerializer(Serializer<T> serializer) {
+    public void setSerializer(ObjectSerializer<T> serializer) {
         this.serializer = serializer;
     }
     

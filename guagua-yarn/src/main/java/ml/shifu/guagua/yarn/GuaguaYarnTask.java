@@ -217,6 +217,7 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
 
         // Start the connection attempt.
         ChannelFuture future = this.rpcClient.connect(new InetSocketAddress(this.rpcHostName, this.rpcPort));
+        LOG.info("Connect to {}:{}", this.rpcHostName, this.rpcPort);
         this.rpcClientChannel = future.awaitUninterruptibly().getChannel();
     }
 
@@ -306,6 +307,7 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
                         GuaguaIterationStatus gi = new GuaguaIterationStatus(GuaguaYarnTask.this.partition,
                                 currentIteration, totalIteration);
                         gi.setKillContainer(isKill);
+                        LOG.info("Send GuaguaIterationStatus: {}.", gi);
                         rpcClientChannel.write(GsonUtils.toJson(gi));
                     }
                 }
