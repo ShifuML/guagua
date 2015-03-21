@@ -16,11 +16,15 @@
 package ml.shifu.guagua.util;
 
 /**
- * A appendable list interface definition.
+ * Appendable list interface definition.
  * 
  * <p>
- * Such list doesn't support randomly read and write. All data should be append into this list and then can be read one
- * by one.
+ * Two states are in this list. State {@link State#WRITE} when instance created, then element can be append to tail.
+ * After all elements are appended, switch state to {@link State#READ}. When state is {@link State#READ}, data cannot be
+ * appended, only can be iterative.
+ * 
+ * <p>
+ * Only support appending element to tail and iterative reading.
  * 
  * <p>
  * Such code as an example:
@@ -58,11 +62,16 @@ public interface AppendList<T> extends Iterable<T> {
      * After appending, switch state from WRITE to READ to allow iterating.
      */
     void switchState();
-    
+
     /**
      * Return size of this list.
      */
     long size();
+
+    /**
+     * Clear all elements.
+     */
+    void clear();
 
     /**
      * Inner state definition.

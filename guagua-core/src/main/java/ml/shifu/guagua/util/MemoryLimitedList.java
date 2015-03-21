@@ -24,6 +24,10 @@ import ml.shifu.guagua.GuaguaRuntimeException;
  * A simple wrapper list with limited byte size.
  * 
  * <p>
+ * Only two stages support in such kind of list. The first one is WRITE, the next is read. So far random WRITE and READ
+ * are not supported in this list.
+ * 
+ * <p>
  * If current size is over limited size, a GuaguaRuntimeException is added when {@link #add(Object)}.
  * 
  * @author Zhang David (pengzhang@paypal.com)
@@ -45,16 +49,28 @@ public class MemoryLimitedList<T> implements AppendList<T> {
      */
     private List<T> delegationList;
 
+    /**
+     * Internal state.
+     */
     private State state = State.WRITE;
 
+    /**
+     * Number of element in this list
+     */
     private long count;
 
+    /**
+     * Constructor with max bytes size limit and delegation list.
+     */
     public MemoryLimitedList(long maxSize, List<T> delegationList) {
         super();
         this.maxByteSize = maxSize;
         this.delegationList = delegationList;
     }
 
+    /**
+     * Constructor with delegation list
+     */
     public MemoryLimitedList(List<T> delegationList) {
         super();
         this.delegationList = delegationList;
@@ -120,6 +136,16 @@ public class MemoryLimitedList<T> implements AppendList<T> {
     @Override
     public long size() {
         return this.count;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see ml.shifu.guagua.util.AppendList#clear()
+     */
+    @Override
+    public void clear() {
+        this.delegationList.clear();
     }
 
 }

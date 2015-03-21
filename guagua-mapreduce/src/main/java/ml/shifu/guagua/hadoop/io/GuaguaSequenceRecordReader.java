@@ -29,7 +29,7 @@ import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.SequenceFileRecordReader;
 
 /**
- * A reader read HDFS sequence file key by key. The sequence key and value types are both {@link BytesWritable}.
+ * A reader read HDFS sequence file key by key. The types of sequence key and value are both {@link BytesWritable}.
  * 
  * <p>
  * Copy some code from {@link org.apache.hadoop.mapred.SequenceFileRecordReader} but to support

@@ -73,9 +73,9 @@ public final class GuaguaConstants {
 
     public static final int GUAGUA_ZK_SESSON_DEFAULT_TIMEOUT = 5 * 60 * 1000;
 
-    public static final String GUAGUA_MASTER_DEFAULT_SYSTEM_INTERCEPTERS = "ml.shifu.guagua.master.MasterTimer,ml.shifu.guagua.master.MemoryStatsMasterInterceptor,ml.shifu.guagua.master.SyncMasterCoordinator";
+    public static final String GUAGUA_MASTER_DEFAULT_SYSTEM_INTERCEPTERS = "ml.shifu.guagua.master.MasterTimer,ml.shifu.guagua.master.MemoryStatsMasterInterceptor,ml.shifu.guagua.master.NettyMasterCoordinator";
 
-    public static final String GUAGUA_WORKER_DEFAULT_SYSTEM_INTERCEPTERS = "ml.shifu.guagua.worker.WorkerTimer,ml.shifu.guagua.worker.MemoryStatsWorkerInterceptor,ml.shifu.guagua.worker.SyncWorkerCoordinator";
+    public static final String GUAGUA_WORKER_DEFAULT_SYSTEM_INTERCEPTERS = "ml.shifu.guagua.worker.WorkerTimer,ml.shifu.guagua.worker.MemoryStatsWorkerInterceptor,ml.shifu.guagua.worker.NettyWorkerCoordinator";
 
     public static final String GUAGUA_ZK_CLEANUP_ENABLE = "guagua.zk.cleanup.enable";
 
@@ -140,5 +140,15 @@ public final class GuaguaConstants {
     public static final int GUAGUA_FIRST_ITERATION = 1;
 
     public static final String GUAGUA_STRAGGLER_ITERATORS = "guagua.straggler.iterators";
+
+    public static final int GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT = 4;
+
+    public static final String GUAGUA_NETTY_SEVER_PORT = "guagua.netty.sever.port";
+
+    public static final int GUAGUA_NETTY_SEVER_DEFAULT_PORT = 54323;
+
+    public static final String GUAGUA_MASTER_WORKERESULTS_DEFAULT_MEMORY_FRACTION = "0.6";
+
+    public static final String GUAGUA_MASTER_WORKERESULTS_MEMORY_FRACTION = "guagua.master.workeresults.memoryFraction";
 
 }

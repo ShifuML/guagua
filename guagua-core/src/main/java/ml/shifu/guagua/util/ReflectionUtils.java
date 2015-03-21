@@ -16,6 +16,7 @@
 package ml.shifu.guagua.util;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -101,5 +102,17 @@ public final class ReflectionUtils {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Just to check if has method with methodName. This function only supports functions without parameters.
+     */
+    public static Method getMethod(Class<?> clazz, String methodName) {
+        for(Method method: clazz.getDeclaredMethods()) {
+            if(method.getName().equals(methodName)) {
+                return method;
+            }
+        }
+        return null;
     }
 }

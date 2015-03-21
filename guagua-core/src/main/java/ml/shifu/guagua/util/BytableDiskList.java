@@ -22,13 +22,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.util.Iterator;
 
 import ml.shifu.guagua.GuaguaRuntimeException;
+import ml.shifu.guagua.io.Bytable;
+import ml.shifu.guagua.io.BytableSerializer;
 
 /**
- * A list wrapper to implement store data into disk.
+ * A list wrapper to implement store {@link Bytable} data into disk.
  * 
  * <p>
  * No size limit for this list but user should make sure valid fileName when constructing.
@@ -42,12 +43,12 @@ import ml.shifu.guagua.GuaguaRuntimeException;
  * 
  * @author Zhang David (pengzhang@paypal.com)
  */
-public class DiskList<T extends Serializable> implements AppendList<T> {
 
+public class BytableDiskList<T extends Bytable> implements AppendList<T> {
     /**
      * Serializer instance to serialize object to bytes or verse visa.
      */
-    private ObjectSerializer<T> serializer = new JavaObjectSerializer<T>();
+    private BytableSerializer<T> serializer = new BytableSerializer<T>();
 
     private OutputStream outputStream;
 
@@ -69,9 +70,21 @@ public class DiskList<T extends Serializable> implements AppendList<T> {
     private long count;
 
     /**
-     * Constructor with file name in current working dir.
+     * Class name used for serialization.
      */
-    public DiskList(String fileName) {
+    private String className;
+
+    /**
+     * Constructor with file name in current working dir and instance class name.
+     */
+    public BytableDiskList(String fileName, String className) {
+        this(fileName, className, new BytableSerializer<T>());
+    }
+
+    /**
+     * Constructor with file name in current working dir, class name and serializer instance.
+     */
+    public BytableDiskList(String fileName, String className, BytableSerializer<T> serializer) {
         try {
             this.file = new File(fileName);
             this.outputStream = new FileOutputStream(file);
@@ -79,6 +92,8 @@ public class DiskList<T extends Serializable> implements AppendList<T> {
         } catch (FileNotFoundException e) {
             throw new GuaguaRuntimeException(e);
         }
+        this.className = className;
+        this.serializer = serializer;
     }
 
     /**
@@ -107,7 +122,7 @@ public class DiskList<T extends Serializable> implements AppendList<T> {
             throw new IllegalStateException();
         }
         this.count += 1;
-        byte[] bytes = getSerializer().serialize(t);
+        byte[] bytes = getSerializer().objectToBytes(t);
         try {
             this.outputStream.write(bytes.length);
             this.outputStream.write(bytes);
@@ -118,7 +133,7 @@ public class DiskList<T extends Serializable> implements AppendList<T> {
     }
 
     /**
-     * This method should be called at the end of {@link DiskList} usage to release file descriptors.
+     * This method should be called at the end of {@link BytableDiskList} usage to release file descriptors.
      */
     public void close() {
         try {
@@ -143,7 +158,7 @@ public class DiskList<T extends Serializable> implements AppendList<T> {
             @Override
             public boolean hasNext() {
                 try {
-                    return DiskList.this.inputStream.available() > 0;
+                    return BytableDiskList.this.inputStream.available() > 0;
                 } catch (IOException e) {
                     return false;
                 }
@@ -152,13 +167,13 @@ public class DiskList<T extends Serializable> implements AppendList<T> {
             @Override
             public T next() {
                 try {
-                    int length = DiskList.this.inputStream.read();
+                    int length = BytableDiskList.this.inputStream.read();
                     byte[] bytes = new byte[length];
-                    int size = DiskList.this.inputStream.read(bytes);
+                    int size = BytableDiskList.this.inputStream.read(bytes);
                     if(size < 0) {
                         throw new GuaguaRuntimeException("IO exception on reading disk file.");
                     }
-                    return DiskList.this.getSerializer().deserialize(bytes, null);
+                    return BytableDiskList.this.getSerializer().bytesToObject(bytes, className);
                 } catch (IOException e) {
                     throw new GuaguaRuntimeException(e);
                 }
@@ -174,7 +189,7 @@ public class DiskList<T extends Serializable> implements AppendList<T> {
     /**
      * @return the serializer
      */
-    public ObjectSerializer<T> getSerializer() {
+    public BytableSerializer<T> getSerializer() {
         return serializer;
     }
 
@@ -182,7 +197,7 @@ public class DiskList<T extends Serializable> implements AppendList<T> {
      * @param serializer
      *            the serializer to set
      */
-    public void setSerializer(ObjectSerializer<T> serializer) {
+    public void setSerializer(BytableSerializer<T> serializer) {
         this.serializer = serializer;
     }
 

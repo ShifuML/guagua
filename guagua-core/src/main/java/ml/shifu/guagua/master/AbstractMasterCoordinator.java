@@ -109,7 +109,6 @@ public abstract class AbstractMasterCoordinator<MASTER_RESULT extends Bytable, W
                 LOG.info("master results write to znode.");
             }
         }.execute();
-
     }
 
     @Override

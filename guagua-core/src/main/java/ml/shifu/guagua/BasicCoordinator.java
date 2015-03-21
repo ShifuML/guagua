@@ -70,7 +70,7 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
     /**
      * Default waiting time to check master or worker progress from zookeeper servers.
      */
-    protected static final int WAIT_SLOT_MILLS = 500;
+    protected static final int WAIT_SLOT_MILLS = 300;
 
     /**
      * Waiting time to check master or worker progress from zookeeper servers.
@@ -459,18 +459,18 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
         public void execute() {
             try {
                 doExecute();
-            } catch (KeeperException e) {
-                throw new GuaguaRuntimeException(e);
             } catch (InterruptedException e) {
                 // transfer interrupt state to caller thread.
                 Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                throw new GuaguaRuntimeException(e);
             }
         }
 
         /**
          * Real method to do coordinator operation.
          */
-        public abstract void doExecute() throws KeeperException, InterruptedException;
+        public abstract void doExecute() throws Exception, InterruptedException;
     }
 
     /**
@@ -492,7 +492,7 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
         }
 
         @Override
-        public void doExecute() throws KeeperException, InterruptedException {
+        public void doExecute() throws Exception, InterruptedException {
             int attempt = 0;
             do {
                 ++attempt;
@@ -507,7 +507,7 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
             } while(attempt < Integer.MAX_VALUE);
         }
 
-        public abstract boolean retryExecution() throws KeeperException, InterruptedException;
+        public abstract boolean retryExecution() throws Exception, InterruptedException;
 
         public long getElapsedTime() {
             return System.currentTimeMillis() - this.startTime;

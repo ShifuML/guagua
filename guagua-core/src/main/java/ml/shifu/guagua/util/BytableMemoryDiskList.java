@@ -15,13 +15,14 @@
  */
 package ml.shifu.guagua.util;
 
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import ml.shifu.guagua.io.Bytable;
+
 /**
- * A list to store data firstly into memory then into disk if over threshold.
+ * A list to store {@link Bytable} data firstly into memory then into disk if over threshold.
  * 
  * <p>
  * Only two stages support in such kind of list. The first one is WRITE, the next is read. So far random WRITE and READ
@@ -35,7 +36,7 @@ import java.util.List;
  * 
  * @author Zhang David (pengzhang@paypal.com)
  */
-public class MemoryDiskList<T extends Serializable> implements AppendList<T> {
+public class BytableMemoryDiskList<T extends Bytable> implements AppendList<T> {
 
     /**
      * Limited size setting for memory
@@ -53,9 +54,9 @@ public class MemoryDiskList<T extends Serializable> implements AppendList<T> {
     private List<T> delegationList;
 
     /**
-     * Backup {@link DiskList} to store element into disk.
+     * Backup {@link BytableDiskList} to store element into disk.
      */
-    private DiskList<T> diskList;
+    private BytableDiskList<T> diskList;
 
     /**
      * Number of elements in this list
@@ -71,60 +72,63 @@ public class MemoryDiskList<T extends Serializable> implements AppendList<T> {
      * Constructor with max bytes size of memory and {@link #delegationList}. Disk file name is random filename in
      * current working dir.
      */
-    public MemoryDiskList(long maxSize, List<T> delegationList) {
-        super();
+    public BytableMemoryDiskList(long maxSize, List<T> delegationList, String className) {
         this.maxByteSize = maxSize;
         this.delegationList = delegationList;
-        this.diskList = new DiskList<T>(System.currentTimeMillis() + "");
+        this.diskList = new BytableDiskList<T>(System.currentTimeMillis() + "", className);
     }
 
     /**
      * Constructor with only memory {@link #delegationList}. By default no limit of bytes size in memory.
      */
-    public MemoryDiskList(List<T> delegationList) {
-        super();
+    public BytableMemoryDiskList(List<T> delegationList, String className) {
         this.delegationList = delegationList;
-        this.diskList = new DiskList<T>(System.currentTimeMillis() + "");
+        this.diskList = new BytableDiskList<T>(System.currentTimeMillis() + "", className);
     }
 
     /**
      * Constructor with max bytes size of memory and {@link #delegationList} and disk file name in current working dir.
      */
-    public MemoryDiskList(long maxSize, List<T> delegationList, String fileName) {
-        super();
+    public BytableMemoryDiskList(long maxSize, List<T> delegationList, String fileName, String className) {
         this.maxByteSize = maxSize;
         this.delegationList = delegationList;
-        this.diskList = new DiskList<T>(fileName);
+        this.diskList = new BytableDiskList<T>(fileName, className);
     }
 
     /**
      * Constructor with max bytes size of memory and disk file name in current working dir. By default
      * {@link LinkedList} is used for memory list.
      */
-    public MemoryDiskList(long maxSize, String fileName) {
-        super();
+    public BytableMemoryDiskList(long maxSize, String fileName, String className) {
         this.maxByteSize = maxSize;
         this.delegationList = new LinkedList<T>();
-        this.diskList = new DiskList<T>(fileName);
+        this.diskList = new BytableDiskList<T>(fileName, className);
     }
 
     /**
-     * Constructor with only memory bytes size limit.
+     * Constructor with memory bytes size limit and bytableDiskList setting.
      */
-    public MemoryDiskList(long maxSize) {
-        super();
+    public BytableMemoryDiskList(long maxSize, BytableDiskList<T> bytableDiskList) {
         this.maxByteSize = maxSize;
         this.delegationList = new LinkedList<T>();
-        this.diskList = new DiskList<T>(System.currentTimeMillis() + "");
+        this.diskList = bytableDiskList;
+    }
+
+    /**
+     * Constructor with only memory bytes size limit and className.
+     */
+    public BytableMemoryDiskList(long maxSize, String className) {
+        this.maxByteSize = maxSize;
+        this.delegationList = new LinkedList<T>();
+        this.diskList = new BytableDiskList<T>(System.currentTimeMillis() + "", className);
     }
 
     /**
      * Default constructor. By default no memory limit, {@link LinkedList} and random file name.
      */
-    public MemoryDiskList() {
-        super();
+    public BytableMemoryDiskList(String className) {
         this.delegationList = new LinkedList<T>();
-        this.diskList = new DiskList<T>(System.currentTimeMillis() + "");
+        this.diskList = new BytableDiskList<T>(System.currentTimeMillis() + "", className);
     }
 
     @Override
@@ -144,7 +148,7 @@ public class MemoryDiskList<T extends Serializable> implements AppendList<T> {
     }
 
     /**
-     * Close disk stream. Should be called at the end of usage of {@link MemoryDiskList}.
+     * Close disk stream. Should be called at the end of usage of {@link BytableMemoryDiskList}.
      */
     public void close() {
         if(this.diskList != null) {
@@ -174,9 +178,9 @@ public class MemoryDiskList<T extends Serializable> implements AppendList<T> {
         }
         return new Iterator<T>() {
 
-            private Iterator<T> iter1 = MemoryDiskList.this.delegationList.iterator();
+            private Iterator<T> iter1 = BytableMemoryDiskList.this.delegationList.iterator();
 
-            private Iterator<T> iter2 = MemoryDiskList.this.diskList.iterator();
+            private Iterator<T> iter2 = BytableMemoryDiskList.this.diskList.iterator();
 
             boolean isDisk = false;
 
@@ -187,7 +191,7 @@ public class MemoryDiskList<T extends Serializable> implements AppendList<T> {
                 }
                 isDisk = iter2.hasNext();
                 if(!isDisk) {
-                    MemoryDiskList.this.close();
+                    BytableMemoryDiskList.this.close();
                 }
                 return isDisk;
             }

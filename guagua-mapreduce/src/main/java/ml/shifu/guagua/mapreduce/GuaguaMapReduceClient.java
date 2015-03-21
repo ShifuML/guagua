@@ -245,8 +245,8 @@ public class GuaguaMapReduceClient {
      */
     public synchronized Job creatJob(String[] args) throws IOException {
         Configuration conf = new Configuration();
-        // set it here to make it can be over-written. Set task timeout to a long period 15 minutes.
-        conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 900000);
+        // set it here to make it can be over-written. Set task timeout to a long period 20 minutes.
+        conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 1200000);
         GuaguaOptionsParser parser = new GuaguaOptionsParser(conf, args);
         CommandLine cmdLine = parser.getCommandLine();
         checkInputSetting(conf, cmdLine);
@@ -263,6 +263,8 @@ public class GuaguaMapReduceClient {
         // speculative execution should be disabled
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_MAP_TASKS_SPECULATIVE_EXECUTION, false);
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_REDUCE_TASKS_SPECULATIVE_EXECUTION, false);
+        // set mapreduce.job.max.split.locations to 30 to suppress warnings
+        conf.setInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_MAX_SPLIT_LOCATIONS, 30);
 
         // Set cache to 0.
         conf.setInt(GuaguaMapReduceConstants.IO_SORT_MB, 0);

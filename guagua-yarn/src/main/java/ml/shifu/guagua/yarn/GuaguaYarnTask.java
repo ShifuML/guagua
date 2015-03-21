@@ -159,12 +159,12 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
      * Constructor with yarn task related parameters.
      */
     public GuaguaYarnTask(ApplicationAttemptId appAttemptId, ContainerId containerId, int partition,
-            String RPCHostName, String RPCPort, Configuration conf) {
+            String rpcHostName, String rpcPort, Configuration conf) {
         this.appAttemptId = appAttemptId;
         this.containerId = containerId;
         this.partition = partition;
-        this.rpcHostName = RPCHostName;
-        this.rpcPort = Integer.parseInt(RPCPort);
+        this.rpcHostName = rpcHostName;
+        this.rpcPort = Integer.parseInt(rpcPort);
         LOG.info("current partition:{}", this.getPartition());
         this.appId = this.getAppAttemptId().getApplicationId();
         this.yarnConf = conf;
