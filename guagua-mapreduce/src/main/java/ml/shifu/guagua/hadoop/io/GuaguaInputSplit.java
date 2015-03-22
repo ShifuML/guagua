@@ -174,4 +174,32 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
                 .format("GuaguaInputSplit [isMaster=%s, fileSplit=%s]", isMaster, Arrays.toString(this.fileSplits));
     }
 
+//    public static void main(String[] args) {
+//        BytableDiskList<BytableWrapper> bytableDiskList = new BytableDiskList<BytableWrapper>(
+//                System.currentTimeMillis() + "", BytableWrapper.class.getName());
+//        BytableMemoryDiskList<BytableWrapper> iterResults = new BytableMemoryDiskList<BytableWrapper>(2,
+//                bytableDiskList);
+//
+//        BytableWrapper bytable = new BytableWrapper();
+//        bytable.setCurrentIteration(1);
+//        bytable.setContainerId("111");
+//        bytable.setBytes(new byte[] { 1, 2, 3 });
+//
+//        BytableWrapper bytable2 = new BytableWrapper();
+//        bytable2.setCurrentIteration(2);
+//        bytable2.setContainerId("222");
+//        bytable2.setBytes(new byte[] { 1, 2, 3, 4 });
+//
+//        iterResults.append(bytable);
+//        iterResults.append(bytable2);
+//
+//        iterResults.switchState();
+//
+//        for(BytableWrapper bytableWrapper: iterResults) {
+//            System.out.println(bytableWrapper);
+//        }
+//        iterResults.close();
+//        iterResults.clear();
+//    }
+
 }

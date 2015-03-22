@@ -19,11 +19,9 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executors;
@@ -36,6 +34,8 @@ import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.BytableWrapper;
 import ml.shifu.guagua.io.NettyBytableDecoder;
 import ml.shifu.guagua.io.NettyBytableEncoder;
+import ml.shifu.guagua.util.BytableDiskList;
+import ml.shifu.guagua.util.BytableMemoryDiskList;
 import ml.shifu.guagua.util.MemoryDiskList;
 import ml.shifu.guagua.util.NetworkUtils;
 import ml.shifu.guagua.util.NumberFormatUtils;
@@ -47,6 +47,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.ChannelEvent;
+import org.jboss.netty.channel.ChannelException;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -86,12 +87,13 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
      */
     private int messageServerPort;
 
-    // TODO , this should be spilled to disk if big memory used
+    private static final Object LOCK = new Object();
+
     /**
      * Worker results for each iteration. It should store each worker result in each iteration once.
      */
-    private List<BytableWrapper> iterResults = Collections.synchronizedList(new ArrayList<BytableWrapper>());
-    // private BytableMemoryDiskList<BytableWrapper> iterResults;
+    // private List<BytableWrapper> iterResults = Collections.synchronizedList(new ArrayList<BytableWrapper>());
+    private BytableMemoryDiskList<BytableWrapper> iterResults;
 
     /**
      * 'indexMap' used to store <containerId, index in iterResults> for search.
@@ -101,7 +103,6 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     /**
      * Current iteration.
      */
-    @SuppressWarnings("unused")
     private int currentInteration;
 
     @Override
@@ -111,13 +112,15 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     }
 
     private void initIterResults(Properties props) {
-        // BytableDiskList<BytableWrapper> bytableDiskList = new BytableDiskList<BytableWrapper>(
-        // System.currentTimeMillis() + "", BytableWrapper.class.getName());
-        // double memoryFraction = Double.valueOf(props.getProperty(
-        // GuaguaConstants.GUAGUA_MASTER_WORKERESULTS_MEMORY_FRACTION,
-        // GuaguaConstants.GUAGUA_MASTER_WORKERESULTS_DEFAULT_MEMORY_FRACTION));
-        // long memoryStoreSize = (long) (Runtime.getRuntime().maxMemory() * memoryFraction);
-        // this.iterResults = new BytableMemoryDiskList<BytableWrapper>(memoryStoreSize, bytableDiskList);
+        synchronized(LOCK) {
+            BytableDiskList<BytableWrapper> bytableDiskList = new BytableDiskList<BytableWrapper>(
+                    System.currentTimeMillis() + "", BytableWrapper.class.getName());
+            double memoryFraction = Double.valueOf(props.getProperty(
+                    GuaguaConstants.GUAGUA_MASTER_WORKERESULTS_MEMORY_FRACTION,
+                    GuaguaConstants.GUAGUA_MASTER_WORKERESULTS_DEFAULT_MEMORY_FRACTION));
+            long memoryStoreSize = (long) (Runtime.getRuntime().maxMemory() * memoryFraction);
+            this.iterResults = new BytableMemoryDiskList<BytableWrapper>(memoryStoreSize, bytableDiskList);
+        }
     }
 
     /**
@@ -134,10 +137,15 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         // Start master netty server
         startNettyServer(context.getProps());
 
+        // if si init ,set currentIteration to 1 else set to current Iteration.
+        if(context.isInitIteration()) {
+            this.currentInteration = GuaguaConstants.GUAGUA_FIRST_ITERATION;
+        } else {
+            this.currentInteration = context.getCurrentIteration();
+        }
+
         // Create master initial znode with message server address.
         initMasterZnode(context);
-
-        this.currentInteration = context.getCurrentIteration();
 
         if(!context.isInitIteration()) {
             // if not init step, return, because of no need initialize twice for fail-over task
@@ -153,11 +161,13 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
      * Clear all status before next iteration.
      */
     private void clear(Properties props) {
-        // clear and wait for next iteration.
-        // this.iterResults.close();
-        this.iterResults.clear();
-        this.initIterResults(props);
-        this.indexMap.clear();
+        synchronized(LOCK) {
+            // clear and wait for next iteration.
+            this.iterResults.close();
+            this.iterResults.clear();
+            this.initIterResults(props);
+            this.indexMap.clear();
+        }
     }
 
     /**
@@ -189,8 +199,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 GuaguaConstants.GUAGUA_NETTY_SEVER_DEFAULT_PORT);
         this.messageServerPort = NetworkUtils.getValidServerPort(this.messageServerPort);
         this.messageServer = new ServerBootstrap(new NioServerSocketChannelFactory(
-                Executors.newFixedThreadPool(GuaguaConstants.GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT / 2),
-                Executors.newFixedThreadPool(GuaguaConstants.GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT * 2)));
+                Executors.newFixedThreadPool(GuaguaConstants.GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT),
+                Executors.newCachedThreadPool()));
 
         // Set up the pipeline factory.
         this.messageServer.setPipelineFactory(new ChannelPipelineFactory() {
@@ -200,7 +210,13 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         });
 
         // Bind and start to accept incoming connections.
-        this.messageServer.bind(new InetSocketAddress(this.messageServerPort));
+        try {
+            this.messageServer.bind(new InetSocketAddress(this.messageServerPort));
+        } catch (ChannelException e) {
+            LOG.warn(e.getMessage() + "; try to rebind again.");
+            this.messageServerPort = NetworkUtils.getValidServerPort(this.messageServerPort);
+            this.messageServer.bind(new InetSocketAddress(this.messageServerPort));
+        }
     }
 
     /**
@@ -222,31 +238,32 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 throw new IllegalStateException("Message should be bytable instance.");
             }
 
-            LOG.info("message:{}", e.getMessage());
-            // TODO such logic should be locked by one lock
             BytableWrapper bytableWrapper = (BytableWrapper) e.getMessage();
+            LOG.debug("Received container id {} with message:{}", bytableWrapper.getContainerId(), bytableWrapper);
             String containerId = bytableWrapper.getContainerId();
-            // if(bytableWrapper.isStopMessage()) {
-            // for stop message, no need to check current iteration.
-            if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)) {
-                NettyMasterCoordinator.this.iterResults.add(bytableWrapper);
-                NettyMasterCoordinator.this.indexMap.put(containerId,
-                        (int) (NettyMasterCoordinator.this.iterResults.size() - 1));
-            } else {
-                // if already exits, no need update, we hope it is the same result as the worker restarted and
-                // result computed again. or result is not for current iteration, throw that result.
+            synchronized(LOCK) {
+                if(bytableWrapper.isStopMessage()) {
+                    // for stop message, no need to check current iteration.
+                    if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)) {
+                        NettyMasterCoordinator.this.iterResults.append(bytableWrapper);
+                        NettyMasterCoordinator.this.indexMap.put(containerId,
+                                (int) (NettyMasterCoordinator.this.iterResults.size() - 1));
+                    } else {
+                        // if already exits, no need update, we hope it is the same result as the worker restarted and
+                        // result computed again. or result is not for current iteration, throw that result.
+                    }
+                } else {
+                    if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)
+                            && NettyMasterCoordinator.this.currentInteration == bytableWrapper.getCurrentIteration()) {
+                        NettyMasterCoordinator.this.iterResults.append(bytableWrapper);
+                        NettyMasterCoordinator.this.indexMap.put(containerId,
+                                (int) (NettyMasterCoordinator.this.iterResults.size() - 1));
+                    } else {
+                        // if already exits, no need update, we hope it is the same result as the worker restarted and
+                        // result computed again. or result is not for current iteration, throw that result.
+                    }
+                }
             }
-            // } else {
-            // if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)
-            // && NettyMasterCoordinator.this.currentInteration == bytableWrapper.getCurrentIteration()) {
-            // NettyMasterCoordinator.this.iterResults.append(bytableWrapper);
-            // NettyMasterCoordinator.this.indexMap.put(containerId,
-            // (int) (NettyMasterCoordinator.this.iterResults.size() - 1));
-            // } else {
-            // // if already exits, no need update, we hope it is the same result as the worker restarted and
-            // // result computed again. or result is not for current iteration, throw that result.
-            // }
-            // }
         }
 
         @Override
@@ -268,9 +285,12 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             @Override
             public boolean retryExecution() throws KeeperException, InterruptedException {
                 // long to int is assumed successful as no such many workers need using long
-                int doneWorkers = (int) NettyMasterCoordinator.this.iterResults.size();
+                int doneWorkers;
+                synchronized(LOCK) {
+                    doneWorkers = (int) NettyMasterCoordinator.this.iterResults.size();
+                }
                 // to avoid log flood
-                if(System.nanoTime() % 20 == 0) {
+                if(System.nanoTime() % 30 == 0) {
                     LOG.info("iteration {}, workers compelted: {}, still {} workers are not synced.",
                             context.getCurrentIteration(), doneWorkers, (context.getWorkers() - doneWorkers));
                 }
@@ -280,7 +300,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         }.execute();
 
         // switch state to read
-        // this.iterResults.switchState();
+        synchronized(LOCK) {
+            this.iterResults.switchState();
+        }
         // set worker results.
         context.setWorkerResults(new Iterable<WORKER_RESULT>() {
             @Override
@@ -293,23 +315,29 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
                     @Override
                     public boolean hasNext() {
-                        if(this.isStart.compareAndSet(false, true)) {
-                            this.localItr = NettyMasterCoordinator.this.iterResults.iterator();
-                        }
-                        boolean hasNext = this.localItr.hasNext();
-                        if(!hasNext) {
-                            // to make sure it can be iterated again, it shouldn't be a good case for iterator, we will
-                            // iterate again to check if all workers are halt.
-                            this.localItr = NettyMasterCoordinator.this.iterResults.iterator();
-                            return false;
+                        boolean hasNext;
+                        synchronized(LOCK) {
+                            if(this.isStart.compareAndSet(false, true)) {
+                                this.localItr = NettyMasterCoordinator.this.iterResults.iterator();
+                            }
+                            hasNext = this.localItr.hasNext();
+                            if(!hasNext) {
+                                // to make sure it can be iterated again, it shouldn't be a good case for iterator, we
+                                // will
+                                // iterate again to check if all workers are halt.
+                                this.localItr = NettyMasterCoordinator.this.iterResults.iterator();
+                                return false;
+                            }
                         }
                         return hasNext;
                     }
 
                     @Override
                     public WORKER_RESULT next() {
-                        return NettyMasterCoordinator.this.getWorkerSerializer().bytesToObject(
-                                localItr.next().getBytes(), context.getWorkerResultClassName());
+                        synchronized(LOCK) {
+                            return NettyMasterCoordinator.this.getWorkerSerializer().bytesToObject(
+                                    localItr.next().getBytes(), context.getWorkerResultClassName());
+                        }
                     }
 
                     @Override
@@ -342,7 +370,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         .toString();
                 String appCurrentMasterSplitNode = getCurrentMasterSplitNode(context.getAppId(),
                         context.getCurrentIteration()).toString();
-                LOG.info("master result:{}", context.getMasterResult());
+                LOG.debug("master result:{}", context.getMasterResult());
                 try {
                     byte[] bytes = getMasterSerializer().objectToBytes(context.getMasterResult());
                     isSplit = setBytesToZNode(appCurrentMasterNode, appCurrentMasterSplitNode, bytes,
@@ -397,10 +425,13 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         new RetryCoordinatorCommand(isFixedTime(), getSleepTime()) {
                             @Override
                             public boolean retryExecution() throws KeeperException, InterruptedException {
-                                // long to int is assumed successful as no such many workers need using long
-                                int doneWorkers = (int) NettyMasterCoordinator.this.iterResults.size();
+                                int doneWorkers;
+                                synchronized(LOCK) {
+                                    // long to int is assumed successful as no such many workers need using long
+                                    doneWorkers = (int) NettyMasterCoordinator.this.iterResults.size();
+                                }
                                 // to avoid log flood
-                                if(System.nanoTime() % 20 == 0) {
+                                if(System.nanoTime() % 30 == 0) {
                                     LOG.info(
                                             "unregister step, workers compelted: {}, still {} workers are not unregistered.",
                                             doneWorkers, (context.getWorkers() - doneWorkers));
@@ -430,7 +461,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         NettyMasterCoordinator.this.messageServer.releaseExternalResources();
                     }
                     closeZooKeeper();
-                    // NettyMasterCoordinator.this.iterResults.close();
+                    NettyMasterCoordinator.this.iterResults.close();
                     NettyMasterCoordinator.this.iterResults.clear();
                 }
             }

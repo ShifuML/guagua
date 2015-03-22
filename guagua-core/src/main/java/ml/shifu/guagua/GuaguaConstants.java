@@ -141,11 +141,11 @@ public final class GuaguaConstants {
 
     public static final String GUAGUA_STRAGGLER_ITERATORS = "guagua.straggler.iterators";
 
-    public static final int GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT = 4;
+    public static final int GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT = 8;
 
     public static final String GUAGUA_NETTY_SEVER_PORT = "guagua.netty.sever.port";
 
-    public static final int GUAGUA_NETTY_SEVER_DEFAULT_PORT = 54323;
+    public static final int GUAGUA_NETTY_SEVER_DEFAULT_PORT = 44323;
 
     public static final String GUAGUA_MASTER_WORKERESULTS_DEFAULT_MEMORY_FRACTION = "0.6";
 

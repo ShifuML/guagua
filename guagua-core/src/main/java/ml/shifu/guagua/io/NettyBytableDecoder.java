@@ -56,7 +56,6 @@ public class NettyBytableDecoder extends LengthFieldBasedFrameDecoder {
         byte[] classNameBytes = new byte[classNameSize];
         frame.readBytes(classNameBytes);
         String className = new String(classNameBytes, Charset.forName("UTF-8"));
-        System.out.println(className);
         int readableBytes = frame.readableBytes();
         byte[] objectBytes = new byte[readableBytes];
         frame.readBytes(objectBytes);

@@ -241,7 +241,7 @@ public final class SizeEstimator {
     }
 
     private static long primitiveSize(Class<?> cls) {
-        if(cls == Byte.class) {
+        if(cls == byte.class) {
             return BYTE_SIZE;
         } else if(cls == boolean.class) {
             return BOOLEAN_SIZE;
