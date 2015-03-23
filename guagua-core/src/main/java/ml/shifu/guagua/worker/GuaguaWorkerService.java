@@ -203,11 +203,12 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     public void run(Progressable progress) {
         WorkerContext<MASTER_RESULT, WORKER_RESULT> context = buildContext();
 
+        int firstIteration = context.getCurrentIteration() + 1;
         int iteration = context.getCurrentIteration();
         while(iteration < getTotalIteration()) {
             int currIter = iteration + 1;
             context.setCurrentIteration(currIter);
-            iterate(context, currIter, progress);
+            iterate(context, firstIteration, progress);
             iteration = context.getCurrentIteration();
             // master says we should stop now.
             MASTER_RESULT masterResult = context.getLastMasterResult();
