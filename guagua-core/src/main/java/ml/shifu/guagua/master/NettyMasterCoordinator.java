@@ -19,6 +19,7 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
@@ -138,7 +139,11 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         new FailOverCommand(context).execute();
 
         // Start master netty server
-        startNettyServer(context.getProps());
+        try {
+            startNettyServer(context.getProps());
+        } catch (UnknownHostException e) {
+            throw new GuaguaRuntimeException(e);
+        }
 
         // if is init step, set currentIteration to 1 else set to current Iteration.
         if(context.isInitIteration()) {
@@ -178,15 +183,34 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
      */
     private void initMasterZnode(final MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
         String znode = null;
+        // create master init znode
         try {
-            // create master init znode
             znode = getMasterBaseNode(context.getAppId()).toString();
             getZooKeeper().createExt(znode, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, true);
+        } catch (KeeperException.NodeExistsException e) {
+            LOG.warn("Node exists: {}", znode);
+        } catch (Exception e) {
+            throw new GuaguaRuntimeException(e);
+        }
+
+        // update master server address info to init master znode
+        try {
             znode = getCurrentMasterNode(context.getAppId(), GuaguaConstants.GUAGUA_INIT_STEP).toString();
-            getZooKeeper().createExt(
-                    znode,
-                    (InetAddress.getLocalHost().getHostName() + ":" + NettyMasterCoordinator.this.messageServerPort)
-                            .getBytes(Charset.forName("UTF-8")), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, false);
+            if(getZooKeeper().exists(znode, false) == null) {
+                String znodeValue = InetAddress.getLocalHost().getHostName() + ":"
+                        + NettyMasterCoordinator.this.messageServerPort + ":" + 1;
+                getZooKeeper().createExt(znode, znodeValue.getBytes(Charset.forName("UTF-8")), Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT, false);
+                LOG.info("Master znode initialization with server info {}", znodeValue);
+            } else {
+                String existZnodeValue = new String(getZooKeeper().getData(znode, null, null), Charset.forName("UTF-8"));
+                int version = NumberFormatUtils.getInt(existZnodeValue.split(":")[2], true);
+                String znodeValue = InetAddress.getLocalHost().getHostName() + ":"
+                        + NettyMasterCoordinator.this.messageServerPort + ":" + (version + 1);
+                getZooKeeper().createOrSetExt(znode, znodeValue.getBytes(Charset.forName("UTF-8")),
+                        Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, false, -1);
+                LOG.info("Master znode re-initialization with server info {}", znodeValue);
+            }
         } catch (KeeperException.NodeExistsException e) {
             LOG.warn("Node exists: {}", znode);
         } catch (Exception e) {
@@ -197,7 +221,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     /**
      * Start netty server which is used to communicate with workers.
      */
-    private void startNettyServer(Properties props) {
+    private void startNettyServer(Properties props) throws UnknownHostException {
         this.messageServerPort = NumberFormatUtils.getInt(props.getProperty(GuaguaConstants.GUAGUA_NETTY_SEVER_PORT),
                 GuaguaConstants.GUAGUA_NETTY_SEVER_DEFAULT_PORT);
         this.messageServerPort = NetworkUtils.getValidServerPort(this.messageServerPort);
@@ -220,6 +244,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             this.messageServerPort = NetworkUtils.getValidServerPort(this.messageServerPort);
             this.messageServer.bind(new InetSocketAddress(this.messageServerPort));
         }
+
+        LOG.info("Master netty server is started at {}", InetAddress.getLocalHost().getHostName() + ":"
+                + InetAddress.getLocalHost().getHostAddress() + ":" + NettyMasterCoordinator.this.messageServerPort);
     }
 
     /**

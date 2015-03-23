@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.io.Bytable;
@@ -76,6 +77,11 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
      * Client channel used to connect to master server.
      */
     private Channel clientChannel;
+
+    /**
+     * If server is shutdown.
+     */
+    private AtomicBoolean isServerShutdown = new AtomicBoolean(false);
 
     /**
      * Worker coordinator initialization.
@@ -166,7 +172,7 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     /**
      * ClientHandeler used to update progress to RPC server (AppMaster).
      */
-    public static class ClientHandler extends SimpleChannelUpstreamHandler {
+    private class ClientHandler extends SimpleChannelUpstreamHandler {
 
         @Override
         public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e) throws Exception {
@@ -188,10 +194,80 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
             e.getChannel().close();
         }
+
+        @Override
+        public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) {
+            // TODO if not master down, how to do
+            // channel is disconnected, assume master server is down.
+            LOG.info("Master server is down, channel client is disconnected with event {}", e);
+            NettyWorkerCoordinator.this.isServerShutdown.compareAndSet(false, true);
+        }
+
     }
 
     @Override
-    public void preIteration(WorkerContext<MASTER_RESULT, WORKER_RESULT> context) {
+    public void preIteration(final WorkerContext<MASTER_RESULT, WORKER_RESULT> context) {
+        if(isServerShutdown.get()) {
+            // if server is shutdown, master is down, fail over from last master step
+            new FailOverCoordinatorCommand(context).execute();
+
+            // Wait for master init and get master server address.
+            new BasicCoordinatorCommand() {
+                @Override
+                public void doExecute() throws KeeperException, InterruptedException {
+                    String appId = context.getAppId();
+                    final String appMasterNode = getCurrentMasterNode(appId, GuaguaConstants.GUAGUA_INIT_STEP)
+                            .toString();
+                    // wait for master restart.
+                    new RetryCoordinatorCommand(isFixedTime(), getSleepTime()) {
+                        String newServerAddress = null;
+
+                        @Override
+                        public boolean retryExecution() throws KeeperException, InterruptedException {
+                            try {
+                                this.newServerAddress = new String(getBytesFromZNode(appMasterNode, null),
+                                        Charset.forName("UTF-8"));
+                                boolean isServerChanged = !this.newServerAddress
+                                        .equals(NettyWorkerCoordinator.this.masterServerAddress);
+                                if(isServerChanged) {
+                                    NettyWorkerCoordinator.this.masterServerAddress = this.newServerAddress;
+                                }
+                                return isServerChanged;
+                            } catch (KeeperException.NoNodeException e) {
+                                // to avoid log flood
+                                if(System.nanoTime() % 10 == 0) {
+                                    LOG.warn("No such node:{}", appMasterNode);
+                                }
+                                return false;
+                            }
+                        }
+                    }.execute();
+                }
+            }.execute();
+
+            // connect to new master server.
+            connectMasterServer();
+
+            // reset master result to current iteration if master is down.
+            if(!context.isInitIteration()) {
+                new BasicCoordinatorCommand() {
+                    @Override
+                    public void doExecute() throws KeeperException, InterruptedException {
+                        String appId = context.getAppId();
+                        int lastIteration = context.getCurrentIteration();
+                        final String appMasterNode = getCurrentMasterNode(appId, lastIteration).toString();
+                        final String appMasterSplitNode = getCurrentMasterSplitNode(appId, lastIteration).toString();
+                        setMasterResult(context, appMasterNode, appMasterSplitNode);
+                    }
+                }.execute();
+            }
+            
+            // current iteration is last master successful iteration
+            context.setCurrentIteration(context.getCurrentIteration() + 1);
+
+            // reset server shut down to false;
+            isServerShutdown.compareAndSet(true, false);
+        }
         LOG.info("Start itertion {} with container id {} and app id {}.", context.getCurrentIteration(),
                 context.getContainerId(), context.getAppId());
     }
@@ -224,7 +300,8 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     @Override
                     public boolean retryExecution() throws KeeperException, InterruptedException {
                         try {
-                            return getZooKeeper().exists(appMasterNode, false) != null;
+                            return getZooKeeper().exists(appMasterNode, false) != null
+                                    || NettyWorkerCoordinator.this.isServerShutdown.get();
                         } catch (KeeperException.NoNodeException e) {
                             // to avoid log flood
                             if(System.nanoTime() % 10 == 0) {
@@ -240,10 +317,11 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
 
                 // set master result for next iteration.
-                String appMasterSplitNode = getCurrentMasterSplitNode(appId, currentIteration).toString();
-                setMasterResult(context, appMasterNode, appMasterSplitNode);
-
-                LOG.info("Master computation is done.");
+                if(!NettyWorkerCoordinator.this.isServerShutdown.get()) {
+                    String appMasterSplitNode = getCurrentMasterSplitNode(appId, currentIteration).toString();
+                    setMasterResult(context, appMasterNode, appMasterSplitNode);
+                    LOG.info("Master computation is done.");
+                }
             }
         }.execute();
     }

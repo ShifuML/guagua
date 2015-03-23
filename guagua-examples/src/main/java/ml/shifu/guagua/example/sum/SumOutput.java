@@ -57,7 +57,7 @@ public class SumOutput extends
         } catch (IOException e) {
             LOG.error("Error in writing output.", e);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("Error in writing output.", e);
         } finally {
             IOUtils.closeStream(pw);
         }

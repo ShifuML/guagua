@@ -15,6 +15,13 @@
  */
 package ml.shifu.guagua;
 
+import ml.shifu.guagua.master.MasterTimer;
+import ml.shifu.guagua.master.MemoryStatsMasterInterceptor;
+import ml.shifu.guagua.master.NettyMasterCoordinator;
+import ml.shifu.guagua.worker.MemoryStatsWorkerInterceptor;
+import ml.shifu.guagua.worker.NettyWorkerCoordinator;
+import ml.shifu.guagua.worker.WorkerTimer;
+
 public final class GuaguaConstants {
 
     // avoid new
@@ -73,9 +80,12 @@ public final class GuaguaConstants {
 
     public static final int GUAGUA_ZK_SESSON_DEFAULT_TIMEOUT = 5 * 60 * 1000;
 
-    public static final String GUAGUA_MASTER_DEFAULT_SYSTEM_INTERCEPTERS = "ml.shifu.guagua.master.MasterTimer,ml.shifu.guagua.master.MemoryStatsMasterInterceptor,ml.shifu.guagua.master.NettyMasterCoordinator";
+    // using class get name to make sure if class or package changed, such default values will also be changed.
+    public static final String GUAGUA_MASTER_DEFAULT_SYSTEM_INTERCEPTERS = MasterTimer.class.getName() + ","
+            + MemoryStatsMasterInterceptor.class.getName() + "," + NettyMasterCoordinator.class.getName();
 
-    public static final String GUAGUA_WORKER_DEFAULT_SYSTEM_INTERCEPTERS = "ml.shifu.guagua.worker.WorkerTimer,ml.shifu.guagua.worker.MemoryStatsWorkerInterceptor,ml.shifu.guagua.worker.NettyWorkerCoordinator";
+    public static final String GUAGUA_WORKER_DEFAULT_SYSTEM_INTERCEPTERS = WorkerTimer.class.getName() + ","
+            + MemoryStatsWorkerInterceptor.class.getName() + "," + NettyWorkerCoordinator.class.getName();
 
     public static final String GUAGUA_ZK_CLEANUP_ENABLE = "guagua.zk.cleanup.enable";
 

@@ -192,21 +192,16 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
     public static void main(String[] args) {
         BytableDiskList<BytableWrapper> bytableDiskList = new BytableDiskList<BytableWrapper>(
                 System.currentTimeMillis() + "", BytableWrapper.class.getName());
-        BytableMemoryDiskList<BytableWrapper> iterResults = new BytableMemoryDiskList<BytableWrapper>(3 * 1024 * 1024,
-                bytableDiskList);
+        BytableMemoryDiskList<BytableWrapper> iterResults = new BytableMemoryDiskList<BytableWrapper>(
+                400 * 1024 * 1024, bytableDiskList);
 
-        BytableWrapper bytable = new BytableWrapper();
-        bytable.setCurrentIteration(1);
-        bytable.setContainerId("111");
-        bytable.setBytes(randomBytes(2 * 1024 * 1024));
-
-        BytableWrapper bytable2 = new BytableWrapper();
-        bytable2.setCurrentIteration(2);
-        bytable2.setContainerId("222");
-        bytable2.setBytes(randomBytes(2 * 1024 * 1024));
-
-        iterResults.append(bytable);
-        iterResults.append(bytable2);
+        for(int i = 0; i < 500; i++) {
+            BytableWrapper bytable = new BytableWrapper();
+            bytable.setCurrentIteration(i);
+            bytable.setContainerId(i + "");
+            bytable.setBytes(randomBytes(2 * 1024 * 1024));
+            iterResults.append(bytable);
+        }
 
         iterResults.switchState();
 
