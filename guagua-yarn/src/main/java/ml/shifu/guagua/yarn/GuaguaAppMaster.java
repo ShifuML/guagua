@@ -247,6 +247,8 @@ public class GuaguaAppMaster {
 
     private String rpcHostName;
 
+    private static final Object LOCK = new Object();
+
     private Map<Integer, GuaguaIterationStatus> partitionProgress;
 
     private ServerBootstrap rpcServer;
@@ -483,9 +485,14 @@ public class GuaguaAppMaster {
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
             GuaguaIterationStatus status = GsonUtils.fromJson(e.getMessage().toString(), GuaguaIterationStatus.class);
             LOG.info("Receive RPC status:{}", status);
-            GuaguaAppMaster.this.partitionProgress.put(status.getPartition(), status);
+            synchronized(LOCK) {
+                GuaguaAppMaster.this.partitionProgress.put(status.getPartition(), status);
+            }
             if(status.isKillContainer()) {
-                List<Container> containers = GuaguaAppMaster.this.partitionContainerMap.get(status.getPartition());
+                List<Container> containers;
+                synchronized(LOCK) {
+                    containers = GuaguaAppMaster.this.partitionContainerMap.get(status.getPartition());
+                }
                 LOG.info("containers:{}", containers);
                 Container container = containers.get(containers.size() - 1);
                 LOG.info("Container {} in node {} is killed because of straggler condition.", container.getId(),
@@ -741,11 +748,13 @@ public class GuaguaAppMaster {
         public float getProgress() {
             // set progress to deliver to RM on next heartbeat
             int sum = 0, totalSum = 0;
-            for(Map.Entry<Integer, GuaguaIterationStatus> entry: GuaguaAppMaster.this.partitionProgress.entrySet()) {
-                sum += entry.getValue().getCurrentIteration();
-                totalSum += GuaguaAppMaster.this.totalIterations;
+            synchronized(LOCK) {
+                for(Map.Entry<Integer, GuaguaIterationStatus> entry: GuaguaAppMaster.this.partitionProgress.entrySet()) {
+                    sum += entry.getValue().getCurrentIteration();
+                    totalSum += GuaguaAppMaster.this.totalIterations;
+                }
+                return (sum * 1.0f) / totalSum;
             }
-            return (sum * 1.0f) / totalSum;
         }
 
         @Override

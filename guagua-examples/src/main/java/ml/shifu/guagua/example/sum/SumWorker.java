@@ -78,11 +78,11 @@ public class SumWorker
             sum += longValue;
         }
 
-        // try {
-        // Thread.sleep(10 * 1000);
-        // } catch (InterruptedException e) {
-        // e.printStackTrace();
-        // }
+        try {
+            Thread.sleep(10 * 1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         LOG.info("worker: {} ; sum: {}", context, sum);
         return new GuaguaWritableAdapter<LongWritable>(new LongWritable(sum));
     }

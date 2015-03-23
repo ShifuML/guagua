@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
@@ -308,7 +309,12 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
                                 currentIteration, totalIteration);
                         gi.setKillContainer(isKill);
                         LOG.info("Send GuaguaIterationStatus: {}.", gi);
-                        rpcClientChannel.write(GsonUtils.toJson(gi));
+                        ChannelFuture channelFuture = rpcClientChannel.write(GsonUtils.toJson(gi));
+                        try {
+                            channelFuture.await(10, TimeUnit.SECONDS);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
                     }
                 }
             });
