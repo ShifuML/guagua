@@ -18,6 +18,7 @@ package ml.shifu.guagua.io;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 
 /**
@@ -107,13 +108,26 @@ public class BytableWrapper implements Bytable {
     @Override
     public void write(DataOutput out) throws IOException {
         out.writeInt(this.currentIteration);
-        out.writeUTF(this.containerId);
+        if(this.containerId == null) {
+            out.writeInt(0);
+        } else {
+            writeBytes(out, this.containerId.getBytes(Charset.forName("UTF-8")));
+        }
         out.writeBoolean(this.isStopMessage);
         if(this.bytes != null) {
             out.writeInt(bytes.length);
-            out.write(bytes);
+            for(int i = 0; i < bytes.length; i++) {
+                out.writeByte(bytes[i]);
+            }
         } else {
             out.writeInt(0);
+        }
+    }
+
+    private void writeBytes(DataOutput out, byte[] bytes) throws IOException {
+        out.writeInt(bytes.length);
+        for(int i = 0; i < bytes.length; i++) {
+            out.writeByte(bytes[i]);
         }
     }
 
@@ -125,16 +139,29 @@ public class BytableWrapper implements Bytable {
     @Override
     public void readFields(DataInput in) throws IOException {
         this.currentIteration = in.readInt();
-        this.containerId = in.readUTF();
+        int containerIdlen = in.readInt();
+        if(containerIdlen != 0) {
+            byte[] containerIdbytes = new byte[containerIdlen];
+            for(int i = 0; i < containerIdbytes.length; i++) {
+                containerIdbytes[i] = in.readByte();
+            }
+            this.containerId = new String(containerIdbytes, Charset.forName("UTF-8"));
+        } else {
+            this.containerId = null;
+        }
         this.isStopMessage = in.readBoolean();
         int bytesSize = in.readInt();
         if(bytesSize != 0) {
             this.bytes = new byte[bytesSize];
-            in.readFully(bytes);
+            for(int i = 0; i < this.bytes.length; i++) {
+                this.bytes[i] = in.readByte();
+            }
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.lang.Object#toString()
      */
     @Override

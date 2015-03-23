@@ -94,7 +94,7 @@ public class GuaguaMapReduceClient {
      * Add new job to JobControl instance.
      */
     public synchronized void addJob(String[] args) throws IOException {
-        this.jc.addJob(new ControlledJob(creatJob(args), null));
+        this.jc.addJob(new ControlledJob(createJob(args), null));
     }
 
     /**
@@ -211,7 +211,7 @@ public class GuaguaMapReduceClient {
 
     /**
      * Returns the progress of a Job j which is part of a submitted JobControl object. The progress is for this Job. So
-     * it has to be scaled down by the num of jobs that are present in the JobControl.
+     * it has to be scaled down by the number of jobs that are present in the JobControl.
      * 
      * @param cjob
      *            - The Job for which progress is required
@@ -243,7 +243,7 @@ public class GuaguaMapReduceClient {
     /**
      * Create Hadoop job according to arguments from main.
      */
-    public synchronized Job creatJob(String[] args) throws IOException {
+    public synchronized Job createJob(String[] args) throws IOException {
         Configuration conf = new Configuration();
         // set it here to make it can be over-written. Set task timeout to a long period 20 minutes.
         conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 1200000);
@@ -259,7 +259,7 @@ public class GuaguaMapReduceClient {
         @SuppressWarnings("rawtypes")
         Class<? extends InputFormat> inputFormatClass = checkInputFormatSetting(cmdLine);
 
-        // set map reduce prameters for specified master-workers achitecture
+        // set map reduce parameters for specified master-workers architecture
         // speculative execution should be disabled
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_MAP_TASKS_SPECULATIVE_EXECUTION, false);
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_REDUCE_TASKS_SPECULATIVE_EXECUTION, false);
@@ -535,7 +535,7 @@ public class GuaguaMapReduceClient {
         }
 
         GuaguaMapReduceClient client = new GuaguaMapReduceClient();
-        Job job = client.creatJob(args);
+        Job job = client.createJob(args);
         job.waitForCompletion(true);
     }
 

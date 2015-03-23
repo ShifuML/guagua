@@ -15,13 +15,13 @@
  */
 package ml.shifu.guagua.util;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Iterator;
 
 import ml.shifu.guagua.GuaguaRuntimeException;
@@ -50,9 +50,9 @@ public class BytableDiskList<T extends Bytable> implements AppendList<T> {
      */
     private BytableSerializer<T> serializer = new BytableSerializer<T>();
 
-    private OutputStream outputStream;
+    private DataOutputStream outputStream;
 
-    private InputStream inputStream;
+    private DataInputStream inputStream;
 
     /**
      * Internal state for WRITE or READ
@@ -87,8 +87,8 @@ public class BytableDiskList<T extends Bytable> implements AppendList<T> {
     public BytableDiskList(String fileName, String className, BytableSerializer<T> serializer) {
         try {
             this.file = new File(fileName);
-            this.outputStream = new FileOutputStream(file);
-            this.inputStream = new FileInputStream(file);
+            this.outputStream = new DataOutputStream(new FileOutputStream(file));
+            this.inputStream = new DataInputStream(new FileInputStream(file));
         } catch (FileNotFoundException e) {
             throw new GuaguaRuntimeException(e);
         }
@@ -102,6 +102,11 @@ public class BytableDiskList<T extends Bytable> implements AppendList<T> {
     @Override
     public void switchState() {
         this.state = State.READ;
+        try {
+            this.outputStream.flush();
+        } catch (IOException e) {
+            throw new GuaguaRuntimeException(e);
+        }
     }
 
     /**
@@ -110,7 +115,7 @@ public class BytableDiskList<T extends Bytable> implements AppendList<T> {
     public void reOpen() {
         close();
         try {
-            this.inputStream = new FileInputStream(file);
+            this.inputStream = new DataInputStream(new FileInputStream(file));
         } catch (FileNotFoundException e) {
             throw new GuaguaRuntimeException(e);
         }
@@ -124,7 +129,7 @@ public class BytableDiskList<T extends Bytable> implements AppendList<T> {
         this.count += 1;
         byte[] bytes = getSerializer().objectToBytes(t);
         try {
-            this.outputStream.write(bytes.length);
+            this.outputStream.writeInt(bytes.length);
             this.outputStream.write(bytes);
         } catch (IOException e) {
             throw new GuaguaRuntimeException(e);
@@ -167,7 +172,7 @@ public class BytableDiskList<T extends Bytable> implements AppendList<T> {
             @Override
             public T next() {
                 try {
-                    int length = BytableDiskList.this.inputStream.read();
+                    int length = BytableDiskList.this.inputStream.readInt();
                     byte[] bytes = new byte[length];
                     int size = BytableDiskList.this.inputStream.read(bytes);
                     if(size < 0) {
@@ -206,10 +211,9 @@ public class BytableDiskList<T extends Bytable> implements AppendList<T> {
         return this.count;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see ml.shifu.guagua.util.AppendList#clear()
+    /**
+     * Delete file to store elements. After this method call, user cannot use such list. But clear here is used to clear
+     * resources used.
      */
     @Override
     public void clear() {

@@ -16,6 +16,7 @@
 package ml.shifu.guagua.yarn;
 
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -33,6 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ml.shifu.guagua.GuaguaConstants;
@@ -414,7 +416,7 @@ public class GuaguaAppMaster {
     private void startRPCServer() {
         this.rpcServer = new ServerBootstrap(new NioServerSocketChannelFactory(
                 Executors.newFixedThreadPool(GuaguaYarnConstants.DEFAULT_STATUS_RPC_SERVER_THREAD_COUNT),
-                Executors.newFixedThreadPool(GuaguaYarnConstants.DEFAULT_STATUS_RPC_SERVER_THREAD_COUNT)));
+                Executors.newCachedThreadPool(new MasterThreadFactory())));
 
         // Set up the pipeline factory.
         this.rpcServer.setPipelineFactory(new ChannelPipelineFactory() {
@@ -427,6 +429,41 @@ public class GuaguaAppMaster {
 
         // Bind and start to accept incoming connections.
         this.rpcServer.bind(new InetSocketAddress(rpcPort));
+    }
+
+    /**
+     * The master thread factory. Main feature is to print error log of worker thread.
+     */
+    private static class MasterThreadFactory implements ThreadFactory {
+        static final AtomicInteger poolNumber = new AtomicInteger(1);
+        final ThreadGroup group;
+        final AtomicInteger threadNumber = new AtomicInteger(1);
+        final String namePrefix;
+
+        MasterThreadFactory() {
+            SecurityManager s = System.getSecurityManager();
+            group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+            namePrefix = "pool-" + poolNumber.getAndIncrement() + "-thread-";
+        }
+
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
+            if(t.isDaemon()) {
+                t.setDaemon(false);
+            }
+            if(t.getPriority() != Thread.NORM_PRIORITY) {
+                t.setPriority(Thread.NORM_PRIORITY);
+            }
+            t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(Thread t, Throwable e) {
+                    LOG.warn("Error message in thread {} with error message {}, error root cause {}.", t, e,
+                            e.getCause());
+                    // print stack???
+                }
+            });
+            return t;
+        }
     }
 
     /**

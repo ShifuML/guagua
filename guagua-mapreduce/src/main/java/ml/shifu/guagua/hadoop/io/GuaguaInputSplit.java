@@ -21,6 +21,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
+
+import ml.shifu.guagua.io.BytableWrapper;
+import ml.shifu.guagua.util.BytableDiskList;
+import ml.shifu.guagua.util.BytableMemoryDiskList;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -174,32 +179,42 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
                 .format("GuaguaInputSplit [isMaster=%s, fileSplit=%s]", isMaster, Arrays.toString(this.fileSplits));
     }
 
-//    public static void main(String[] args) {
-//        BytableDiskList<BytableWrapper> bytableDiskList = new BytableDiskList<BytableWrapper>(
-//                System.currentTimeMillis() + "", BytableWrapper.class.getName());
-//        BytableMemoryDiskList<BytableWrapper> iterResults = new BytableMemoryDiskList<BytableWrapper>(2,
-//                bytableDiskList);
-//
-//        BytableWrapper bytable = new BytableWrapper();
-//        bytable.setCurrentIteration(1);
-//        bytable.setContainerId("111");
-//        bytable.setBytes(new byte[] { 1, 2, 3 });
-//
-//        BytableWrapper bytable2 = new BytableWrapper();
-//        bytable2.setCurrentIteration(2);
-//        bytable2.setContainerId("222");
-//        bytable2.setBytes(new byte[] { 1, 2, 3, 4 });
-//
-//        iterResults.append(bytable);
-//        iterResults.append(bytable2);
-//
-//        iterResults.switchState();
-//
-//        for(BytableWrapper bytableWrapper: iterResults) {
-//            System.out.println(bytableWrapper);
-//        }
-//        iterResults.close();
-//        iterResults.clear();
-//    }
+    private static Random random = new Random();
+
+    private static byte[] randomBytes(int size) {
+        byte[] bytes = new byte[size];
+        for(int i = 0; i < bytes.length; i++) {
+            bytes[i] = (byte) random.nextInt();
+        }
+        return bytes;
+    }
+
+    public static void main(String[] args) {
+        BytableDiskList<BytableWrapper> bytableDiskList = new BytableDiskList<BytableWrapper>(
+                System.currentTimeMillis() + "", BytableWrapper.class.getName());
+        BytableMemoryDiskList<BytableWrapper> iterResults = new BytableMemoryDiskList<BytableWrapper>(3 * 1024 * 1024,
+                bytableDiskList);
+
+        BytableWrapper bytable = new BytableWrapper();
+        bytable.setCurrentIteration(1);
+        bytable.setContainerId("111");
+        bytable.setBytes(randomBytes(2 * 1024 * 1024));
+
+        BytableWrapper bytable2 = new BytableWrapper();
+        bytable2.setCurrentIteration(2);
+        bytable2.setContainerId("222");
+        bytable2.setBytes(randomBytes(2 * 1024 * 1024));
+
+        iterResults.append(bytable);
+        iterResults.append(bytable2);
+
+        iterResults.switchState();
+
+        for(BytableWrapper bytableWrapper: iterResults) {
+            System.out.println(bytableWrapper.getContainerId());
+        }
+        iterResults.close();
+        iterResults.clear();
+    }
 
 }

@@ -263,7 +263,7 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     stopMessage.setContainerId(context.getContainerId());
                     stopMessage.setStopMessage(true);
                     ChannelFuture future = NettyWorkerCoordinator.this.clientChannel.write(stopMessage);
-                    future.await(5, TimeUnit.SECONDS);
+                    future.await(30, TimeUnit.SECONDS);
                 } finally {
                     NettyWorkerCoordinator.this.clientChannel.close();
                     Method shutDownMethod = ReflectionUtils.getMethod(

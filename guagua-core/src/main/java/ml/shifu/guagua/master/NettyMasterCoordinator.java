@@ -15,6 +15,7 @@
  */
 package ml.shifu.guagua.master;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -25,8 +26,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
@@ -137,7 +140,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         // Start master netty server
         startNettyServer(context.getProps());
 
-        // if si init ,set currentIteration to 1 else set to current Iteration.
+        // if is init step, set currentIteration to 1 else set to current Iteration.
         if(context.isInitIteration()) {
             this.currentInteration = GuaguaConstants.GUAGUA_FIRST_ITERATION;
         } else {
@@ -200,7 +203,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         this.messageServerPort = NetworkUtils.getValidServerPort(this.messageServerPort);
         this.messageServer = new ServerBootstrap(new NioServerSocketChannelFactory(
                 Executors.newFixedThreadPool(GuaguaConstants.GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT),
-                Executors.newCachedThreadPool()));
+                Executors.newCachedThreadPool(new MasterThreadFactory())));
 
         // Set up the pipeline factory.
         this.messageServer.setPipelineFactory(new ChannelPipelineFactory() {
@@ -216,6 +219,41 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             LOG.warn(e.getMessage() + "; try to rebind again.");
             this.messageServerPort = NetworkUtils.getValidServerPort(this.messageServerPort);
             this.messageServer.bind(new InetSocketAddress(this.messageServerPort));
+        }
+    }
+
+    /**
+     * The master thread factory. Main feature is to print error log of worker thread.
+     */
+    private static class MasterThreadFactory implements ThreadFactory {
+        static final AtomicInteger poolNumber = new AtomicInteger(1);
+        final ThreadGroup group;
+        final AtomicInteger threadNumber = new AtomicInteger(1);
+        final String namePrefix;
+
+        MasterThreadFactory() {
+            SecurityManager s = System.getSecurityManager();
+            group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+            namePrefix = "pool-" + poolNumber.getAndIncrement() + "-thread-";
+        }
+
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
+            if(t.isDaemon()) {
+                t.setDaemon(false);
+            }
+            if(t.getPriority() != Thread.NORM_PRIORITY) {
+                t.setPriority(Thread.NORM_PRIORITY);
+            }
+            t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(Thread t, Throwable e) {
+                    LOG.warn("Error message in thread {} with error message {}, error root cause {}.", t, e,
+                            e.getCause());
+                    // print stack???
+                }
+            });
+            return t;
         }
     }
 
@@ -364,6 +402,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 // update master halt status.
                 updateMasterHaltStatus(context);
 
+                // after master result and status set in zookeeper, clear resources here at once for next iteration.
+                clear(context.getProps());
+
                 // create master znode
                 boolean isSplit = false;
                 String appCurrentMasterNode = getCurrentMasterNode(context.getAppId(), context.getCurrentIteration())
@@ -399,8 +440,6 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 LOG.info("master results write to znode.");
             }
         }.execute();
-
-        clear(context.getProps());
     }
 
     /**
@@ -433,7 +472,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                                 // to avoid log flood
                                 if(System.nanoTime() % 30 == 0) {
                                     LOG.info(
-                                            "unregister step, workers compelted: {}, still {} workers are not unregistered.",
+                                            "unregister step, worker(s) compelted: {}, still {} workers are not unregistered.",
                                             doneWorkers, (context.getWorkers() - doneWorkers));
                                 }
                                 return isTerminated(doneWorkers, context.getWorkers(), context.getMinWorkersRatio(),
