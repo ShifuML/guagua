@@ -164,7 +164,11 @@ public final class GuaguaConstants {
     public static final String GUAGUA_ZK_CLUSTER_SERVER_FOLDER = "guagua.zk.cluster.server.folder";
 
     public static final String GUAGUA_CLUSTER_ZOOKEEPER_SERVER_FILE = "zookeeper_server";
-    
+
     public static final String GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT = "guagua.zk.embedbed.isInClient";
+
+    public static final String GUAGUA_CHILD_DEFAULT_ZKSERVER_OPTS = "-Xms1G -Xmx1G -server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70";
+
+    public static final String GUAGUA_CHILD_ZKSERVER_OPTS = "guagua.child.zkserver.opts";
 
 }

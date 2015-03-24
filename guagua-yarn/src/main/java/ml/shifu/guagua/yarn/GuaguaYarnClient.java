@@ -444,7 +444,7 @@ public class GuaguaYarnClient extends Configured {
             System.err.println("WARN: For big data guagua application, independent ZooKeeper instance is recommended.");
             System.err.println("WARN: Zookeeper servers can be provided by '-z' parameter with non-empty value.");
 
-            boolean isZkInClient = conf.getBoolean(GuaguaConstants.GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT, false);
+            boolean isZkInClient = conf.getBoolean(GuaguaConstants.GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT, true);
             if(isZkInClient) {
                 synchronized(GuaguaYarnClient.class) {
                     if(embededZooKeeperServer == null) {

@@ -15,22 +15,37 @@
  */
 package ml.shifu.guagua.coordinator.zk;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.util.FileUtils;
 
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.impl.Log4jLoggerAdapter;
 
 /**
  * {@link ZooKeeperUtils} is a helper used to start embed zookeeper server in CLI host.
@@ -40,6 +55,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeerMain;
  * guagua if there is no zookeeper server in hand.
  */
 public final class ZooKeeperUtils {
+
+    private final static Logger LOG = LoggerFactory.getLogger(ZooKeeperUtils.class);
 
     private static final int DEFAULT_ZK_PORT = 2181;
 
@@ -72,13 +89,14 @@ public final class ZooKeeperUtils {
      */
     public static int getValidZooKeeperPort() {
         int zkValidPort = INITAL_ZK_PORT;
+        int initialPort = DEFAULT_ZK_PORT;
         // add random port to avoid port in the same small range.
         if(System.currentTimeMillis() % 2 == 0) {
             zkValidPort += RANDOM.nextInt(100);
         } else {
             zkValidPort -= RANDOM.nextInt(100);
         }
-        for(int i = DEFAULT_ZK_PORT; i < (DEFAULT_ZK_PORT + TRY_PORT_COUNT); i++) {
+        for(int i = initialPort; i < (initialPort + TRY_PORT_COUNT); i++) {
             try {
                 if(!isServerAlive(InetAddress.getLocalHost(), i)) {
                     zkValidPort = i;
@@ -319,6 +337,223 @@ public final class ZooKeeperUtils {
         }));
 
         return validZkPort;
+    }
+
+    /**
+     * Start embed zookeeper server in a child process.
+     * 
+     * @return null if start child process failed, non empty string if valid zookeeper server in child.
+     */
+    public static String startChildZooKeeperProcess(String zkJavaOpts) throws IOException {
+        // 1. prepare working dir
+        final String zooKeeperWorkingDir = getZooKeeperWorkingDir();
+        createFolder(zooKeeperWorkingDir);
+        // 2. prepare conf file
+        final String confName = zooKeeperWorkingDir + File.separator + "zoo.cfg";
+        int validZkPort = getValidZooKeeperPort();
+        prepZooKeeperConf(confName, validZkPort + "");
+        // 3. prepare process buider command
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        List<String> commandList = new ArrayList<String>();
+        String javaHome = System.getProperty("java.home");
+        if(javaHome == null) {
+            throw new IllegalArgumentException("java.home is not set!");
+        }
+
+        commandList.add(javaHome + "/bin/java");
+        String[] zkJavaOptsArray = zkJavaOpts.split(" ");
+        if(zkJavaOptsArray != null) {
+            commandList.addAll(Arrays.asList(zkJavaOptsArray));
+        }
+        commandList.add("-cp");
+        commandList.add(findContainingJar(Log4jLoggerAdapter.class) + ":" + findContainingJar(Logger.class) + ":"
+                + findContainingJar(org.apache.log4j.Logger.class) + ":" + findContainingJar(QuorumPeerMain.class));
+        commandList.add(QuorumPeerMain.class.getName());
+        commandList.add(confName);
+        processBuilder.command(commandList);
+        File execDirectory = new File(zooKeeperWorkingDir);
+        processBuilder.directory(execDirectory);
+        processBuilder.redirectErrorStream(true);
+
+        LOG.info("onlineZooKeeperServers: Attempting to start ZooKeeper server with command {} in directory {}.",
+                commandList, execDirectory.toString());
+        // 4. start process
+        Process zkProcess = null;
+        StreamCollector zkProcessCollector;
+        synchronized(ZooKeeperUtils.class) {
+            zkProcess = processBuilder.start();
+            zkProcessCollector = new StreamCollector(zkProcess.getInputStream());
+            zkProcessCollector.start();
+        }
+        Runtime.getRuntime().addShutdownHook(
+                new Thread(new ZooKeeperShutdownHook(zkProcess, zkProcessCollector, zooKeeperWorkingDir)));
+        LOG.info("onlineZooKeeperServers: Shutdown hook added.");
+
+        // 5. check and wait for server just started.
+        String hostname = getLocalHostName();
+        if(isServerAlive(hostname, validZkPort)) {
+            return hostname + ":" + validZkPort;
+        } else {
+            return null;
+        }
+    }
+
+    private static String getLocalHostName() {
+        // TODO use cache??
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (Exception e) {
+            throw new GuaguaRuntimeException(e);
+        }
+    }
+
+    private static class ZooKeeperShutdownHook implements Runnable {
+
+        private Process process;
+
+        private StreamCollector collector;
+
+        private String zooKeeperWorkingDir;
+
+        public ZooKeeperShutdownHook(Process process, StreamCollector collector, String zooKeeperWorkingDir) {
+            this.process = process;
+            this.collector = collector;
+            this.zooKeeperWorkingDir = zooKeeperWorkingDir;
+        }
+
+        @Override
+        public void run() {
+            LOG.info("run: Shutdown hook started.");
+            synchronized(this) {
+                if(process != null) {
+                    LOG.warn("onlineZooKeeperServers: " + "Forced a shutdown hook kill of the " + "ZooKeeper process.");
+                    process.destroy();
+                    int exitCode = -1;
+                    try {
+                        exitCode = process.waitFor();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    LOG.info(
+                            "onlineZooKeeperServers: ZooKeeper process exited with {} (note that 143 typically means killed).",
+                            exitCode);
+                }
+            }
+            this.collector.close();
+            FileUtils.deleteQuietly(new File(zooKeeperWorkingDir));
+        }
+
+    }
+
+    /**
+     * Collects the output of a stream and dumps it to the log.
+     */
+    private static class StreamCollector extends Thread {
+        /** Number of last lines to keep */
+        private static final int LAST_LINES_COUNT = 100;
+        /** Class logger */
+        private static final Logger LOG = LoggerFactory.getLogger(StreamCollector.class);
+        /** Buffered reader of input stream */
+        private final BufferedReader bufferedReader;
+        /** Last lines (help to debug failures) */
+        private final LinkedList<String> lastLines = new LinkedList<String>();
+
+        /**
+         * Constructor.
+         * 
+         * @param is
+         *            InputStream to dump to LOG.info
+         */
+        public StreamCollector(final InputStream is) {
+            super(StreamCollector.class.getName());
+            setDaemon(true);
+            InputStreamReader streamReader = new InputStreamReader(is, Charset.defaultCharset());
+            bufferedReader = new BufferedReader(streamReader);
+        }
+
+        @Override
+        public void run() {
+            readLines();
+        }
+
+        /**
+         * Read all the lines from the bufferedReader.
+         */
+        private synchronized void readLines() {
+            String line;
+            try {
+                while((line = bufferedReader.readLine()) != null) {
+                    if(lastLines.size() > LAST_LINES_COUNT) {
+                        lastLines.removeFirst();
+                    }
+                    lastLines.add(line);
+                    LOG.info("readLines: {}.", line);
+                }
+            } catch (IOException e) {
+                LOG.error("readLines: Ignoring IOException", e);
+            }
+        }
+
+        /**
+         * Dump the last n lines of the collector. Likely used in the case of failure.
+         * 
+         * @param level
+         *            Log level to dump with
+         */
+        @SuppressWarnings("unused")
+        public synchronized void dumpLastLines() {
+            // Get any remaining lines
+            readLines();
+            // Dump the lines to the screen
+            for(String line: lastLines) {
+                LOG.info(line);
+            }
+        }
+
+        public void close() {
+            try {
+                this.bufferedReader.close();
+            } catch (IOException ignore) {
+            }
+        }
+
+    }
+
+    /**
+     * Find a jar that contains a class of the same name, if any. It will return a jar file, even if that is not the
+     * first thing on the class path that has a class with the same name.
+     * 
+     * @param my_class
+     *            the class to find
+     * @return a jar file that contains the class, or null
+     */
+    @SuppressWarnings("rawtypes")
+    public static String findContainingJar(Class my_class) {
+        ClassLoader loader = my_class.getClassLoader();
+        String class_file = my_class.getName().replaceAll("\\.", "/") + ".class";
+        try {
+            for(Enumeration itr = loader.getResources(class_file); itr.hasMoreElements();) {
+                URL url = (URL) itr.nextElement();
+                if("jar".equals(url.getProtocol())) {
+                    String toReturn = url.getPath();
+                    if(toReturn.startsWith("file:")) {
+                        toReturn = toReturn.substring("file:".length());
+                    }
+                    // URLDecoder is a misnamed class, since it actually decodes
+                    // x-www-form-urlencoded MIME type rather than actual
+                    // URL encoding (which the file path has). Therefore it would
+                    // decode +s to ' 's which is incorrect (spaces are actually
+                    // either unencoded or encoded as "%20"). Replace +s first, so
+                    // that they are kept sacred during the decoding process.
+                    toReturn = toReturn.replaceAll("\\+", "%2B");
+                    toReturn = URLDecoder.decode(toReturn, "UTF-8");
+                    return toReturn.replaceAll("!.*$", "");
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
     }
 
     /**

@@ -74,16 +74,32 @@ public class ZooKeeperMasterInterceptor<MASTER_RESULT extends Bytable, WORKER_RE
                 }
             }
             String localHostName = getLocalHostName();
-            LOG.warn("No valid zookeeper servers, start one in ZooKeeperManager {}", localHostName);
+            LOG.warn("No valid zookeeper servers, start one in ZooKeeperMaster {}", localHostName);
             // 1. start embed zookeeper server in one thread.
-            String embededZooKeeperServer = startZookeeperServer(localHostName);
-            LOG.info("Zookeeper server is stated: {}", embededZooKeeperServer);
+            String zkJavaOpts = context.getProps().getProperty(GuaguaConstants.GUAGUA_CHILD_ZKSERVER_OPTS,
+                    GuaguaConstants.GUAGUA_CHILD_DEFAULT_ZKSERVER_OPTS);
+            String zookeeperServer;
+            try {
+                zookeeperServer = ZooKeeperUtils.startChildZooKeeperProcess(zkJavaOpts);
+            } catch (IOException e) {
+                LOG.error("Error in start child zookeeper process.", e);
+                // set to null to try start zookeeper with tread.
+                zookeeperServer = null;
+            }
+
+            if(zookeeperServer == null) {
+                // if started failed
+                zookeeperServer = startZookeeperServer(localHostName);
+                LOG.info("Zookeeper server is stated with thread: {}", zookeeperServer);
+            } else {
+                LOG.info("Zookeeper server is stated with child process: {}", zookeeperServer);
+            }
 
             // 2. write such server info to HDFS file, no any place for us to communicate server address with worker.
-            writeServerInfoToHDFS(context, embededZooKeeperServer);
+            writeServerInfoToHDFS(context, zookeeperServer);
 
             // 3. set server info to context for next intercepters.
-            context.getProps().setProperty(GuaguaConstants.GUAGUA_ZK_SERVERS, embededZooKeeperServer);
+            context.getProps().setProperty(GuaguaConstants.GUAGUA_ZK_SERVERS, zookeeperServer);
         }
     }
 
