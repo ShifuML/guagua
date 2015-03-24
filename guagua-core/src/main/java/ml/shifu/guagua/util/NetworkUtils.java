@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Random;
+
+import ml.shifu.guagua.GuaguaRuntimeException;
 
 /**
  * {@link NetworkUtils} is used as TCP server or port helper functions.
@@ -31,12 +34,14 @@ public final class NetworkUtils {
     /**
      * Client connection retry count
      */
-    public static final int RETRY_COUNT = 4;
+    public static final int RETRY_COUNT = 3;
 
     /**
      * How many ports will be used to launch embed zookeeper server.
      */
     public static final int TRY_PORT_COUNT = 20;
+
+    private static final Random RANDOM = new Random();
 
     /**
      * Check whether a server is alive.
@@ -70,7 +75,6 @@ public final class NetworkUtils {
                 }
             }
         }
-
         return i != RETRY_COUNT;
     }
 
@@ -80,7 +84,15 @@ public final class NetworkUtils {
      * @return valid TCP server port
      */
     public static int getValidServerPort(int iniatialPort) {
-        assert iniatialPort > 0;
+        assert iniatialPort > 100;
+
+        // add random port to avoid port in the same small range.
+        if(System.currentTimeMillis() % 2 == 0) {
+            iniatialPort += RANDOM.nextInt(100);
+        } else {
+            iniatialPort -= RANDOM.nextInt(100);
+        }
+
         int zkValidPort = -1;
         for(int i = iniatialPort; i < (iniatialPort + TRY_PORT_COUNT); i++) {
             try {
@@ -89,12 +101,13 @@ public final class NetworkUtils {
                     break;
                 }
             } catch (UnknownHostException e) {
-                throw new RuntimeException(e);
+                throw new GuaguaRuntimeException(e);
             }
         }
         if(zkValidPort == -1) {
-            throw new RuntimeException("Too many ports are used, please submit guagua app later.");
+            throw new GuaguaRuntimeException("Too many ports are used, please submit guagua app later.");
         }
         return zkValidPort;
     }
+
 }
