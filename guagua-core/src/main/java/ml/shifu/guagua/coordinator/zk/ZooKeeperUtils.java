@@ -26,6 +26,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import ml.shifu.guagua.util.FileUtils;
 
@@ -57,6 +58,8 @@ public final class ZooKeeperUtils {
      */
     public static final int INITAL_ZK_PORT = -1;
 
+    private static final Random RANDOM = new Random();
+
     /** Do not instantiate. */
     private ZooKeeperUtils() {
     }
@@ -69,6 +72,12 @@ public final class ZooKeeperUtils {
      */
     public static int getValidZooKeeperPort() {
         int zkValidPort = INITAL_ZK_PORT;
+        // add random port to avoid port in the same small range.
+        if(System.currentTimeMillis() % 2 == 0) {
+            zkValidPort += RANDOM.nextInt(100);
+        } else {
+            zkValidPort -= RANDOM.nextInt(100);
+        }
         for(int i = DEFAULT_ZK_PORT; i < (DEFAULT_ZK_PORT + TRY_PORT_COUNT); i++) {
             try {
                 if(!isServerAlive(InetAddress.getLocalHost(), i)) {

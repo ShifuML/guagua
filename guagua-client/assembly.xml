@@ -79,6 +79,7 @@
                 <include>*:encog-core:*</include>
                 <include>*:guava*:*</include>
                 <include>*:netty:*</include>
+                <include>*:commons-io:*</include>
             </includes>
             <excludes>
                 <exclude>*thirdparty*:guava*:*</exclude>

@@ -442,7 +442,7 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
     /**
      * {@link CoordinatorCommand} is used for consistent process of zookeeper coordination.
      */
-    protected static interface CoordinatorCommand {
+    public static interface CoordinatorCommand {
 
         /**
          * Command method.
@@ -453,7 +453,7 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
     /**
      * {@link BasicCoordinatorCommand} is to process exceptions for zookeeper operations.
      */
-    protected static abstract class BasicCoordinatorCommand implements CoordinatorCommand {
+    public static abstract class BasicCoordinatorCommand implements CoordinatorCommand {
 
         @Override
         public void execute() {
@@ -477,7 +477,7 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
      * {@link RetryCoordinatorCommand} is used to wrap retry logic. {@link RetryCoordinatorCommand#retryExecution()}
      * will be retried by a fixed sleeping time or an increasing time.
      */
-    protected abstract static class RetryCoordinatorCommand extends BasicCoordinatorCommand {
+    public abstract static class RetryCoordinatorCommand extends BasicCoordinatorCommand {
 
         private long sleepUnitTime = WAIT_SLOT_MILLS;
 

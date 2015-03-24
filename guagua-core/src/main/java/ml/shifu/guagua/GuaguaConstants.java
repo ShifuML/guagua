@@ -161,4 +161,10 @@ public final class GuaguaConstants {
 
     public static final String GUAGUA_MASTER_WORKERESULTS_MEMORY_FRACTION = "guagua.master.workeresults.memoryFraction";
 
+    public static final String GUAGUA_ZK_CLUSTER_SERVER_FOLDER = "guagua.zk.cluster.server.folder";
+
+    public static final String GUAGUA_CLUSTER_ZOOKEEPER_SERVER_FILE = "zookeeper_server";
+    
+    public static final String GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT = "guagua.zk.embedbed.isInClient";
+
 }
