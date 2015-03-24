@@ -89,7 +89,7 @@ public class ZooKeeperMasterInterceptor<MASTER_RESULT extends Bytable, WORKER_RE
 
             if(zookeeperServer == null) {
                 // if started failed
-                startZookeeperServer(localHostName);
+                zookeeperServer = startZookeeperServer(localHostName);
                 LOG.info("Zookeeper server is stated with thread: {}", zookeeperServer);
             } else {
                 LOG.info("Zookeeper server is stated with child process: {}", zookeeperServer);
