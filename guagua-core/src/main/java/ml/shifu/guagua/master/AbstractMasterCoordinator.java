@@ -190,7 +190,6 @@ public abstract class AbstractMasterCoordinator<MASTER_RESULT extends Bytable, W
      * 
      * <p>
      * Master znodes should be set as persistent type.
-     * 
      */
     protected class FailOverCommand extends BasicCoordinatorCommand {
 

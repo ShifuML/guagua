@@ -467,6 +467,16 @@ public class GuaguaYarnClient extends Configured {
                 // 3. set local embed zookeeper server address
                 conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, embededZooKeeperServer);
             } else {
+                conf.set(
+                        GuaguaConstants.GUAGUA_MASTER_SYSTEM_INTERCEPTERS,
+                        conf.get(
+                                GuaguaConstants.GUAGUA_MASTER_SYSTEM_INTERCEPTERS,
+                                "ml.shifu.guagua.master.MasterTimer,ml.shifu.guagua.master.MemoryStatsMasterInterceptor,ml.shifu.guagua.hadoop.ZooKeeperMasterInterceptor,ml.shifu.guagua.master.NettyMasterCoordinator "));
+                conf.set(
+                        GuaguaConstants.GUAGUA_WORKER_SYSTEM_INTERCEPTERS,
+                        conf.get(
+                                GuaguaConstants.GUAGUA_WORKER_SYSTEM_INTERCEPTERS,
+                                "ml.shifu.guagua.worker.WorkerTimer,ml.shifu.guagua.worker.MemoryStatsWorkerInterceptor,ml.shifu.guagua.hadoop.ZooKeeperWorkerInterceptor,ml.shifu.guagua.worker.NettyWorkerCoordinator"));
                 System.err.println("WARN: Zookeeper server will be started in master node of cluster");
             }
             return;
@@ -532,7 +542,6 @@ public class GuaguaYarnClient extends Configured {
         // copy local resources to hdfs app folder
         copyResourcesToFS();
 
-        // TODO configurable
         appContext.setMaxAppAttempts(GuaguaYarnConstants.GUAGAU_APP_MASTER_DEFAULT_ATTMPTS);
         appContext.setQueue(getConf().get(GuaguaYarnConstants.GUAGUA_YARN_QUEUE_NAME,
                 GuaguaYarnConstants.GUAGUA_YARN_DEFAULT_QUEUE_NAME));

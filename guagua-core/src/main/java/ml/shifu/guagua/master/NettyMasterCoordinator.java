@@ -388,8 +388,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                             hasNext = this.localItr.hasNext();
                             if(!hasNext) {
                                 // to make sure it can be iterated again, it shouldn't be a good case for iterator, we
-                                // will
-                                // iterate again to check if all workers are halt.
+                                // will iterate again to check if all workers are halt.
                                 this.localItr = NettyMasterCoordinator.this.iterResults.iterator();
                                 return false;
                             }

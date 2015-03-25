@@ -42,7 +42,7 @@ public final class GuaguaYarnConstants {
 
     public static final String GUAGUA_YARN_QUEUE_NAME = "guagua.yarn.queue.name";
 
-    public static final int GUAGAU_APP_MASTER_DEFAULT_ATTMPTS = 2;
+    public static final int GUAGAU_APP_MASTER_DEFAULT_ATTMPTS = 3;
 
     public static final String GUAGUA_YARN_APP_NAME = "guagua.yarn.app.name";
 

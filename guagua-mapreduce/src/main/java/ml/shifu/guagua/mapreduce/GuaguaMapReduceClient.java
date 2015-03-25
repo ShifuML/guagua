@@ -506,6 +506,16 @@ public class GuaguaMapReduceClient {
                 // 3. set local embed zookeeper server address
                 conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, embededZooKeeperServer);
             } else {
+                conf.set(
+                        GuaguaConstants.GUAGUA_MASTER_SYSTEM_INTERCEPTERS,
+                        conf.get(
+                                GuaguaConstants.GUAGUA_MASTER_SYSTEM_INTERCEPTERS,
+                                "ml.shifu.guagua.master.MasterTimer,ml.shifu.guagua.master.MemoryStatsMasterInterceptor,ml.shifu.guagua.hadoop.ZooKeeperMasterInterceptor,ml.shifu.guagua.master.NettyMasterCoordinator "));
+                conf.set(
+                        GuaguaConstants.GUAGUA_WORKER_SYSTEM_INTERCEPTERS,
+                        conf.get(
+                                GuaguaConstants.GUAGUA_WORKER_SYSTEM_INTERCEPTERS,
+                                "ml.shifu.guagua.worker.WorkerTimer,ml.shifu.guagua.worker.MemoryStatsWorkerInterceptor,ml.shifu.guagua.hadoop.ZooKeeperWorkerInterceptor,ml.shifu.guagua.worker.NettyWorkerCoordinator"));
                 System.err.println("WARN: Zookeeper server will be started in master node of cluster");
             }
             return;
