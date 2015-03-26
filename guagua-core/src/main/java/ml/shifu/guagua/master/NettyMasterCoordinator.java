@@ -160,7 +160,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             return;
         }
 
-        clear(context.getProps());
+        this.clear(context.getProps());
 
         LOG.info("All workers are initiliazed successfully.");
     }
@@ -525,7 +525,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         }
                         NettyMasterCoordinator.this.messageServer.releaseExternalResources();
                     }
-                    closeZooKeeper();
+                    NettyMasterCoordinator.super.closeZooKeeper();
                     NettyMasterCoordinator.this.iterResults.close();
                     NettyMasterCoordinator.this.iterResults.clear();
                 }
