@@ -19,11 +19,11 @@
 OLD_HADOOP_CLASSPATH="$HADOOP_CLASSPATH"
 
 # set new HADOOP_CLASSPATH to run guagua
-export HADOOP_CLASSPATH="../lib/guagua-mapreduce-examples-0.6.0-SNAPSHOT.jar:../lib/guava-14.0.1.jar:../lib/guagua-mapreduce-0.6.0-SNAPSHOT.jar:../lib/guagua-core-0.6.0-SNAPSHOT.jar:../lib/zookeeper-3.4.5.jar"
+export HADOOP_CLASSPATH="../lib/guagua-mapreduce-examples-0.6.0.jar:../lib/guava-14.0.1.jar:../lib/guagua-mapreduce-0.6.0.jar:../lib/guagua-core-0.6.0.jar:../lib/zookeeper-3.4.5.jar"
 
-hadoop jar ../lib/guagua-mapreduce-0.6.0-SNAPSHOT.jar \
+hadoop jar ../lib/guagua-mapreduce-0.6.0.jar \
     ml.shifu.guagua.mapreduce.GuaguaMapReduceClient   \
-    -libjars ../lib/guagua-mapreduce-examples-0.6.0-SNAPSHOT.jar,../lib/guava-14.0.1.jar,../lib/guagua-mapreduce-0.6.0-SNAPSHOT.jar,../lib/guagua-core-0.6.0-SNAPSHOT.jar,../lib/zookeeper-3.4.5.jar \
+    -libjars ../lib/guagua-mapreduce-examples-0.6.0.jar,../lib/guava-14.0.1.jar,../lib/guagua-mapreduce-0.6.0.jar,../lib/guagua-core-0.6.0.jar,../lib/zookeeper-3.4.5.jar \
     -i sum  \
     -w ml.shifu.guagua.mapreduce.example.sum.SumWorker  \
     -m ml.shifu.guagua.mapreduce.example.sum.SumMaster  \

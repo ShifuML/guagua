@@ -91,7 +91,7 @@ public class LogisticRegressionWorker
                 LogisticRegressionContants.LR_INPUT_DEFAULT_NUM);
         this.outputNum = 1;
         double memoryFraction = Double.valueOf(context.getProps().getProperty("guagua.data.memoryFraction", "0.5"));
-        String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", "tmp");
+        String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", System.getProperty("user.dir"));
         this.dataList = new MemoryDiskList<Data>((long) (Runtime.getRuntime().maxMemory() * memoryFraction), tmpFolder
                 + File.separator + System.currentTimeMillis());
         // cannot find a good place to close these two data set, using Shutdown hook

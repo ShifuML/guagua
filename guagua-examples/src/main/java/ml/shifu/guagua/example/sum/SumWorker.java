@@ -56,7 +56,7 @@ public class SumWorker
     @Override
     public void init(WorkerContext<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>> context) {
         double memoryFraction = Double.valueOf(context.getProps().getProperty("guagua.data.memoryFraction", "0.5"));
-        String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", "tmp");
+        String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", System.getProperty("user.dir"));
         this.list = new MemoryDiskList<Long>((long) (Runtime.getRuntime().maxMemory() * memoryFraction), tmpFolder
                 + File.separator + System.currentTimeMillis());
         // cannot find a good place to close these two data set, using Shutdown hook
