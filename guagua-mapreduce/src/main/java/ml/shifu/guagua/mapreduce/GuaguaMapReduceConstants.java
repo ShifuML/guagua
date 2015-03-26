@@ -40,6 +40,8 @@ public final class GuaguaMapReduceConstants {
 
     public static final String MAPRED_MAP_TASKS_SPECULATIVE_EXECUTION = "mapred.map.tasks.speculative.execution";
 
+    public static final String MAPREDUCE_JOB_MAX_SPLIT_LOCATIONS = "mapreduce.job.max.split.locations";
+
     public static final String PIG_SCHEMA = "pig_schema";
 
     public static final String PIG_HEADER = "pig_header";

@@ -17,6 +17,7 @@ package ml.shifu.guagua.yarn;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -35,9 +36,13 @@ import java.util.Map;
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.coordinator.zk.ZooKeeperUtils;
+import ml.shifu.guagua.hadoop.io.GuaguaOptionsParser;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableSerializer;
+import ml.shifu.guagua.hadoop.io.GuaguaInputSplit;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.master.MasterComputable;
+import ml.shifu.guagua.util.ReflectionUtils;
 import ml.shifu.guagua.worker.WorkerComputable;
 import ml.shifu.guagua.yarn.util.GsonUtils;
 import ml.shifu.guagua.yarn.util.InputSplitUtils;
@@ -302,6 +307,10 @@ public class GuaguaYarnClient extends Configured {
                 conf.set(GuaguaConstants.GUAGUA_MASTER_RESULT_CLASS, resultClassName);
             } else if(Bytable.class.isAssignableFrom(masterResultClass)) {
                 conf.set(GuaguaConstants.GUAGUA_MASTER_RESULT_CLASS, resultClassName);
+                if(!ReflectionUtils.hasEmptyParameterConstructor(masterResultClass)) {
+                    throw new IllegalArgumentException(
+                            "Master result class should have default constuctor without any parameters.");
+                }
             } else {
                 printUsage();
                 throw new IllegalArgumentException(
@@ -327,6 +336,10 @@ public class GuaguaYarnClient extends Configured {
                 conf.set(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS, resultClassName);
             } else if(Bytable.class.isAssignableFrom(workerResultClass)) {
                 conf.set(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS, resultClassName);
+                if(!ReflectionUtils.hasEmptyParameterConstructor(workerResultClass)) {
+                    throw new IllegalArgumentException(
+                            "Worker result class should have default constuctor without any parameters.");
+                }
             } else {
                 printUsage();
                 throw new IllegalArgumentException(
@@ -345,7 +358,7 @@ public class GuaguaYarnClient extends Configured {
 
     private static void checkIterationCountSetting(Configuration conf, CommandLine cmdLine) {
         if(!cmdLine.hasOption("-c")) {
-            System.err.println("WARN: Total iteration number is not set, default 10 will be used.");
+            System.err.println("WARN: Total iteration number is not set, default 50 will be used.");
             System.err.println("WARN: Total iteration number can be provided by '-c' parameter with non-empty value.");
             conf.setInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, GuaguaConstants.GUAGUA_DEFAULT_ITERATION_COUNT);
         } else {
@@ -386,6 +399,9 @@ public class GuaguaYarnClient extends Configured {
             throw new IllegalArgumentException(
                     "Master class name provided by '-m' should implement 'com.paypal.guagua.master.MasterComputable' interface.");
         }
+        if(!ReflectionUtils.hasEmptyParameterConstructor(masterClass)) {
+            throw new IllegalArgumentException("Master class should have default constuctor without any parameters.");
+        }
 
         conf.set(GuaguaConstants.MASTER_COMPUTABLE_CLASS, masterClassOptionValue.trim());
     }
@@ -415,6 +431,10 @@ public class GuaguaYarnClient extends Configured {
             throw new IllegalArgumentException(
                     "Worker class name provided by '-w' should implement 'com.paypal.guagua.worker.WorkerComputable' interface.");
         }
+        if(!ReflectionUtils.hasEmptyParameterConstructor(workerClass)) {
+            throw new IllegalArgumentException("Worker class should have default constuctor without any parameters.");
+        }
+
         conf.set(GuaguaConstants.WORKER_COMPUTABLE_CLASS, workerClassOptionValue.trim());
     }
 
@@ -424,22 +444,41 @@ public class GuaguaYarnClient extends Configured {
             System.err.println("WARN: For big data guagua application, independent ZooKeeper instance is recommended.");
             System.err.println("WARN: Zookeeper servers can be provided by '-z' parameter with non-empty value.");
 
-            synchronized(GuaguaYarnClient.class) {
-                if(embededZooKeeperServer == null) {
-                    // 1. start embed zookeeper server in one thread.
-                    int embedZkClientPort = ZooKeeperUtils.startEmbedZooKeeper();
-                    // 2. check if it is started.
-                    ZooKeeperUtils.checkIfEmbedZooKeeperStarted(embedZkClientPort);
-                    try {
-                        embededZooKeeperServer = InetAddress.getLocalHost().getHostName() + ":" + embedZkClientPort;
-                    } catch (UnknownHostException e) {
-                        throw new RuntimeException(e);
+            boolean isZkInClient = conf.getBoolean(GuaguaConstants.GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT, true);
+            if(isZkInClient) {
+                synchronized(GuaguaYarnClient.class) {
+                    if(embededZooKeeperServer == null) {
+                        // 1. start embed zookeeper server in one thread.
+                        int embedZkClientPort = 0;
+                        try {
+                            embedZkClientPort = ZooKeeperUtils.startEmbedZooKeeper();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        // 2. check if it is started.
+                        ZooKeeperUtils.checkIfEmbedZooKeeperStarted(embedZkClientPort);
+                        try {
+                            embededZooKeeperServer = InetAddress.getLocalHost().getHostName() + ":" + embedZkClientPort;
+                        } catch (UnknownHostException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
+                // 3. set local embed zookeeper server address
+                conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, embededZooKeeperServer);
+            } else {
+                conf.set(
+                        GuaguaConstants.GUAGUA_MASTER_SYSTEM_INTERCEPTERS,
+                        conf.get(
+                                GuaguaConstants.GUAGUA_MASTER_SYSTEM_INTERCEPTERS,
+                                "ml.shifu.guagua.master.MasterTimer,ml.shifu.guagua.master.MemoryStatsMasterInterceptor,ml.shifu.guagua.hadoop.ZooKeeperMasterInterceptor,ml.shifu.guagua.master.NettyMasterCoordinator "));
+                conf.set(
+                        GuaguaConstants.GUAGUA_WORKER_SYSTEM_INTERCEPTERS,
+                        conf.get(
+                                GuaguaConstants.GUAGUA_WORKER_SYSTEM_INTERCEPTERS,
+                                "ml.shifu.guagua.worker.WorkerTimer,ml.shifu.guagua.worker.MemoryStatsWorkerInterceptor,ml.shifu.guagua.hadoop.ZooKeeperWorkerInterceptor,ml.shifu.guagua.worker.NettyWorkerCoordinator"));
+                System.err.println("WARN: Zookeeper server will be started in master node of cluster");
             }
-            // 3. set local embed zookeeper server address
-            conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, embededZooKeeperServer);
-
             return;
         } else {
             String zkServers = cmdLine.getOptionValue("z");
@@ -503,7 +542,6 @@ public class GuaguaYarnClient extends Configured {
         // copy local resources to hdfs app folder
         copyResourcesToFS();
 
-        // TODO configurable
         appContext.setMaxAppAttempts(GuaguaYarnConstants.GUAGAU_APP_MASTER_DEFAULT_ATTMPTS);
         appContext.setQueue(getConf().get(GuaguaYarnConstants.GUAGUA_YARN_QUEUE_NAME,
                 GuaguaYarnConstants.GUAGUA_YARN_DEFAULT_QUEUE_NAME));
@@ -658,7 +696,10 @@ public class GuaguaYarnClient extends Configured {
         LOG.info("Input split size including master: {}", this.inputSplits.size());
     }
 
-    private static class SplitComparator implements Comparator<InputSplit> {
+    private static class SplitComparator implements Comparator<InputSplit>, Serializable {
+
+        private static final long serialVersionUID = 8176767139729612657L;
+
         @Override
         public int compare(InputSplit o1, InputSplit o2) {
             try {

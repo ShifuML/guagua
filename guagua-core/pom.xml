@@ -5,10 +5,9 @@
     <parent>
         <groupId>ml.shifu</groupId>
         <artifactId>guagua</artifactId>
-        <version>0.5.0</version>
+        <version>0.6.0</version>
         <relativePath>../</relativePath>
     </parent>
-
     <dependencies>
         <dependency>
             <groupId>org.apache.zookeeper</groupId>
@@ -27,6 +26,10 @@
                     <groupId>javax.jms</groupId>
                     <artifactId>jms</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.jboss.netty</groupId>
+                    <artifactId>netty</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -34,6 +37,10 @@
             <artifactId>commons-compress</artifactId>
             <version>1.5</version>
         </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty</artifactId>
+            <version>3.6.2.FINAL</version>
+        </dependency>
     </dependencies>
-
 </project>

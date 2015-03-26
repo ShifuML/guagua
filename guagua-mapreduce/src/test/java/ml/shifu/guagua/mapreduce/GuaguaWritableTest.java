@@ -17,8 +17,8 @@ package ml.shifu.guagua.mapreduce;
 
 import junit.framework.Assert;
 
-import ml.shifu.guagua.mapreduce.GuaguaWritableAdapter;
-import ml.shifu.guagua.mapreduce.GuaguaWritableSerializer;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableSerializer;
 
 import org.apache.hadoop.io.IntWritable;
 import org.junit.After;

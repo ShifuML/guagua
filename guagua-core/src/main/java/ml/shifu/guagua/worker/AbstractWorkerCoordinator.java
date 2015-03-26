@@ -21,6 +21,7 @@ import java.util.List;
 
 import ml.shifu.guagua.BasicCoordinator;
 import ml.shifu.guagua.GuaguaConstants;
+import ml.shifu.guagua.coordinator.zk.GuaguaZooKeeper.Filter;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.util.StringUtils;
 
@@ -115,7 +116,17 @@ public abstract class AbstractWorkerCoordinator<MASTER_RESULT extends Bytable, W
             String masterBaseNode = getMasterBaseNode(context.getAppId()).toString();
             List<String> masterIterations = null;
             try {
-                masterIterations = getZooKeeper().getChildrenExt(masterBaseNode, false, false, false);
+                masterIterations = getZooKeeper().getChildrenExt(masterBaseNode, false, false, false, new Filter() {
+                    @Override
+                    public boolean filter(String path) {
+                        try {
+                            Integer.parseInt(path);
+                            return false;
+                        } catch (Exception e) {
+                            return true;
+                        }
+                    }
+                });
             } catch (KeeperException.NoNodeException e) {
                 LOG.warn("No such node:{}", masterBaseNode);
             }

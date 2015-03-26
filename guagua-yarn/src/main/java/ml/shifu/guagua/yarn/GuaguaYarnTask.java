@@ -24,10 +24,12 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.GuaguaService;
+import ml.shifu.guagua.hadoop.io.GuaguaInputSplit;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.GuaguaFileSplit;
 import ml.shifu.guagua.master.GuaguaMasterService;
@@ -158,12 +160,12 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
      * Constructor with yarn task related parameters.
      */
     public GuaguaYarnTask(ApplicationAttemptId appAttemptId, ContainerId containerId, int partition,
-            String RPCHostName, String RPCPort, Configuration conf) {
+            String rpcHostName, String rpcPort, Configuration conf) {
         this.appAttemptId = appAttemptId;
         this.containerId = containerId;
         this.partition = partition;
-        this.rpcHostName = RPCHostName;
-        this.rpcPort = Integer.parseInt(RPCPort);
+        this.rpcHostName = rpcHostName;
+        this.rpcPort = Integer.parseInt(rpcPort);
         LOG.info("current partition:{}", this.getPartition());
         this.appId = this.getAppAttemptId().getApplicationId();
         this.yarnConf = conf;
@@ -216,6 +218,7 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
 
         // Start the connection attempt.
         ChannelFuture future = this.rpcClient.connect(new InetSocketAddress(this.rpcHostName, this.rpcPort));
+        LOG.info("Connect to {}:{}", this.rpcHostName, this.rpcPort);
         this.rpcClientChannel = future.awaitUninterruptibly().getChannel();
     }
 
@@ -283,7 +286,6 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
             Deserializer<T> deserializer = (Deserializer<T>) factory.getDeserializer(cls);
             deserializer.open(inFile);
             split = deserializer.deserialize(null);
-            // long pos = inFile.getPos();
         } finally {
             IOUtils.closeStream(inFile);
         }
@@ -300,11 +302,19 @@ public class GuaguaYarnTask<MASTER_RESULT extends Bytable, WORKER_RESULT extends
                 @Override
                 public void progress(int currentIteration, int totalIteration, String status, boolean isLastUpdate,
                         boolean isKill) {
+                    // if is last update in current iteration, progress and status should be updated
                     if(isLastUpdate) {
                         LOG.info("Application progress: {}%.", (currentIteration * 100 / totalIteration));
                         GuaguaIterationStatus gi = new GuaguaIterationStatus(GuaguaYarnTask.this.partition,
                                 currentIteration, totalIteration);
-                        rpcClientChannel.write(GsonUtils.toJson(gi));
+                        gi.setKillContainer(isKill);
+                        LOG.info("Send GuaguaIterationStatus: {}.", gi);
+                        ChannelFuture channelFuture = rpcClientChannel.write(GsonUtils.toJson(gi));
+                        try {
+                            channelFuture.await(10, TimeUnit.SECONDS);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
                     }
                 }
             });

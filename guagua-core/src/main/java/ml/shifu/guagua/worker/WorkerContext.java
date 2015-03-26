@@ -175,8 +175,18 @@ public class WorkerContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
         this.attachment = attachment;
     }
 
+    /**
+     * Whether is in first iteration, default first iteration is 1.
+     */
     public boolean isFirstIteration() {
         return getCurrentIteration() == GuaguaConstants.GUAGUA_FIRST_ITERATION;
+    }
+
+    /**
+     * Whether is in initiate iteration, default initiate iteration is 1.
+     */
+    public boolean isInitIteration() {
+        return getCurrentIteration() == GuaguaConstants.GUAGUA_INIT_STEP;
     }
 
     @Override

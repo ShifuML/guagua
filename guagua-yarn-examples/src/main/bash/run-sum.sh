@@ -19,11 +19,11 @@
 OLD_HADOOP_CLASSPATH="$HADOOP_CLASSPATH"
 
 # set new HADOOP_CLASSPATH to run guagua
-export HADOOP_CLASSPATH="../lib/guagua-yarn-examples-0.5.0.jar:../lib/guagua-yarn-0.5.0.jar:../lib/gson-2.2.2.jar:../lib/guava-11.0.2.jar:../lib/guagua-core-0.5.0.jar:../lib/zookeeper-3.4.5.jar"
+export HADOOP_CLASSPATH="../lib/guagua-yarn-examples-0.6.0.jar:../lib/guagua-yarn-0.6.0.jar:../lib/gson-2.2.2.jar:../lib/guava-11.0.2.jar:../lib/guagua-core-0.6.0.jar:../lib/zookeeper-3.4.5.jar"
 
-hadoop jar ../lib/guagua-yarn-examples-0.5.0.jar \
+hadoop jar ../lib/guagua-yarn-examples-0.6.0.jar \
     ml.shifu.guagua.yarn.GuaguaYarnClient  \
-    -libjars ../lib/guagua-yarn-examples-0.5.0.jar,../lib/guagua-yarn-0.5.0.jar,../lib/gson-2.2.2.jar,../lib/guava-11.0.2.jar,../lib/guagua-core-0.5.0.jar,../lib/zookeeper-3.4.5.jar \
+    -libjars ../lib/guagua-yarn-examples-0.6.0.jar,../lib/guagua-yarn-0.6.0.jar,../lib/gson-2.2.2.jar,../lib/guava-11.0.2.jar,../lib/guagua-core-0.6.0.jar,../lib/zookeeper-3.4.5.jar \
     -i sum  \
     -w ml.shifu.guagua.yarn.example.sum.SumWorker  \
     -m ml.shifu.guagua.yarn.example.sum.SumMaster  \

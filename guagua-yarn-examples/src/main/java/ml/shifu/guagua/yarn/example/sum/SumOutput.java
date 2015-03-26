@@ -18,9 +18,9 @@ package ml.shifu.guagua.yarn.example.sum;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.master.BasicMasterInterceptor;
 import ml.shifu.guagua.master.MasterContext;
-import ml.shifu.guagua.yarn.GuaguaWritableAdapter;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;

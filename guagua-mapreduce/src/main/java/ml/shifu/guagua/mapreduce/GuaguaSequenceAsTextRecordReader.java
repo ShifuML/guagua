@@ -44,7 +44,10 @@ import org.apache.hadoop.io.Text;
  * <pre>
  * this.setRecordReader(new GuaguaSequenceAsTextRecordReader(fileSplit));
  * </pre>
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaSequenceAsTextRecordReader}
  */
+@Deprecated
 public class GuaguaSequenceAsTextRecordReader extends GuaguaSequenceRecordReader<Text, Text> {
 
     public GuaguaSequenceAsTextRecordReader() throws IOException {

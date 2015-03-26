@@ -16,11 +16,26 @@
  
 Guagua Change Logs
 
+Changes for Guagua-0.6.0
+    * Add TCP server/client to send/receive results in both master and workers: 
+      https://github.com/ShifuML/guagua/issues/65.
+      This issue is to decrease dependency on zookeeper while master results are still stored into zookeeper for fault 
+      tolerance. With this feature, no need to depend on a zookeeper cluster with enough memory and disk. User need not 
+      specify zookeeper server used in shifu and guagua. 
+    * Add memory+(local)disk feature to scale data volume worker can process: https://github.com/ShifuML/guagua/issues/54.
+    * Add feature to start internal zookeeper server as a process in node of master process: 
+      https://github.com/ShifuML/guagua/issues/14.
+    * Extract common hadoop classes and APIs to the same packages for in both guagua-mapreduce and guagua-yarn: 
+      https://github.com/ShifuML/guagua/issues/28.
+    * Embedded zookeeper server(in client node or master node) imporvement: 
+      https://github.com/ShifuML/guagua/issues/62; https://github.com/ShifuML/guagua/issues/61
+    * Add feature to kill straggling container if over configured threshold in guagua-yarn component: 
+      https://github.com/ShifuML/guagua/issues/52.
 Changes for Guagua-0.5.0
     * Add annotation ComputableMonitor to support worker time out for each iteration. 
     * Change worker results in MasterContext from a List to Iteratable to save memory in master.
     * Add logistic regression example in guagua-mapreduce-examples.
-	* Add linear regression example in guagua-mapreduce-examples.
+    * Add linear regression example in guagua-mapreduce-examples.
 Changes for Guagua-0.4.2
     * Add internal(embeded) ZooKeeper support.
     * Add default total iteration number if user don't set '-c'.
@@ -39,7 +54,7 @@ Changes for Guagua-0.3.0
     * Delete unneeded ZooKeeper znodes ASAP, for example: in iteration 4, delete all znodes from iteration 1 and 2, node
       remove znodes for iteration 3 because of fail-over needed.
     * Improve Hadoop mapper progress to make sure users can get accurate progress in web and console.
-    * Improve nerual network implementation.
+    * Improve neural network implementation.
     * Fulfill guagua client input validation.
     * Add slow task detection mechanism, if one task iteration execution time is over a threshold value, task will kill 
       itself to trigger fail-over task on other machines.
@@ -56,10 +71,10 @@ Changes for Guagua-0.1.0
     * Master-Workers services implementation for whole guagua arch.
     * Sync and async ZooKeeper coordinators for both master and workers.
     * MapReduce adapter implementation by using only mapper tasks.
-    * Yarn adapter implementation with fail-over like mapreduce tasks. By default each task has 4 attempts.
+    * YARN adapter implementation with fail-over like mapreduce tasks. By default each task has 4 attempts.
     * Guagua-core fail-over support to make restarted-task starts at last successful iteration.
     * Basic IO for master result and worker results and adapter for hadoop writable.
     * Add examples: sum values and distributed neural network implementation.
-    * Make all interceptors and properties set by hadoop like commnad: '-D<key=value>'.
+    * Make all intercepters and properties set by hadoop like commnad: '-D<key=value>'.
     * Input splits like Pig: set combination size, guagua can combine each worker according to the size.
     * Profile intercepter liker memory profilers and worker timers.

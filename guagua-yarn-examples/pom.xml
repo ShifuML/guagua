@@ -2,13 +2,13 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>guagua-yarn-examples</artifactId>
+    <description>Guagua examples on guagua yarn implementation. This is deprecated and all new examples are in guagua-examples.</description>
     <parent>
         <groupId>ml.shifu</groupId>
         <artifactId>guagua</artifactId>
-        <version>0.5.0</version>
+        <version>0.6.0</version>
         <relativePath>../</relativePath>
     </parent>
-
     <dependencies>
         <dependency>
             <groupId>ml.shifu</groupId>
@@ -26,7 +26,6 @@
             <version>14.0.1</version>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -50,5 +49,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

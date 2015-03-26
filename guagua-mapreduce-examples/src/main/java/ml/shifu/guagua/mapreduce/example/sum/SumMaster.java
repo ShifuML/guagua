@@ -16,8 +16,8 @@
 package ml.shifu.guagua.mapreduce.example.sum;
 
 import ml.shifu.guagua.ComputableMonitor;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.io.HaltBytable;
-import ml.shifu.guagua.mapreduce.GuaguaWritableAdapter;
 import ml.shifu.guagua.master.MasterComputable;
 import ml.shifu.guagua.master.MasterContext;
 

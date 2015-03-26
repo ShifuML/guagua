@@ -48,7 +48,10 @@ import org.apache.hadoop.mapred.SequenceFileRecordReader;
  * <pre>
  * this.setRecordReader(new SequenceFileRecordReader(fileSplit, Text.class, Text,class));
  * </pre>
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaSequenceRecordReader}
  */
+@Deprecated
 public class GuaguaSequenceRecordReader<KEY extends Writable, VALUE extends Writable> implements
         GuaguaRecordReader<GuaguaWritableAdapter<KEY>, GuaguaWritableAdapter<VALUE>> {
 
@@ -78,7 +81,9 @@ public class GuaguaSequenceRecordReader<KEY extends Writable, VALUE extends Writ
         this.conf = conf;
         this.keyClass = keyClass;
         this.valueClass = valueClass;
-        initialize(split);
+        if(split != null) {
+            initialize(split);
+        }
     }
 
     /**

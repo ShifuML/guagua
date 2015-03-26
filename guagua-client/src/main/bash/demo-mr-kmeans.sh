@@ -21,18 +21,18 @@ BIN_DIR="$( cd -P "$( dirname "${BASH_SOURCE:-0}" )" && pwd )"
 hadoop fs -put $BIN_DIR/../data/kmeans /user/$USER/
 
 # Comments for all parameters:
-#  '../mapreduce-lib/guagua-mapreduce-examples-0.5.0.jar': Jar files include master, worker and user intercepters
+#  '../mapreduce-lib/guagua-examples-0.6.0.jar': Jar files include master, worker and user intercepters
 #  '-i kmeans': '-i' means guagua application input, should be HDFS input file or folder
 #  '-z ${ZOOKEEPER_SERVERS}': '-z' is used to configure zookeeper server, this should be placed by real zookeeper server
 #                            The format is like '<zkServer1:zkPort1,zkServer2:zkPort2>'
 #      If user doesn't specify this parameter, a zookeeper server in CLI host will be embeded.
-#  '-w ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorker': Worker computable implementation class setting
-#  '-m ml.shifu.guagua.mapreduce.example.kmeans.KMeansMaster': Master computable implementation class setting
+#  '-w ml.shifu.guagua.example.kmeans.KMeansWorker': Worker computable implementation class setting
+#  '-m ml.shifu.guagua.example.kmeans.KMeansMaster': Master computable implementation class setting
 #  '-c 10': Total iteration number setting
 #      If user doesn't specify this parameter, default 10 will be used.
 #  '-n Guagua-Sum-Master-Workers-Job': Hadoop job name or YARN application name specified
-#  '-mr ml.shifu.guagua.mapreduce.example.kmeans.KMeansMasterParams': Master result class setting
-#  '-wr ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorkerParams': Worker result class setting
+#  '-mr ml.shifu.guagua.example.kmeans.KMeansMasterParams': Master result class setting
+#  '-wr ml.shifu.guagua.example.kmeans.KMeansWorkerParams': Worker result class setting
 #  '-Dmapred.job.queue.name=default': Queue name setting
 #  '-Dkmeans.k.number=2': set k
 #  '-Dkmeans.data.seperator="|"': data input separator
@@ -40,21 +40,21 @@ hadoop fs -put $BIN_DIR/../data/kmeans /user/$USER/
 #  '-Dkmeans.k.number=2': set k
 #  '-Dkmeans.centriods.output=kmeans-centriods': new centriods output file in HDFS
 #  '-Dkmeans.data.output=kmeans-tags': new data file folder with tag at last column
-#  '-Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansCentriodsOutput': User master interceptors
+#  '-Dguagua.master.intercepters=ml.shifu.guagua.example.kmeans.KMeansCentriodsOutput': User master interceptors
 
-$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-mapreduce-examples-0.5.0.jar \
+$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-examples-0.6.0.jar \
         -i kmeans  \
-        -w ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorker  \
-        -m ml.shifu.guagua.mapreduce.example.kmeans.KMeansMaster  \
+        -w ml.shifu.guagua.example.kmeans.KMeansWorker  \
+        -m ml.shifu.guagua.example.kmeans.KMeansMaster  \
         -n "Guagua-KMeans-Master-Workers-Job" \
-        -mr ml.shifu.guagua.mapreduce.example.kmeans.KMeansMasterParams \
-        -wr ml.shifu.guagua.mapreduce.example.kmeans.KMeansWorkerParams \
+        -mr ml.shifu.guagua.example.kmeans.KMeansMasterParams \
+        -wr ml.shifu.guagua.example.kmeans.KMeansWorkerParams \
         -Dmapred.job.queue.name=default \
         -Dkmeans.k.number=2 \
         -Dkmeans.data.seperator="|" \
         -Dkmeans.column.number=2 \
         -Dkmeans.centriods.output=kmeans-centriods \
         -Dkmeans.data.output=kmeans-tags \
-        -Dguagua.master.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansCentriodsOutput \
-        -Dguagua.worker.intercepters=ml.shifu.guagua.mapreduce.example.kmeans.KMeansDataOutput
+        -Dguagua.master.intercepters=ml.shifu.guagua.example.kmeans.KMeansCentriodsOutput \
+        -Dguagua.worker.intercepters=ml.shifu.guagua.example.kmeans.KMeansDataOutput
         

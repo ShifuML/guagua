@@ -79,8 +79,8 @@ public class LogisticRegressionMaster implements MasterComputable<LogisticRegres
                     for(int i = 0; i < gradients.length; i++) {
                         gradients[i] += param.getParameters()[i];
                     }
+                    sumError += param.getError();
                 }
-                sumError += param.getError();
                 size++;
             }
             for(int i = 0; i < weights.length; i++) {

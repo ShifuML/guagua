@@ -20,11 +20,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import junit.framework.Assert;
 
 import ml.shifu.guagua.GuaguaRuntimeException;
-import ml.shifu.guagua.mapreduce.GuaguaInputSplit;
+import ml.shifu.guagua.hadoop.io.GuaguaInputSplit;
 import ml.shifu.guagua.util.ReflectionUtils;
 
 import org.apache.hadoop.fs.Path;
@@ -45,7 +46,7 @@ public class GuaguaInputSplitTest {
 
     @Test
     public void testMasterInputSplit() {
-        guaguaInputSplit = new GuaguaInputSplit(true, (FileSplit)null);
+        guaguaInputSplit = new GuaguaInputSplit(true, (FileSplit) null);
         try {
             Assert.assertEquals(Long.MAX_VALUE, guaguaInputSplit.getLength());
             guaguaInputSplit.getLocations();
@@ -81,7 +82,7 @@ public class GuaguaInputSplitTest {
                 Assert.assertEquals(fs1.getStart(), fs2.getStart());
                 Assert.assertEquals(fs1.getLength(), fs2.getLength());
                 Assert.assertEquals(fs1.getPath(), fs2.getPath());
-                Assert.assertEquals(fs1.getLocations().length,fs2.getLocations().length);
+                Assert.assertEquals(fs1.getLocations().length, fs2.getLocations().length);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -119,7 +120,8 @@ public class GuaguaInputSplitTest {
     public Writable bytesToObject(byte[] data, String className) {
         if(data == null || className == null) {
             throw new NullPointerException(String.format(
-                    "data and className should not be null. data:%s, className:%s", data, className));
+                    "data and className should not be null. data:%s, className:%s",
+                    data == null ? null : Arrays.toString(data), className));
         }
         Writable result = (Writable) ReflectionUtils.newInstance(className);
         DataInputStream dataIn = null;

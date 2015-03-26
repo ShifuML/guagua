@@ -22,6 +22,9 @@ import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,5 +98,23 @@ public class JMap {
                 }
             }
         }
+    }
+    
+    public static void main(String[] args) {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put(null, "123");
+        System.out.println(map.get(null));
+        map.put("123", null);
+        System.out.println(map.get("123"));
+        System.out.println(map.containsKey("123"));
+        System.out.println("-----------------------------------------");
+        map = new LinkedHashMap<String, String>();
+        map.put(null, "123");
+        System.out.println(map.get(null));
+        map.put("123", null);
+        System.out.println(map.get("123"));
+        System.out.println(map.containsKey("123"));
+        
+        
     }
 }

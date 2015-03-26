@@ -26,7 +26,6 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
  * Copied from apache common-io source code.
  */

@@ -21,8 +21,8 @@ import java.util.Properties;
 
 import junit.framework.Assert;
 import ml.shifu.guagua.GuaguaConstants;
-import ml.shifu.guagua.mapreduce.GuaguaMRUnitDriver;
-import ml.shifu.guagua.mapreduce.GuaguaWritableAdapter;
+import ml.shifu.guagua.hadoop.GuaguaMRUnitDriver;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.unit.GuaguaUnitDriver;
 
 import org.apache.commons.io.FileUtils;
@@ -58,11 +58,12 @@ public class SumTest {
 
         driver.run();
 
-        Assert.assertEquals(15345 + "", FileUtils.readLines(new File(SUM_OUTPUT)).get(0));
+        Assert.assertEquals(15345 + "",
+                FileUtils.readLines(new File(System.getProperty("user.dir") + File.separator + SUM_OUTPUT)).get(0));
     }
-    
+
     @After
-    public void tearDown(){
+    public void tearDown() {
         FileUtils.deleteQuietly(new File(System.getProperty("user.dir") + File.separator + SUM_OUTPUT));
         FileUtils.deleteQuietly(new File(System.getProperty("user.dir") + File.separator + "." + SUM_OUTPUT + ".crc"));
     }

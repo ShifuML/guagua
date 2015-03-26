@@ -18,9 +18,9 @@ package ml.shifu.guagua.mapreduce.example.nn;
 import java.io.IOException;
 
 import ml.shifu.guagua.GuaguaRuntimeException;
+import ml.shifu.guagua.hadoop.io.GuaguaLineRecordReader;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.io.GuaguaFileSplit;
-import ml.shifu.guagua.mapreduce.GuaguaLineRecordReader;
-import ml.shifu.guagua.mapreduce.GuaguaWritableAdapter;
 import ml.shifu.guagua.mapreduce.example.nn.meta.NNParams;
 import ml.shifu.guagua.util.NumberFormatUtils;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;

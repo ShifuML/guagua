@@ -17,7 +17,7 @@
 mvn clean install
 
 cd guagua-mapreduce
-mvn install -Phdp-yarn
+mvn install -Phdp-yarn 
 
 cd ../guagua-client
 mvn clean install

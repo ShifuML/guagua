@@ -16,6 +16,7 @@
 package ml.shifu.guagua.yarn;
 
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -33,9 +34,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ml.shifu.guagua.GuaguaConstants;
+import ml.shifu.guagua.hadoop.io.GuaguaInputSplit;
 import ml.shifu.guagua.yarn.util.GsonUtils;
 import ml.shifu.guagua.yarn.util.YarnUtils;
 
@@ -244,6 +247,8 @@ public class GuaguaAppMaster {
 
     private String rpcHostName;
 
+    private static final Object LOCK = new Object();
+
     private Map<Integer, GuaguaIterationStatus> partitionProgress;
 
     private ServerBootstrap rpcServer;
@@ -320,7 +325,6 @@ public class GuaguaAppMaster {
     public boolean run() throws YarnException, IOException {
         boolean success = false;
         try {
-
             // 1. get input from conf, generate input splits like GuaguaMapReduce
             // 2. store all splits into conf and export to hdfs
             // 3. for each conntainer, according to container host and split host to select a partition to the container
@@ -414,7 +418,7 @@ public class GuaguaAppMaster {
     private void startRPCServer() {
         this.rpcServer = new ServerBootstrap(new NioServerSocketChannelFactory(
                 Executors.newFixedThreadPool(GuaguaYarnConstants.DEFAULT_STATUS_RPC_SERVER_THREAD_COUNT),
-                Executors.newFixedThreadPool(GuaguaYarnConstants.DEFAULT_STATUS_RPC_SERVER_THREAD_COUNT)));
+                Executors.newCachedThreadPool(new MasterThreadFactory())));
 
         // Set up the pipeline factory.
         this.rpcServer.setPipelineFactory(new ChannelPipelineFactory() {
@@ -427,6 +431,41 @@ public class GuaguaAppMaster {
 
         // Bind and start to accept incoming connections.
         this.rpcServer.bind(new InetSocketAddress(rpcPort));
+    }
+
+    /**
+     * The master thread factory. Main feature is to print error log of worker thread.
+     */
+    private static class MasterThreadFactory implements ThreadFactory {
+        static final AtomicInteger poolNumber = new AtomicInteger(1);
+        final ThreadGroup group;
+        final AtomicInteger threadNumber = new AtomicInteger(1);
+        final String namePrefix;
+
+        MasterThreadFactory() {
+            SecurityManager s = System.getSecurityManager();
+            group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+            namePrefix = "pool-" + poolNumber.getAndIncrement() + "-thread-";
+        }
+
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
+            if(t.isDaemon()) {
+                t.setDaemon(false);
+            }
+            if(t.getPriority() != Thread.NORM_PRIORITY) {
+                t.setPriority(Thread.NORM_PRIORITY);
+            }
+            t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(Thread t, Throwable e) {
+                    LOG.warn("Error message in thread {} with error message {}, error root cause {}.", t, e,
+                            e.getCause());
+                    // print stack???
+                }
+            });
+            return t;
+        }
     }
 
     /**
@@ -445,8 +484,21 @@ public class GuaguaAppMaster {
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) {
             GuaguaIterationStatus status = GsonUtils.fromJson(e.getMessage().toString(), GuaguaIterationStatus.class);
-            LOG.debug("Receive RPC status:{}", status);
-            GuaguaAppMaster.this.partitionProgress.put(status.getPartition(), status);
+            LOG.info("Receive RPC status:{}", status);
+            synchronized(LOCK) {
+                GuaguaAppMaster.this.partitionProgress.put(status.getPartition(), status);
+            }
+            if(status.isKillContainer()) {
+                List<Container> containers;
+                synchronized(LOCK) {
+                    containers = GuaguaAppMaster.this.partitionContainerMap.get(status.getPartition());
+                }
+                LOG.info("containers:{}", containers);
+                Container container = containers.get(containers.size() - 1);
+                LOG.info("Container {} in node {} is killed because of straggler condition.", container.getId(),
+                        container.getNodeId());
+                GuaguaAppMaster.this.getNmClientAsync().stopContainerAsync(container.getId(), container.getNodeId());
+            }
         }
 
         @Override
@@ -563,9 +615,9 @@ public class GuaguaAppMaster {
      * @return the setup ResourceRequest to be sent to RM
      */
     private ContainerRequest setupContainerAskForRM() {
-        // setup requirements for hosts
-        // TODO temp use * for host selection. should be better for data localization. add vcore
-        // set the priority for the request
+        // setup requirements for hosts, request containers firstly and then check allocated containers and splits to
+        // get data locality.
+        // TODO, better here to requests according to hosts of splits.
         Priority pri = Records.newRecord(Priority.class);
         pri.setPriority(GuaguaYarnConstants.GUAGUA_YARN_DEFAULT_PRIORITY);
 
@@ -626,6 +678,13 @@ public class GuaguaAppMaster {
                 LOG.info("Got container status for containerID={}, state={}, exitStatus={}, diagnostics={}.",
                         containerStatus.getContainerId(), containerStatus.getState(), containerStatus.getExitStatus(),
                         containerStatus.getDiagnostics());
+                if(!GuaguaAppMaster.this.containerPartitionMap.containsKey(containerStatus.getContainerId().toString())) {
+                    getCompletedCount().incrementAndGet();
+                    LOG.info("Why such container {} is started, no partition. Exited with status:{}",
+                            containerStatus.getContainerId(), containerStatus.getExitStatus());
+                    continue;
+                }
+
                 int partition = GuaguaAppMaster.this.containerPartitionMap.get(containerStatus.getContainerId()
                         .toString());
                 if(GuaguaAppMaster.this.partitionContainerMap.get(partition).size() >= GuaguaAppMaster.this.maxContainerAttempts) {
@@ -689,11 +748,13 @@ public class GuaguaAppMaster {
         public float getProgress() {
             // set progress to deliver to RM on next heartbeat
             int sum = 0, totalSum = 0;
-            for(Map.Entry<Integer, GuaguaIterationStatus> entry: GuaguaAppMaster.this.partitionProgress.entrySet()) {
-                sum += entry.getValue().getCurrentIteration();
-                totalSum += GuaguaAppMaster.this.totalIterations;
+            synchronized(LOCK) {
+                for(Map.Entry<Integer, GuaguaIterationStatus> entry: GuaguaAppMaster.this.partitionProgress.entrySet()) {
+                    sum += entry.getValue().getCurrentIteration();
+                    totalSum += GuaguaAppMaster.this.totalIterations;
+                }
+                return (sum * 1.0f) / totalSum;
             }
-            return (sum * 1.0f) / totalSum;
         }
 
         @Override
@@ -716,6 +777,9 @@ public class GuaguaAppMaster {
             int currentPartition = getCurrentPartition();
             if(currentPartition == -1) {
                 LOG.warn("Request too many resources. TODO, remove containers no needed.");
+                for(Container container: allocatedContainers) {
+                    GuaguaAppMaster.this.getAmRMClient().releaseAssignedContainer(container.getId());
+                }
                 break;
             }
             Container container = getDataLocalityContainer(hostContainterMap, currentPartition);
@@ -763,6 +827,8 @@ public class GuaguaAppMaster {
     /**
      * Find a container with the same host for input split. Not a good implementation for data locality. Check
      * map-reduce implementation.
+     * 
+     * TODO RACK-LOCAL implementation
      */
     private Container getDataLocalityContainer(Map<String, List<Container>> hostContainterMap, int currentPartition) {
         GuaguaInputSplit inputSplit = (GuaguaInputSplit) (this.inputSplits.get(currentPartition - 1));

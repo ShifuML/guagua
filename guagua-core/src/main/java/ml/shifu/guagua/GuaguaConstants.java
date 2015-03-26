@@ -15,6 +15,13 @@
  */
 package ml.shifu.guagua;
 
+import ml.shifu.guagua.master.MasterTimer;
+import ml.shifu.guagua.master.MemoryStatsMasterInterceptor;
+import ml.shifu.guagua.master.NettyMasterCoordinator;
+import ml.shifu.guagua.worker.MemoryStatsWorkerInterceptor;
+import ml.shifu.guagua.worker.NettyWorkerCoordinator;
+import ml.shifu.guagua.worker.WorkerTimer;
+
 public final class GuaguaConstants {
 
     // avoid new
@@ -25,7 +32,7 @@ public final class GuaguaConstants {
 
     public static final String GUAGUA_ITERATION_COUNT = "guagua.iteration.count";
 
-    public static final int GUAGUA_DEFAULT_ITERATION_COUNT = 10;
+    public static final int GUAGUA_DEFAULT_ITERATION_COUNT = 50;
 
     public static final String WORKER_COMPUTABLE_CLASS = "guagua.worker.computable.class";
 
@@ -73,9 +80,12 @@ public final class GuaguaConstants {
 
     public static final int GUAGUA_ZK_SESSON_DEFAULT_TIMEOUT = 5 * 60 * 1000;
 
-    public static final String GUAGUA_MASTER_DEFAULT_SYSTEM_INTERCEPTERS = "ml.shifu.guagua.master.MasterTimer,ml.shifu.guagua.master.MemoryStatsMasterInterceptor,ml.shifu.guagua.master.SyncMasterCoordinator";
+    // using class get name to make sure if class or package changed, such default values will also be changed.
+    public static final String GUAGUA_MASTER_DEFAULT_SYSTEM_INTERCEPTERS = MasterTimer.class.getName() + ","
+            + MemoryStatsMasterInterceptor.class.getName() + "," + NettyMasterCoordinator.class.getName();
 
-    public static final String GUAGUA_WORKER_DEFAULT_SYSTEM_INTERCEPTERS = "ml.shifu.guagua.worker.WorkerTimer,ml.shifu.guagua.worker.MemoryStatsWorkerInterceptor,ml.shifu.guagua.worker.SyncWorkerCoordinator";
+    public static final String GUAGUA_WORKER_DEFAULT_SYSTEM_INTERCEPTERS = WorkerTimer.class.getName() + ","
+            + MemoryStatsWorkerInterceptor.class.getName() + "," + NettyWorkerCoordinator.class.getName();
 
     public static final String GUAGUA_ZK_CLEANUP_ENABLE = "guagua.zk.cleanup.enable";
 
@@ -138,5 +148,27 @@ public final class GuaguaConstants {
     public static final String GUAGUA_SITE_FILE = "guagua-site.xml";
 
     public static final int GUAGUA_FIRST_ITERATION = 1;
+
+    public static final String GUAGUA_STRAGGLER_ITERATORS = "guagua.straggler.iterators";
+
+    public static final int GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT = 8;
+
+    public static final String GUAGUA_NETTY_SEVER_PORT = "guagua.netty.sever.port";
+
+    public static final int GUAGUA_NETTY_SEVER_DEFAULT_PORT = 44323;
+
+    public static final String GUAGUA_MASTER_WORKERESULTS_DEFAULT_MEMORY_FRACTION = "0.6";
+
+    public static final String GUAGUA_MASTER_WORKERESULTS_MEMORY_FRACTION = "guagua.master.workeresults.memoryFraction";
+
+    public static final String GUAGUA_ZK_CLUSTER_SERVER_FOLDER = "guagua.zk.cluster.server.folder";
+
+    public static final String GUAGUA_CLUSTER_ZOOKEEPER_SERVER_FILE = "zookeeper_server";
+
+    public static final String GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT = "guagua.zk.embedbed.isInClient";
+
+    public static final String GUAGUA_CHILD_DEFAULT_ZKSERVER_OPTS = "-Xms1G -Xmx1G -server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70";
+
+    public static final String GUAGUA_CHILD_ZKSERVER_OPTS = "guagua.child.zkserver.opts";
 
 }

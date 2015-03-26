@@ -35,7 +35,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Copy from LineRecordReader to avoid using Mapreduce-related interfaces.
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaLineRecordReader}
  */
+@Deprecated
 public class GuaguaLineRecordReader implements
         GuaguaRecordReader<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<Text>> {
 

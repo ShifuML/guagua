@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import ml.shifu.guagua.BasicCoordinator;
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
+import ml.shifu.guagua.coordinator.zk.GuaguaZooKeeper.Filter;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.util.NumberFormatUtils;
@@ -108,7 +109,6 @@ public abstract class AbstractMasterCoordinator<MASTER_RESULT extends Bytable, W
                 LOG.info("master results write to znode.");
             }
         }.execute();
-
     }
 
     @Override
@@ -190,7 +190,6 @@ public abstract class AbstractMasterCoordinator<MASTER_RESULT extends Bytable, W
      * 
      * <p>
      * Master znodes should be set as persistent type.
-     * 
      */
     protected class FailOverCommand extends BasicCoordinatorCommand {
 
@@ -205,7 +204,17 @@ public abstract class AbstractMasterCoordinator<MASTER_RESULT extends Bytable, W
             String masterBaseNode = getMasterBaseNode(context.getAppId()).toString();
             List<String> masterIterations = null;
             try {
-                masterIterations = getZooKeeper().getChildrenExt(masterBaseNode, false, false, false);
+                masterIterations = getZooKeeper().getChildrenExt(masterBaseNode, false, false, false, new Filter() {
+                    @Override
+                    public boolean filter(String path) {
+                        try {
+                            Integer.parseInt(path);
+                            return false;
+                        } catch (Exception e) {
+                            return true;
+                        }
+                    }
+                });
             } catch (KeeperException.NoNodeException e) {
                 LOG.warn("No such node:{}", masterBaseNode);
             }

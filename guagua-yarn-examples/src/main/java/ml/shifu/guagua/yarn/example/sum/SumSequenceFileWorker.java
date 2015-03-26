@@ -19,11 +19,11 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+import ml.shifu.guagua.hadoop.io.GuaguaSequenceRecordReader;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.io.GuaguaFileSplit;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;
 import ml.shifu.guagua.worker.WorkerContext;
-import ml.shifu.guagua.yarn.GuaguaSequenceRecordReader;
-import ml.shifu.guagua.yarn.GuaguaWritableAdapter;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;

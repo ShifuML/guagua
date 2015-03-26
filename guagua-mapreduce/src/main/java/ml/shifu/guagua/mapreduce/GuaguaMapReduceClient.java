@@ -25,9 +25,12 @@ import java.util.Set;
 
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.coordinator.zk.ZooKeeperUtils;
+import ml.shifu.guagua.hadoop.io.GuaguaOptionsParser;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableSerializer;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.master.MasterComputable;
+import ml.shifu.guagua.util.ReflectionUtils;
 import ml.shifu.guagua.worker.WorkerComputable;
 
 import org.apache.commons.cli.CommandLine;
@@ -91,13 +94,13 @@ public class GuaguaMapReduceClient {
      * Add new job to JobControl instance.
      */
     public synchronized void addJob(String[] args) throws IOException {
-        this.jc.addJob(new ControlledJob(creatJob(args), null));
+        this.jc.addJob(new ControlledJob(createJob(args), null));
     }
 
     /**
      * Run all jobs added to JobControl.
      */
-    public synchronized void run() throws IOException {
+    public void run() throws IOException {
         // Initially, all jobs are in wait state.
         List<ControlledJob> jobsWithoutIds = this.jc.getWaitingJobList();
         int totalMRJobs = jobsWithoutIds.size();
@@ -132,7 +135,7 @@ public class GuaguaMapReduceClient {
             for(ControlledJob controlledJob: successfulJobs) {
                 String jobId = controlledJob.getJob().getJobID().toString();
                 if(!sucessfulJobs.contains(jobId)) {
-                    LOG.info("Job {} is sucessful.", jobId);
+                    LOG.info("Job {} is successful.", jobId);
                     sucessfulJobs.add(jobId);
                 }
             }
@@ -208,7 +211,7 @@ public class GuaguaMapReduceClient {
 
     /**
      * Returns the progress of a Job j which is part of a submitted JobControl object. The progress is for this Job. So
-     * it has to be scaled down by the num of jobs that are present in the JobControl.
+     * it has to be scaled down by the number of jobs that are present in the JobControl.
      * 
      * @param cjob
      *            - The Job for which progress is required
@@ -240,10 +243,10 @@ public class GuaguaMapReduceClient {
     /**
      * Create Hadoop job according to arguments from main.
      */
-    public synchronized Job creatJob(String[] args) throws IOException {
+    public synchronized Job createJob(String[] args) throws IOException {
         Configuration conf = new Configuration();
-        // set it here to make it can be over-written. Set task timeout to a long period 15 minutes.
-        conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 900000);
+        // set it here to make it can be over-written. Set task timeout to a long period 20 minutes.
+        conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 1200000);
         GuaguaOptionsParser parser = new GuaguaOptionsParser(conf, args);
         CommandLine cmdLine = parser.getCommandLine();
         checkInputSetting(conf, cmdLine);
@@ -256,10 +259,12 @@ public class GuaguaMapReduceClient {
         @SuppressWarnings("rawtypes")
         Class<? extends InputFormat> inputFormatClass = checkInputFormatSetting(cmdLine);
 
-        // set map reduce prameters for specified master-workers achitecture
+        // set map reduce parameters for specified master-workers architecture
         // speculative execution should be disabled
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_MAP_TASKS_SPECULATIVE_EXECUTION, false);
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_REDUCE_TASKS_SPECULATIVE_EXECUTION, false);
+        // set mapreduce.job.max.split.locations to 30 to suppress warnings
+        conf.setInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_MAX_SPLIT_LOCATIONS, 30);
 
         // Set cache to 0.
         conf.setInt(GuaguaMapReduceConstants.IO_SORT_MB, 0);
@@ -336,6 +341,10 @@ public class GuaguaMapReduceClient {
                 conf.set(GuaguaConstants.GUAGUA_MASTER_RESULT_CLASS, resultClassName);
             } else if(Bytable.class.isAssignableFrom(masterResultClass)) {
                 conf.set(GuaguaConstants.GUAGUA_MASTER_RESULT_CLASS, resultClassName);
+                if(!ReflectionUtils.hasEmptyParameterConstructor(masterResultClass)) {
+                    throw new IllegalArgumentException(
+                            "Master result class should have default constuctor without any parameters.");
+                }
             } else {
                 printUsage();
                 throw new IllegalArgumentException(
@@ -361,6 +370,10 @@ public class GuaguaMapReduceClient {
                 conf.set(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS, resultClassName);
             } else if(Bytable.class.isAssignableFrom(workerResultClass)) {
                 conf.set(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS, resultClassName);
+                if(!ReflectionUtils.hasEmptyParameterConstructor(workerResultClass)) {
+                    throw new IllegalArgumentException(
+                            "Worker result class should have default constuctor without any parameters.");
+                }
             } else {
                 printUsage();
                 throw new IllegalArgumentException(
@@ -379,7 +392,7 @@ public class GuaguaMapReduceClient {
 
     private static void checkIterationCountSetting(Configuration conf, CommandLine cmdLine) {
         if(!cmdLine.hasOption("-c")) {
-            System.err.println("WARN: Total iteration number is not set, default 10 will be used.");
+            System.err.println("WARN: Total iteration number is not set, default 50 will be used.");
             System.err.println("WARN: Total iteration number can be provided by '-c' parameter with non-empty value.");
             conf.setInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, GuaguaConstants.GUAGUA_DEFAULT_ITERATION_COUNT);
         } else {
@@ -420,6 +433,9 @@ public class GuaguaMapReduceClient {
             throw new IllegalArgumentException(
                     "Master class name provided by '-m' should implement 'com.paypal.guagua.master.MasterComputable' interface.");
         }
+        if(!ReflectionUtils.hasEmptyParameterConstructor(masterClass)) {
+            throw new IllegalArgumentException("Master class should have default constuctor without any parameters.");
+        }
 
         conf.set(GuaguaConstants.MASTER_COMPUTABLE_CLASS, masterClassOptionValue.trim());
     }
@@ -449,6 +465,10 @@ public class GuaguaMapReduceClient {
             throw new IllegalArgumentException(
                     "Worker class name provided by '-w' should implement 'com.paypal.guagua.worker.WorkerComputable' interface.");
         }
+        if(!ReflectionUtils.hasEmptyParameterConstructor(workerClass)) {
+            throw new IllegalArgumentException("Worker class should have default constuctor without any parameters.");
+        }
+
         conf.set(GuaguaConstants.WORKER_COMPUTABLE_CLASS, workerClassOptionValue.trim());
     }
 
@@ -463,21 +483,41 @@ public class GuaguaMapReduceClient {
             System.err.println("WARN: For big data guagua application, independent ZooKeeper instance is recommended.");
             System.err.println("WARN: Zookeeper servers can be provided by '-z' parameter with non-empty value.");
 
-            synchronized(GuaguaMapReduceClient.class) {
-                if(embededZooKeeperServer == null) {
-                    // 1. start embed zookeeper server in one thread.
-                    int embedZkClientPort = ZooKeeperUtils.startEmbedZooKeeper();
-                    // 2. check if it is started.
-                    ZooKeeperUtils.checkIfEmbedZooKeeperStarted(embedZkClientPort);
-                    try {
-                        embededZooKeeperServer = InetAddress.getLocalHost().getHostName() + ":" + embedZkClientPort;
-                    } catch (UnknownHostException e) {
-                        throw new RuntimeException(e);
+            boolean isZkInClient = conf.getBoolean(GuaguaConstants.GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT, true);
+            if(isZkInClient) {
+                synchronized(GuaguaMapReduceClient.class) {
+                    if(embededZooKeeperServer == null) {
+                        // 1. start embed zookeeper server in one thread.
+                        int embedZkClientPort = 0;
+                        try {
+                            embedZkClientPort = ZooKeeperUtils.startEmbedZooKeeper();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        // 2. check if it is started.
+                        ZooKeeperUtils.checkIfEmbedZooKeeperStarted(embedZkClientPort);
+                        try {
+                            embededZooKeeperServer = InetAddress.getLocalHost().getHostName() + ":" + embedZkClientPort;
+                        } catch (UnknownHostException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
+                // 3. set local embed zookeeper server address
+                conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, embededZooKeeperServer);
+            } else {
+                conf.set(
+                        GuaguaConstants.GUAGUA_MASTER_SYSTEM_INTERCEPTERS,
+                        conf.get(
+                                GuaguaConstants.GUAGUA_MASTER_SYSTEM_INTERCEPTERS,
+                                "ml.shifu.guagua.master.MasterTimer,ml.shifu.guagua.master.MemoryStatsMasterInterceptor,ml.shifu.guagua.hadoop.ZooKeeperMasterInterceptor,ml.shifu.guagua.master.NettyMasterCoordinator "));
+                conf.set(
+                        GuaguaConstants.GUAGUA_WORKER_SYSTEM_INTERCEPTERS,
+                        conf.get(
+                                GuaguaConstants.GUAGUA_WORKER_SYSTEM_INTERCEPTERS,
+                                "ml.shifu.guagua.worker.WorkerTimer,ml.shifu.guagua.worker.MemoryStatsWorkerInterceptor,ml.shifu.guagua.hadoop.ZooKeeperWorkerInterceptor,ml.shifu.guagua.worker.NettyWorkerCoordinator"));
+                System.err.println("WARN: Zookeeper server will be started in master node of cluster");
             }
-            // 3. set local embed zookeeper server address
-            conf.set(GuaguaConstants.GUAGUA_ZK_SERVERS, embededZooKeeperServer);
             return;
         } else {
             String zkServers = cmdLine.getOptionValue("z");
@@ -510,7 +550,7 @@ public class GuaguaMapReduceClient {
         }
 
         GuaguaMapReduceClient client = new GuaguaMapReduceClient();
-        Job job = client.creatJob(args);
+        Job job = client.createJob(args);
         job.waitForCompletion(true);
     }
 

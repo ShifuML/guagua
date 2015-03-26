@@ -20,9 +20,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import ml.shifu.guagua.hadoop.io.GuaguaLineRecordReader;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.io.GuaguaFileSplit;
-import ml.shifu.guagua.mapreduce.GuaguaLineRecordReader;
-import ml.shifu.guagua.mapreduce.GuaguaWritableAdapter;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;
 import ml.shifu.guagua.worker.WorkerContext;
 

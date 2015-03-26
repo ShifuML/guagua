@@ -1,20 +1,21 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>guagua-yarn</artifactId>
     <parent>
         <groupId>ml.shifu</groupId>
         <artifactId>guagua</artifactId>
-        <version>0.5.0</version>
+        <version>0.6.0</version>
         <relativePath>../</relativePath>
     </parent>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
         <hadoop.version>2.2.0</hadoop.version>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -36,6 +37,11 @@
             <artifactId>hadoop-yarn-client</artifactId>
             <version>${hadoop.version}</version>
         </dependency>
+ <!--        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-yarn-applications-unmanaged-am-launcher</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency> -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>

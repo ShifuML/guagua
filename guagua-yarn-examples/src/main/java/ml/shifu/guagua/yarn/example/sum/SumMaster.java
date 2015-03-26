@@ -15,10 +15,10 @@
  */
 package ml.shifu.guagua.yarn.example.sum;
 
+import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.master.MasterComputable;
 import ml.shifu.guagua.master.MasterContext;
-import ml.shifu.guagua.yarn.GuaguaWritableAdapter;
 
 import org.apache.hadoop.io.LongWritable;
 import org.slf4j.Logger;

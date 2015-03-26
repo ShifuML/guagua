@@ -43,7 +43,10 @@ import org.apache.hadoop.io.BytesWritable;
  * <pre>
  * this.setRecordReader(new GuaguaSequenceAsBinaryRecordReader(fileSplit));
  * </pre>
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaSequenceAsBinaryRecordReader}
  */
+@Deprecated
 public class GuaguaSequenceAsBinaryRecordReader extends GuaguaSequenceRecordReader<BytesWritable, BytesWritable> {
 
     public GuaguaSequenceAsBinaryRecordReader() throws IOException {

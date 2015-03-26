@@ -18,7 +18,7 @@ package ml.shifu.guagua.mapreduce.example.sum;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import ml.shifu.guagua.mapreduce.GuaguaWritableAdapter;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.master.BasicMasterInterceptor;
 import ml.shifu.guagua.master.MasterContext;
 

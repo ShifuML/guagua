@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import ml.shifu.guagua.ComputableMonitor;
+import ml.shifu.guagua.hadoop.io.GuaguaLineRecordReader;
+import ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter;
 import ml.shifu.guagua.io.GuaguaFileSplit;
-import ml.shifu.guagua.mapreduce.GuaguaLineRecordReader;
-import ml.shifu.guagua.mapreduce.GuaguaWritableAdapter;
 import ml.shifu.guagua.worker.AbstractWorkerComputable;
 import ml.shifu.guagua.worker.WorkerContext;
 
@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * The master's sum value will be added to current iteration.
  */
- @ComputableMonitor(timeUnit = TimeUnit.SECONDS, duration = 60)
+@ComputableMonitor(timeUnit = TimeUnit.SECONDS, duration = 60)
 public class SumWorker
         extends
         AbstractWorkerComputable<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<Text>> {

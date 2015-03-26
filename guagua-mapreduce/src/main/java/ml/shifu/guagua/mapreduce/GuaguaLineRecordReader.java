@@ -53,7 +53,10 @@ import org.slf4j.LoggerFactory;
  * <pre>
  * this.setRecordReader(new GuaguaLineRecordReader(fileSplit));
  * </pre>
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaLineRecordReader}
  */
+@Deprecated
 public class GuaguaLineRecordReader implements
         GuaguaRecordReader<GuaguaWritableAdapter<LongWritable>, GuaguaWritableAdapter<Text>> {
 

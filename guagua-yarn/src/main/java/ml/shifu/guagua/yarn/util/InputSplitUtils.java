@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import ml.shifu.guagua.GuaguaRuntimeException;
-import ml.shifu.guagua.yarn.GuaguaInputSplit;
+import ml.shifu.guagua.hadoop.io.GuaguaInputSplit;
 import ml.shifu.guagua.yarn.GuaguaYarnConstants;
 
 import org.apache.hadoop.conf.Configuration;

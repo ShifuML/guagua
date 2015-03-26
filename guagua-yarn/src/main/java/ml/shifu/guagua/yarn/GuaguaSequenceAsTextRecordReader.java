@@ -47,7 +47,10 @@ import org.apache.hadoop.mapred.SequenceFileAsTextRecordReader;
  * <pre>
  * this.setRecordReader(new GuaguaSequenceAsTextRecordReader(fileSplit));
  * </pre>
+ * 
+ * @deprecated use {@link ml.shifu.guagua.hadoop.io.GuaguaSequenceAsTextRecordReader}
  */
+@Deprecated
 public class GuaguaSequenceAsTextRecordReader implements
         GuaguaRecordReader<GuaguaWritableAdapter<Text>, GuaguaWritableAdapter<Text>> {
 

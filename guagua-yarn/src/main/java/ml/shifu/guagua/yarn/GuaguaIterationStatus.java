@@ -41,6 +41,12 @@ public class GuaguaIterationStatus {
     private long time;
 
     /**
+     * Whether to kill container. For straggler container, this is to notice AppMaster to kill contianer and make fault
+     * tolerance work to restart a contianer.
+     */
+    private boolean isKillContainer;
+
+    /**
      * Default constructor.
      */
     public GuaguaIterationStatus() {
@@ -88,10 +94,26 @@ public class GuaguaIterationStatus {
         this.time = time;
     }
 
+    /**
+     * @return the isKillContainer
+     */
+    public boolean isKillContainer() {
+        return isKillContainer;
+    }
+
+    /**
+     * @param isKillContainer
+     *            the isKillContainer to set
+     */
+    public void setKillContainer(boolean isKillContainer) {
+        this.isKillContainer = isKillContainer;
+    }
+
     @Override
     public String toString() {
-        return String.format("GuaguaIterationStatus [partition=%s, currentIteration=%s, totalIteration=%s, time=%s]",
-                partition, currentIteration, totalIteration, time);
+        return String
+                .format("GuaguaIterationStatus [partition=%s, currentIteration=%s, totalIteration=%s, time=%s, isKillContainer=%s]",
+                        partition, currentIteration, totalIteration, time, isKillContainer);
     }
 
 }
