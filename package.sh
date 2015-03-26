@@ -14,12 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-mvn clean install
+mvn clean install -DskipTests
 
 cd guagua-mapreduce
-mvn install -Phdp-yarn 
+mvn install -Phdp-yarn -DskipTests
 
 cd ../guagua-client
-mvn clean install
+mvn clean install -DskipTests
 
 cd ..
