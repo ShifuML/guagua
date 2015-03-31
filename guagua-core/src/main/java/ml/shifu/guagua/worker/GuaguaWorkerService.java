@@ -151,6 +151,11 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     private boolean isMonitored;
 
     /**
+     * Check {@link ComputableMonitor#isSoft()} for details
+     */
+    private boolean isSoftForComputableTimeout = true;
+
+    /**
      * Start services from interceptors, all services started logic should be wrapperd in
      * {@link WorkerInterceptor#preApplication(WorkerContext)};
      */
@@ -242,6 +247,8 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         long start = System.nanoTime();
         WORKER_RESULT workerResult = null;
         boolean isKill = false;
+        // if time out in thread
+        boolean isTimeOutInThread = false;
         try {
             if(this.isMonitored) {
                 if(this.executor.isTerminated() || this.executor.isShutdown()) {
@@ -252,7 +259,6 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                 ComputableMonitor monitor = workerComputable.getClass().getAnnotation(ComputableMonitor.class);
                 TimeUnit unit = monitor.timeUnit();
                 long duration = monitor.duration();
-
                 try {
                     workerResult = executor.submit(new Callable<WORKER_RESULT>() {
                         @Override
@@ -264,8 +270,10 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                     Thread.currentThread().interrupt();
                 } catch (ExecutionException e) {
                     LOG.error("Error in master computation:", e);
+                    throw new GuaguaRuntimeException(e);
                 } catch (TimeoutException e) {
-                    LOG.warn("Time out for master computation, null will be returned");
+                    isTimeOutInThread = true;
+                    LOG.warn("Time out for master computation, null will be returned or mapper will be killed.");
                     // We should use shutdown to terminate computation in current iteration
                     executor.shutdownNow();
                     workerResult = null;
@@ -309,7 +317,8 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         if(progress != null) {
             progress.progress(iteration, getTotalIteration(),
                     String.format(status, iteration, getTotalIteration(), (iteration * 100 / getTotalIteration())),
-                    true, isKill);
+                    true,
+                    isKill || (isTimeOutInThread && !this.isSoftForComputableTimeout && !context.isFirstIteration()));
         }
         return workerResult;
     }
@@ -337,6 +346,8 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         this.setWorkerComputable(newWorkerComputable());
         this.isMonitored = this.getWorkerComputable().getClass().isAnnotationPresent(ComputableMonitor.class);
         if(this.isMonitored) {
+            this.isSoftForComputableTimeout = workerComputable.getClass().getAnnotation(ComputableMonitor.class)
+                    .isSoft();
             this.executor = Executors.newSingleThreadExecutor();
         }
 
