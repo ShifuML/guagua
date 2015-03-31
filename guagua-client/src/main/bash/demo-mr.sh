@@ -21,7 +21,7 @@ BIN_DIR="$( cd -P "$( dirname "${BASH_SOURCE:-0}" )" && pwd )"
 hadoop fs -put $BIN_DIR/../data/sum /user/$USER/
 
 # Comments for all parameters:
-#  '../mapreduce-lib/guagua-examples-0.6.0.jar': Jar files include master, worker and user intercepters
+#  '../mapreduce-lib/guagua-examples-0.6.1.jar': Jar files include master, worker and user intercepters
 #  '-i sum': '-i' means guagua application input, should be HDFS input file or folder
 #  '-z ${ZOOKEEPER_SERVERS}': '-z' is used to configure zookeeper server, this should be placed by real zookeeper server
 #                            The format is like '<zkServer1:zkPort1,zkServer2:zkPort2>'
@@ -37,7 +37,7 @@ hadoop fs -put $BIN_DIR/../data/sum /user/$USER/
 #  '-Dguagua.sum.output=sum-output': Output file, this is used in 'ml.shifu.guagua.example.sum.SumOutput'
 #  '-Dguagua.master.intercepters=ml.shifu.guagua.example.sum.SumOutput': User master intercepters
 
-$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-examples-0.6.0.jar \
+$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-examples-0.6.1.jar \
         -i sum  \
         -w ml.shifu.guagua.example.sum.SumWorker  \
         -m ml.shifu.guagua.example.sum.SumMaster  \

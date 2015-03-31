@@ -5,7 +5,7 @@
     <parent>
         <groupId>ml.shifu</groupId>
         <artifactId>guagua</artifactId>
-        <version>0.6.0</version>
+        <version>0.6.1</version>
         <relativePath>../</relativePath>
     </parent>
     <dependencies>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty</artifactId>
-            <version>3.6.2.FINAL</version>
+            <version>3.6.2.Final</version>
         </dependency>
     </dependencies>
 </project>
