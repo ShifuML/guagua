@@ -101,6 +101,7 @@ public class LinearRegressionWorker
             @Override
             public void run() {
                 LinearRegressionWorker.this.dataList.close();
+                LinearRegressionWorker.this.dataList.clear();
             }
         }));
     }

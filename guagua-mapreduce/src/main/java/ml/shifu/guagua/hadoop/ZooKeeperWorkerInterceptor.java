@@ -18,6 +18,7 @@ package ml.shifu.guagua.hadoop;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.TimeUnit;
 
 import ml.shifu.guagua.BasicCoordinator.RetryCoordinatorCommand;
 import ml.shifu.guagua.GuaguaConstants;
@@ -69,33 +70,43 @@ public class ZooKeeperWorkerInterceptor<MASTER_RESULT extends Bytable, WORKER_RE
             this.isFixedTime = Boolean.TRUE.toString().equalsIgnoreCase(
                     context.getProps().getProperty(GuaguaConstants.GUAGUA_COORDINATOR_FIXED_SLEEP_ENABLE,
                             GuaguaConstants.GUAGUA_COORDINATOR_FIXED_SLEEP));
-            BufferedReader br = null;
-            try {
-                final FileSystem fileSystem = FileSystem.get(new Configuration());
-                String hdfsZookeeperServerFolder = getZookeeperServerFolder(context);
-                final Path zookeeperServerPath = fileSystem.makeQualified(new Path(hdfsZookeeperServerFolder,
-                        GuaguaConstants.GUAGUA_CLUSTER_ZOOKEEPER_SERVER_FILE));
 
-                new RetryCoordinatorCommand(this.isFixedTime, this.sleepTime) {
-                    @Override
-                    public boolean retryExecution() throws Exception, InterruptedException {
-                        return fileSystem.exists(zookeeperServerPath);
-                    }
-                }.execute();
-
-                FSDataInputStream fis = fileSystem.open(zookeeperServerPath);
-                br = new BufferedReader(new InputStreamReader(fis));
-                String zookeeperServer = br.readLine();
-                if(zookeeperServer == null || zookeeperServer.length() == 0) {
-                    throw new GuaguaRuntimeException("Cannot get zookeeper server in " + zookeeperServerPath.toString());
+            String hdfsZookeeperServerFolder = getZookeeperServerFolder(context);
+            long start = System.nanoTime();
+            while(true) {
+                if(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) > 10 * 60 * 1000L) {
+                    throw new GuaguaRuntimeException("Cannot get zookeeper server address in 10 minutes.");
                 }
-                // set server info to context for next intercepters.
-                LOG.info("Embeded zookeeper instance is {}", zookeeperServer);
-                context.getProps().setProperty(GuaguaConstants.GUAGUA_ZK_SERVERS, zookeeperServer);
-            } catch (IOException e) {
-                throw new GuaguaRuntimeException(e);
-            } finally {
-                IOUtils.closeQuietly(br);
+                BufferedReader br = null;
+                try {
+                    final FileSystem fileSystem = FileSystem.get(new Configuration());
+                    final Path zookeeperServerPath = fileSystem.makeQualified(new Path(hdfsZookeeperServerFolder,
+                            GuaguaConstants.GUAGUA_CLUSTER_ZOOKEEPER_SERVER_FILE));
+
+                    new RetryCoordinatorCommand(this.isFixedTime, this.sleepTime) {
+                        @Override
+                        public boolean retryExecution() throws Exception, InterruptedException {
+                            return fileSystem.exists(zookeeperServerPath);
+                        }
+                    }.execute();
+
+                    FSDataInputStream fis = fileSystem.open(zookeeperServerPath);
+                    br = new BufferedReader(new InputStreamReader(fis));
+                    String zookeeperServer = br.readLine();
+                    if(zookeeperServer == null || zookeeperServer.length() == 0) {
+                        LOG.warn("Cannot get zookeeper server in {} ", zookeeperServerPath.toString());
+                        // retry
+                        continue;
+                    }
+                    // set server info to context for next intercepters.
+                    LOG.info("Embeded zookeeper instance is {}", zookeeperServer);
+                    context.getProps().setProperty(GuaguaConstants.GUAGUA_ZK_SERVERS, zookeeperServer);
+                    break;
+                } catch (IOException e) {
+                    throw new GuaguaRuntimeException(e);
+                } finally {
+                    IOUtils.closeQuietly(br);
+                }
             }
         }
     }

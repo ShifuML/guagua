@@ -343,7 +343,8 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                 this.getProps().getProperty(GuaguaConstants.GUAGUA_MIN_WORKERS_RATIO),
                 GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_RATIO);
         this.setMinWorkersRatio(minWorkersRatio);
-        long minWorkersTimeOut = NumberFormatUtils.getLong(GuaguaConstants.GUAGUA_MIN_WORKERS_TIMEOUT,
+        long minWorkersTimeOut = NumberFormatUtils.getLong(
+                this.getProps().getProperty(GuaguaConstants.GUAGUA_MIN_WORKERS_TIMEOUT),
                 GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
         this.setMinWorkersTimeOut(minWorkersTimeOut);
     }

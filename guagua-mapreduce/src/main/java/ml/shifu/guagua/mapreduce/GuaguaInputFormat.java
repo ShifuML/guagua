@@ -498,6 +498,11 @@ public class GuaguaInputFormat extends TextInputFormat {
         if(file.getName().endsWith(GuaguaMapReduceConstants.BZ2)) {
             return true;
         }
+
+        // gz can not be split.
+        if(file.getName().endsWith("gz")) {
+            return false;
+        }
         // other compression can not be split, maybe for lzo I should add it to split list.
         CompressionCodec codec = new CompressionCodecFactory(context.getConfiguration()).getCodec(file);
         return codec == null;

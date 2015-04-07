@@ -126,8 +126,6 @@ public final class GuaguaConstants {
 
     public static final double GUAGUA_DEFAULT_MIN_WORKERS_RATIO = 1.0d;
 
-    public static final int GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT = 10 * 60 * 1000;
-
     public static final String GUAGUA_MIN_WORKERS_TIMEOUT = "guagua.min.workers.timeout";
 
     public static final String GUAGUA_MIN_WORKERS_RATIO = "guagua.min.workers.ratio";
@@ -144,6 +142,8 @@ public final class GuaguaConstants {
     public static final String GUAGUA_COMPUTATION_TIME_THRESHOLD = "guagua.computation.time.threshold";
 
     public static final long GUAGUA_DEFAULT_COMPUTATION_TIME_THRESHOLD = 60 * 1000l;
+
+    public static final long GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT = GUAGUA_DEFAULT_COMPUTATION_TIME_THRESHOLD;
 
     public static final String GUAGUA_SITE_FILE = "guagua-site.xml";
 
@@ -171,4 +171,7 @@ public final class GuaguaConstants {
 
     public static final String GUAGUA_CHILD_ZKSERVER_OPTS = "guagua.child.zkserver.opts";
 
+    public static final int GUAGUA_DEFAULT_CLEANUP_INTERVAL = 2;
+
+    public static final String GUAGUA_CLEANUP_INTERVAL = "guagua.cleanup.interval";
 }
