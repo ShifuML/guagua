@@ -32,6 +32,7 @@ import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.coordinator.zk.GuaguaZooKeeper.Filter;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.BytableWrapper;
+import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.io.NettyBytableDecoder;
 import ml.shifu.guagua.io.NettyBytableEncoder;
 import ml.shifu.guagua.util.NetworkUtils;
@@ -437,9 +438,11 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             public void doExecute() throws Exception, InterruptedException {
                 try {
                     // send stop message to server
-                    if(context.getCurrentIteration() == context.getTotalIteration() + 1) {
-                        // only send stop message if it is last iteration, if exception in iteration, guagua will stop
-                        // here to call postApplication, if not last iteration, shouldn't send stop message.
+                    MASTER_RESULT masterResult = context.getLastMasterResult();
+                    if((context.getCurrentIteration() == context.getTotalIteration() + 1)
+                            || ((masterResult instanceof HaltBytable) && ((HaltBytable) masterResult).isHalt())) {
+                        // only send stop message if it is last iteration or isHalt is true, if exception in iteration,
+                        // guagua will stop here to call postApplication
                         BytableWrapper stopMessage = new BytableWrapper();
                         stopMessage.setCurrentIteration(context.getCurrentIteration());
                         stopMessage.setContainerId(context.getContainerId());

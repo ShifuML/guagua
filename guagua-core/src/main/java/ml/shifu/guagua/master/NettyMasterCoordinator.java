@@ -35,6 +35,7 @@ import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.BytableWrapper;
+import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.io.NettyBytableDecoder;
 import ml.shifu.guagua.io.NettyBytableEncoder;
 import ml.shifu.guagua.util.BytableDiskList;
@@ -112,6 +113,11 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
      * Total iteration, this should not be change after initialization.
      */
     private int totalInteration;
+
+    /**
+     * Master result in last iteration, which is used to set stop message
+     */
+    private MASTER_RESULT masterResult = null;
 
     @Override
     protected void initialize(Properties props) {
@@ -316,9 +322,11 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             String containerId = bytableWrapper.getContainerId();
             synchronized(LOCK) {
                 if(bytableWrapper.isStopMessage()) {
-                    // only accept stop message in unregistered iteration(total iteration +1), stop messages not in
-                    // unregistered iteration will be ignored.
-                    if(bytableWrapper.getCurrentIteration() == NettyMasterCoordinator.this.totalInteration + 1) {
+                    // only accept stop message in unregistered iteration(total iteration +1) or halt condition is
+                    // accepted, stop messages not in unregistered iteration will be ignored.
+                    MASTER_RESULT masterResult = NettyMasterCoordinator.this.masterResult;
+                    if((bytableWrapper.getCurrentIteration() == NettyMasterCoordinator.this.totalInteration + 1)
+                            || ((masterResult instanceof HaltBytable) && ((HaltBytable) masterResult).isHalt())) {
                         // for stop message, no need to check current iteration.
                         if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)) {
                             NettyMasterCoordinator.this.iterResults.append(bytableWrapper);
@@ -501,6 +509,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         new BasicCoordinatorCommand() {
             @Override
             public void doExecute() throws KeeperException, InterruptedException {
+                // set master result in each iteration.
+                NettyMasterCoordinator.this.masterResult = context.getMasterResult();
                 // update master halt status.
                 updateMasterHaltStatus(context);
 
