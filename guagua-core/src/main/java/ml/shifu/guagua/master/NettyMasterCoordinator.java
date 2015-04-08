@@ -115,6 +115,11 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     private int totalInteration;
 
     /**
+     * A flag to see if we can update worker results map instance, guarded by {@link #LOCK}.
+     */
+    private boolean canUpdateWorkerResultsMap = true;
+
+    /**
      * Master result in last iteration, which is used to set stop message
      */
     private MASTER_RESULT masterResult = null;
@@ -185,6 +190,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             this.iterResults.clear();
             this.initIterResults(props);
             this.indexMap.clear();
+            this.canUpdateWorkerResultsMap = true;
         }
     }
 
@@ -321,6 +327,12 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             LOG.debug("Received container id {} with message:{}", bytableWrapper.getContainerId(), bytableWrapper);
             String containerId = bytableWrapper.getContainerId();
             synchronized(LOCK) {
+                if(!NettyMasterCoordinator.this.canUpdateWorkerResultsMap) {
+                    LOG.info("Cannot update worker result with message: containerId {} iteration {} currentIteration",
+                            containerId, bytableWrapper.getCurrentIteration(),
+                            NettyMasterCoordinator.this.currentInteration);
+                    return;
+                }
                 if(bytableWrapper.isStopMessage()) {
                     // only accept stop message in unregistered iteration(total iteration +1) or halt condition is
                     // accepted, stop messages not in unregistered iteration will be ignored.
@@ -365,6 +377,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         // set current iteration firstly
         synchronized(LOCK) {
             this.currentInteration = context.getCurrentIteration();
+            this.canUpdateWorkerResultsMap = true;
         }
 
         long start = System.nanoTime();
@@ -390,6 +403,10 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                             GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_RATIO,
                             GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
                     if(isTerminated) {
+                        // update canUpdateWorkerResultsMap to false no accept other results
+                        synchronized(LOCK) {
+                            NettyMasterCoordinator.this.canUpdateWorkerResultsMap = false;
+                        }
                         LOG.info(
                                 "Iteration {}, master waiting is terminated by workers {} doneWorkers {} minWorkersRatio {} minWorkersTimeOut {}.",
                                 context.getCurrentIteration(), context.getWorkers(), doneWorkers,
@@ -400,6 +417,10 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     isTerminated = isTerminated(doneWorkers, context.getWorkers(), context.getMinWorkersRatio(),
                             context.getMinWorkersTimeOut());
                     if(isTerminated) {
+                        // update canUpdateWorkerResultsMap to false no accept other results
+                        synchronized(LOCK) {
+                            NettyMasterCoordinator.this.canUpdateWorkerResultsMap = false;
+                        }
                         LOG.info(
                                 "Iteration {}, master waiting is terminated by workers {} doneWorkers {} minWorkersRatio {} minWorkersTimeOut {}.",
                                 context.getCurrentIteration(), context.getWorkers(), doneWorkers,
@@ -410,8 +431,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             }
         }.execute();
 
-        // switch state to read
+        // switch state to read and not accept other results
         synchronized(LOCK) {
+            this.canUpdateWorkerResultsMap = false;
             this.iterResults.switchState();
         }
         // set worker results.
@@ -514,9 +536,6 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 // update master halt status.
                 updateMasterHaltStatus(context);
 
-                // after master result and status set in zookeeper, clear resources here at once for next iteration.
-                clear(context.getProps());
-
                 // create master znode
                 boolean isSplit = false;
                 String appCurrentMasterNode = getCurrentMasterNode(context.getAppId(), context.getCurrentIteration())
@@ -528,6 +547,15 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     byte[] bytes = getMasterSerializer().objectToBytes(context.getMasterResult());
                     isSplit = setBytesToZNode(appCurrentMasterNode, appCurrentMasterSplitNode, bytes,
                             CreateMode.PERSISTENT);
+                    // after master result and status set in zookeeper, clear resources here at once for next iteration.
+                    // there is race condition here, after master znode is visible, worker computes result and send
+                    // results to master, while at here current iteration is still not next iteration.
+                    synchronized(LOCK) {
+                        clear(context.getProps());
+                        // update current iteration to avoid receive messages of last iteration in ServerHandler
+                        NettyMasterCoordinator.this.currentInteration = context.getCurrentIteration() + 1;
+                        NettyMasterCoordinator.this.canUpdateWorkerResultsMap = true;
+                    }
                 } catch (KeeperException.NodeExistsException e) {
                     LOG.warn("Has such node:", e);
                 }
@@ -564,8 +592,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     @Override
     public void postApplication(final MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
         // update current iteration for unregister iteration
-        this.currentInteration = context.getCurrentIteration();
-
+        synchronized(LOCK) {
+            this.currentInteration = context.getCurrentIteration();
+        }
         new BasicCoordinatorCommand() {
             @Override
             public void doExecute() throws Exception, InterruptedException {
