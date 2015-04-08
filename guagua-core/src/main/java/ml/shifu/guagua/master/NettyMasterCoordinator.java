@@ -405,35 +405,51 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
                     private volatile AtomicBoolean isStart = new AtomicBoolean();
 
-                    // private boolean isPrint = false;
+                    private boolean isPrint = false;
+
+                    BytableWrapper current = null;
 
                     @Override
                     public boolean hasNext() {
                         boolean hasNext;
                         synchronized(LOCK) {
                             // debug start
-                            // if(!isPrint) {
-                            // Iterator<BytableWrapper> ii = NettyMasterCoordinator.this.iterResults.iterator();
-                            // int curr = 0, notCurr = 0;
-                            // while(ii.hasNext()) {
-                            // BytableWrapper next = ii.next();
-                            // if(NettyMasterCoordinator.this.currentInteration == next.getCurrentIteration()) {
-                            // curr += 1;
-                            // } else {
-                            // notCurr += 1;
-                            // LOG.info("iter result next {}", next);
-                            // }
-                            // }
-                            // LOG.info("iter result curr {} notcurr {}", curr, notCurr);
-                            //
-                            // isPrint = true;
-                            // }
+                            if(!isPrint) {
+                                Iterator<BytableWrapper> ii = NettyMasterCoordinator.this.iterResults.iterator();
+                                int curr = 0, notCurr = 0;
+                                while(ii.hasNext()) {
+                                    BytableWrapper next = ii.next();
+                                    if(NettyMasterCoordinator.this.currentInteration == next.getCurrentIteration()) {
+                                        curr += 1;
+                                    } else {
+                                        notCurr += 1;
+                                        LOG.info("iter result next {}", next);
+                                    }
+                                }
+                                LOG.info("iter result curr {} notcurr {}", curr, notCurr);
+
+                                isPrint = true;
+                            }
                             // debug end
 
                             if(this.isStart.compareAndSet(false, true)) {
                                 this.localItr = NettyMasterCoordinator.this.iterResults.iterator();
                             }
                             hasNext = this.localItr.hasNext();
+                            if(hasNext) {
+                                this.current = this.localItr.next();
+                                // check if iteration number is the same, remove unneccasary results.
+                                while(this.current.getCurrentIteration() != currentIter) {
+                                    hasNext = this.localItr.hasNext();
+                                    if(hasNext) {
+                                        this.current = this.localItr.next();
+                                        continue;
+                                    } else {
+                                        // no elements, break
+                                        break;
+                                    }
+                                }
+                            }
                             if(!hasNext) {
                                 // to make sure it can be iterated again, it shouldn't be a good case for iterator, we
                                 // will iterate again to check if all workers are halt.
@@ -447,13 +463,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     @Override
                     public WORKER_RESULT next() {
                         synchronized(LOCK) {
-                            BytableWrapper next = localItr.next();
-                            // here is a validation
-                            while(next.getCurrentIteration() != currentIter) {
-                                next = localItr.next();
-                            }
-                            return NettyMasterCoordinator.this.getWorkerSerializer().bytesToObject(next.getBytes(),
-                                    context.getWorkerResultClassName());
+                            return NettyMasterCoordinator.this.getWorkerSerializer().bytesToObject(
+                                    this.current.getBytes(), context.getWorkerResultClassName());
                         }
                     }
 

@@ -437,14 +437,18 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             public void doExecute() throws Exception, InterruptedException {
                 try {
                     // send stop message to server
-                    BytableWrapper stopMessage = new BytableWrapper();
-                    stopMessage.setCurrentIteration(context.getCurrentIteration());
-                    stopMessage.setContainerId(context.getContainerId());
-                    stopMessage.setStopMessage(true);
-                    ChannelFuture future = NettyWorkerCoordinator.this.clientChannel.write(stopMessage);
-                    future.await(30, TimeUnit.SECONDS);
-                    // wait 2s to send stop message out.
-                    Thread.sleep(2 * 1000L);
+                    if(context.getCurrentIteration() == context.getTotalIteration() + 1) {
+                        // only send stop message if it is last iteration, if exception in iteration, guagua will stop
+                        // here to call postApplication, if not last iteration, shouldn't send stop message.
+                        BytableWrapper stopMessage = new BytableWrapper();
+                        stopMessage.setCurrentIteration(context.getCurrentIteration());
+                        stopMessage.setContainerId(context.getContainerId());
+                        stopMessage.setStopMessage(true);
+                        ChannelFuture future = NettyWorkerCoordinator.this.clientChannel.write(stopMessage);
+                        future.await(30, TimeUnit.SECONDS);
+                        // wait 2s to send stop message out.
+                        Thread.sleep(2 * 1000L);
+                    }
                 } finally {
                     NettyWorkerCoordinator.this.clientChannel.close();
                     Method shutDownMethod = ReflectionUtils.getMethod(

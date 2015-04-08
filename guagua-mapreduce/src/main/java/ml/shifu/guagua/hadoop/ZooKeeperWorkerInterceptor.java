@@ -16,7 +16,6 @@
 package ml.shifu.guagua.hadoop;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 
@@ -82,6 +81,7 @@ public class ZooKeeperWorkerInterceptor<MASTER_RESULT extends Bytable, WORKER_RE
                     final FileSystem fileSystem = FileSystem.get(new Configuration());
                     final Path zookeeperServerPath = fileSystem.makeQualified(new Path(hdfsZookeeperServerFolder,
                             GuaguaConstants.GUAGUA_CLUSTER_ZOOKEEPER_SERVER_FILE));
+                    LOG.info("Embeded zookeeper server address is {}", zookeeperServerPath);
 
                     new RetryCoordinatorCommand(this.isFixedTime, this.sleepTime) {
                         @Override
@@ -102,8 +102,9 @@ public class ZooKeeperWorkerInterceptor<MASTER_RESULT extends Bytable, WORKER_RE
                     LOG.info("Embeded zookeeper instance is {}", zookeeperServer);
                     context.getProps().setProperty(GuaguaConstants.GUAGUA_ZK_SERVERS, zookeeperServer);
                     break;
-                } catch (IOException e) {
-                    throw new GuaguaRuntimeException(e);
+                } catch (Throwable t) {
+                    LOG.warn(String.format("Error in get zookeeper address message: %s", t.getMessage()));
+                    continue;
                 } finally {
                     IOUtils.closeQuietly(br);
                 }
