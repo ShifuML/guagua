@@ -108,6 +108,11 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
      */
     private int currentInteration;
 
+    /**
+     * Total iteration, this should not be change after initialization.
+     */
+    private int totalInteration;
+
     @Override
     protected void initialize(Properties props) {
         super.initialize(props);
@@ -133,6 +138,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     public void preApplication(final MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
         // Initialize zookeeper and other props
         initialize(context.getProps());
+
+        // init total iteration for later usage
+        this.totalInteration = context.getTotalIteration();
 
         // Fail over checking to check current iteration.
         new FailOverCommand(context).execute();
@@ -308,14 +316,18 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             String containerId = bytableWrapper.getContainerId();
             synchronized(LOCK) {
                 if(bytableWrapper.isStopMessage()) {
-                    // for stop message, no need to check current iteration.
-                    if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)) {
-                        NettyMasterCoordinator.this.iterResults.append(bytableWrapper);
-                        NettyMasterCoordinator.this.indexMap.put(containerId,
-                                (int) (NettyMasterCoordinator.this.iterResults.size() - 1));
-                    } else {
-                        // if already exits, no need update, we hope it is the same result as the worker restarted and
-                        // result computed again. or result is not for current iteration, throw that result.
+                    // only accept stop message in unregistered iteration(total iteration +1), stop messages not in
+                    // unregistered iteration will be ignored.
+                    if(bytableWrapper.getCurrentIteration() == NettyMasterCoordinator.this.totalInteration + 1) {
+                        // for stop message, no need to check current iteration.
+                        if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)) {
+                            NettyMasterCoordinator.this.iterResults.append(bytableWrapper);
+                            NettyMasterCoordinator.this.indexMap.put(containerId,
+                                    (int) (NettyMasterCoordinator.this.iterResults.size() - 1));
+                        } else {
+                            // if already exits, no need update, we hope it is the same result as the worker restarted
+                            // and result computed again. or result is not for current iteration, throw that result.
+                        }
                     }
                 } else {
                     if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)
