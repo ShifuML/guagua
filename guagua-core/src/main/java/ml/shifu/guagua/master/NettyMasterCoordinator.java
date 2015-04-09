@@ -399,10 +399,6 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 if(context.isFirstIteration() || context.getCurrentIteration() == context.getTotalIteration()) {
                     // in the first iteration or last iteration, make sure all workers loading data successfully, use
                     // default 1.0 as worker ratio.
-                    // isTerminated = isTerminated(doneWorkers, context.getWorkers(),
-                    // context.isFirstIteration() ? context.getMinWorkersRatio()
-                    // : GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_RATIO,
-                    // GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
                     isTerminated = isTerminated(doneWorkers, context.getWorkers(), context.getMinWorkersRatio(),
                             GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
                     if(isTerminated) {
