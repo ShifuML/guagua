@@ -413,8 +413,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         LOG.info(
                                 "Iteration {}, master waiting is terminated by workers {} doneWorkers {} minWorkersRatio {} minWorkersTimeOut {}.",
                                 context.getCurrentIteration(), context.getWorkers(), doneWorkers,
-                                GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_RATIO,
-                                GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
+                                context.getMinWorkersRatio(), GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
                     }
                 } else {
                     isTerminated = isTerminated(doneWorkers, context.getWorkers(), context.getMinWorkersRatio(),

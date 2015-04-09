@@ -102,6 +102,12 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     private boolean isTimeoutToGetCurrentMasterResult = false;
 
     /**
+     * If master znode is cleaned, we may get exception on calling
+     * {@link #setMasterResult(WorkerContext, String, String)}.
+     */
+    private boolean isMasterZnodeCleaned = false;
+
+    /**
      * If get master server address time out. Set this to a field to make it updated in inner classes.
      */
     private boolean isTimeoutToGetMasterServerAddress = false;
@@ -334,7 +340,7 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 GUAGUA_DEFAULT_WORKER_GETRESULT_TIMEOUT);
         while(true) {
             this.isTimeoutToGetCurrentMasterResult = false;
-
+            this.isMasterZnodeCleaned = false;
             // check current iteration from zookeeper latest
             int latestIteraton = getLatestMasterIteration(context);
 
@@ -348,6 +354,7 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         final String appMasterNode = getCurrentMasterNode(appId, currentIteration).toString();
 
                         // send message
+                        // TODO do we need to send several times.
                         BytableWrapper workerMessage = new BytableWrapper();
                         workerMessage.setBytes(NettyWorkerCoordinator.this.getWorkerSerializer().objectToBytes(
                                 context.getWorkerResult()));
@@ -388,14 +395,21 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                             if(!NettyWorkerCoordinator.this.isServerShutdownOrClientDisconnect.get()) {
                                 String appMasterSplitNode = getCurrentMasterSplitNode(appId, currentIteration)
                                         .toString();
-                                setMasterResult(context, appMasterNode, appMasterSplitNode);
+                                try {
+                                    setMasterResult(context, appMasterNode, appMasterSplitNode);
+                                } catch (KeeperException.NoNodeException e) {
+                                    // this exception may happen after checking znode existing, cleaned by master znode
+                                    NettyWorkerCoordinator.this.isMasterZnodeCleaned = true;
+                                    LOG.warn("No such node:{}", appMasterNode);
+                                }
                                 LOG.info("Master computation is done.");
                             }
                         }
                     }
                 }.execute();
 
-                if(NettyWorkerCoordinator.this.isTimeoutToGetCurrentMasterResult) {
+                if(NettyWorkerCoordinator.this.isTimeoutToGetCurrentMasterResult
+                        || NettyWorkerCoordinator.this.isMasterZnodeCleaned) {
                     // if time out to get master result, continue and retry the whole postIteration logic (while(true)).
                     continue;
                 } else {
@@ -418,12 +432,22 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                             final String appMasterNode = getCurrentMasterNode(appId, lastIteration).toString();
                             final String appMasterSplitNode = getCurrentMasterSplitNode(appId, lastIteration)
                                     .toString();
-                            setMasterResult(context, appMasterNode, appMasterSplitNode);
+                            try {
+                                setMasterResult(context, appMasterNode, appMasterSplitNode);
+                            } catch (KeeperException.NoNodeException e) {
+                                // this exception may happen after checking znode existing, cleaned by master znode
+                                NettyWorkerCoordinator.this.isMasterZnodeCleaned = true;
+                                LOG.warn("No such node:{}", appMasterNode);
+                            }
                         }
                     }.execute();
                 }
-                // break while loop
-                break;
+                // break while loop or if master znode is already cleaned
+                if(NettyWorkerCoordinator.this.isMasterZnodeCleaned) {
+                    continue;
+                } else {
+                    break;
+                }
             }
         }
     }
