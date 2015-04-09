@@ -138,7 +138,6 @@ public class GuaguaZooKeeper {
                 return getZooKeeper().create(path, data, acl, createMode);
             }
         });
-        // LOG.info("createExt done: Creating path {}", path);
         return result;
     }
 
