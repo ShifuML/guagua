@@ -141,7 +141,7 @@ public final class GuaguaConstants {
 
     public static final String GUAGUA_COMPUTATION_TIME_THRESHOLD = "guagua.computation.time.threshold";
 
-    public static final long GUAGUA_DEFAULT_COMPUTATION_TIME_THRESHOLD = 60 * 1000l;
+    public static final long GUAGUA_DEFAULT_COMPUTATION_TIME_THRESHOLD = 60 * 1000L;
 
     public static final long GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT = GUAGUA_DEFAULT_COMPUTATION_TIME_THRESHOLD;
 
