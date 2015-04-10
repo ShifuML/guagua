@@ -99,6 +99,7 @@ public class LogisticRegressionWorker
             @Override
             public void run() {
                 LogisticRegressionWorker.this.dataList.close();
+                LogisticRegressionWorker.this.dataList.clear();
             }
         }));
     }

@@ -16,6 +16,15 @@
  
 Guagua Change Logs
 
+Changes for Guagua-0.7.0
+    * Add workers partial complete feature: 
+      https://github.com/ShifuML/guagua/issues/81
+      'guagua.min.workers.ratio' by default is 1.0, if set to 0.99, means in each iteration master only wait for 99% 
+      workers. 'guagua.min.workers.timeout': if waiting time over such parameter (default 60000 ms), 
+      'guagua.min.workers.ratio' will be considered. 
+Changes for Guagua-0.6.1
+    * Quick fix a bug on Netty Maven dependency:
+      https://github.com/ShifuML/guagua/issues/76
 Changes for Guagua-0.6.0
     * Add TCP server/client to send/receive results in both master and workers: 
       https://github.com/ShifuML/guagua/issues/65.

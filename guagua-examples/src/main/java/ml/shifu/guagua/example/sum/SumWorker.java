@@ -64,6 +64,7 @@ public class SumWorker
             @Override
             public void run() {
                 SumWorker.this.list.close();
+                SumWorker.this.list.clear();
             }
         }));
     }

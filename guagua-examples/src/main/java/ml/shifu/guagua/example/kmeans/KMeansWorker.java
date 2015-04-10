@@ -87,12 +87,13 @@ public class KMeansWorker
         String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", "tmp");
         this.dataList = new MemoryDiskList<TaggedRecord>((long) (Runtime.getRuntime().maxMemory() * memoryFraction),
                 tmpFolder + File.separator + System.currentTimeMillis());
-        
+
         // cannot find a good place to close these two data set, using Shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
                 KMeansWorker.this.dataList.close();
+                KMeansWorker.this.dataList.clear();
             }
         }));
         // just set into worker context for data output interceptor usage.

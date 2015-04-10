@@ -21,7 +21,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -36,6 +35,7 @@ import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.BytableWrapper;
+import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.io.NettyBytableDecoder;
 import ml.shifu.guagua.io.NettyBytableEncoder;
 import ml.shifu.guagua.util.BytableDiskList;
@@ -82,6 +82,11 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     private static final Logger LOG = LoggerFactory.getLogger(NettyMasterCoordinator.class);
 
     /**
+     * Internal lock used for multiple thread synchronization of message results readning and writing.
+     */
+    private static final Object LOCK = new Object();
+
+    /**
      * A server instance used to communicate with all workers.
      */
     private ServerBootstrap messageServer;
@@ -91,8 +96,6 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
      */
     private int messageServerPort;
 
-    private static final Object LOCK = new Object();
-
     /**
      * Worker results for each iteration. It should store each worker result in each iteration once.
      */
@@ -100,14 +103,29 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     private BytableMemoryDiskList<BytableWrapper> iterResults;
 
     /**
-     * 'indexMap' used to store <containerId, index in iterResults> for search.
+     * 'indexMap' used to store <containerId, index in iterResults> for search, guarded by {@link #LOCK}.
      */
-    private Map<String, Integer> indexMap = Collections.synchronizedMap(new HashMap<String, Integer>());
+    private Map<String, Integer> indexMap = new HashMap<String, Integer>();
 
     /**
      * Current iteration.
      */
     private int currentInteration;
+
+    /**
+     * Total iteration, this should not be change after initialization.
+     */
+    private int totalInteration;
+
+    /**
+     * A flag to see if we can update worker results map instance, guarded by {@link #LOCK}.
+     */
+    private boolean canUpdateWorkerResultMap = true;
+
+    /**
+     * Master result in last iteration, which is used to set stop message
+     */
+    private MASTER_RESULT masterResult = null;
 
     @Override
     protected void initialize(Properties props) {
@@ -135,23 +153,23 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         // Initialize zookeeper and other props
         initialize(context.getProps());
 
+        // init total iteration for later usage
+        this.totalInteration = context.getTotalIteration();
+
         // Fail over checking to check current iteration.
         new FailOverCommand(context).execute();
 
         // Start master netty server
-        try {
-            startNettyServer(context.getProps());
-        } catch (UnknownHostException e) {
-            throw new GuaguaRuntimeException(e);
-        }
+        startNettyServer(context.getProps());
 
         // if is init step, set currentIteration to 1 else set to current Iteration.
-        if(context.isInitIteration()) {
-            this.currentInteration = GuaguaConstants.GUAGUA_FIRST_ITERATION;
-        } else {
-            this.currentInteration = context.getCurrentIteration();
+        synchronized(LOCK) {
+            if(context.isInitIteration()) {
+                this.currentInteration = GuaguaConstants.GUAGUA_INIT_STEP;
+            } else {
+                this.currentInteration = context.getCurrentIteration();
+            }
         }
-
         // Create master initial znode with message server address.
         initMasterZnode(context);
 
@@ -175,6 +193,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             this.iterResults.clear();
             this.initIterResults(props);
             this.indexMap.clear();
+            this.canUpdateWorkerResultMap = true;
         }
     }
 
@@ -221,7 +240,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     /**
      * Start netty server which is used to communicate with workers.
      */
-    private void startNettyServer(Properties props) throws UnknownHostException {
+    private void startNettyServer(Properties props) {
         this.messageServerPort = NumberFormatUtils.getInt(props.getProperty(GuaguaConstants.GUAGUA_NETTY_SEVER_PORT),
                 GuaguaConstants.GUAGUA_NETTY_SEVER_DEFAULT_PORT);
         this.messageServerPort = NetworkUtils.getValidServerPort(this.messageServerPort);
@@ -245,8 +264,12 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             this.messageServer.bind(new InetSocketAddress(this.messageServerPort));
         }
 
-        LOG.info("Master netty server is started at {}", InetAddress.getLocalHost().getHostName() + ":"
-                + InetAddress.getLocalHost().getHostAddress() + ":" + NettyMasterCoordinator.this.messageServerPort);
+        try {
+            LOG.info("Master netty server is started at {}", InetAddress.getLocalHost().getHostName() + ":"
+                    + InetAddress.getLocalHost().getHostAddress() + ":" + NettyMasterCoordinator.this.messageServerPort);
+        } catch (UnknownHostException e) {
+            throw new GuaguaRuntimeException(e);
+        }
     }
 
     /**
@@ -265,14 +288,14 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         }
 
         public Thread newThread(Runnable r) {
-            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
-            if(t.isDaemon()) {
-                t.setDaemon(false);
+            Thread thread = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
+            if(thread.isDaemon()) {
+                thread.setDaemon(false);
             }
-            if(t.getPriority() != Thread.NORM_PRIORITY) {
-                t.setPriority(Thread.NORM_PRIORITY);
+            if(thread.getPriority() != Thread.NORM_PRIORITY) {
+                thread.setPriority(Thread.NORM_PRIORITY);
             }
-            t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+            thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
                 @Override
                 public void uncaughtException(Thread t, Throwable e) {
                     LOG.warn("Error message in thread {} with error message {}, error root cause {}.", t, e,
@@ -280,7 +303,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     // print stack???
                 }
             });
-            return t;
+            return thread;
         }
     }
 
@@ -307,15 +330,27 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             LOG.debug("Received container id {} with message:{}", bytableWrapper.getContainerId(), bytableWrapper);
             String containerId = bytableWrapper.getContainerId();
             synchronized(LOCK) {
+                if(!NettyMasterCoordinator.this.canUpdateWorkerResultMap) {
+                    LOG.info("Cannot update worker result with message: containerId {} iteration {} currentIteration",
+                            containerId, bytableWrapper.getCurrentIteration(),
+                            NettyMasterCoordinator.this.currentInteration);
+                    return;
+                }
                 if(bytableWrapper.isStopMessage()) {
-                    // for stop message, no need to check current iteration.
-                    if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)) {
-                        NettyMasterCoordinator.this.iterResults.append(bytableWrapper);
-                        NettyMasterCoordinator.this.indexMap.put(containerId,
-                                (int) (NettyMasterCoordinator.this.iterResults.size() - 1));
-                    } else {
-                        // if already exits, no need update, we hope it is the same result as the worker restarted and
-                        // result computed again. or result is not for current iteration, throw that result.
+                    // only accept stop message in unregistered iteration(total iteration +1) or halt condition is
+                    // accepted, stop messages not in unregistered iteration will be ignored.
+                    MASTER_RESULT masterResult = NettyMasterCoordinator.this.masterResult;
+                    if((bytableWrapper.getCurrentIteration() == NettyMasterCoordinator.this.totalInteration + 1)
+                            || ((masterResult instanceof HaltBytable) && ((HaltBytable) masterResult).isHalt())) {
+                        // for stop message, no need to check current iteration.
+                        if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)) {
+                            NettyMasterCoordinator.this.iterResults.append(bytableWrapper);
+                            NettyMasterCoordinator.this.indexMap.put(containerId,
+                                    (int) (NettyMasterCoordinator.this.iterResults.size() - 1));
+                        } else {
+                            // if already exits, no need update, we hope it is the same result as the worker restarted
+                            // and result computed again. or result is not for current iteration, throw that result.
+                        }
                     }
                 } else {
                     if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)
@@ -343,7 +378,10 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     @Override
     public void preIteration(final MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
         // set current iteration firstly
-        this.currentInteration = context.getCurrentIteration();
+        synchronized(LOCK) {
+            this.currentInteration = context.getCurrentIteration();
+            this.canUpdateWorkerResultMap = true;
+        }
 
         long start = System.nanoTime();
         new RetryCoordinatorCommand(isFixedTime(), getSleepTime()) {
@@ -356,19 +394,51 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 }
                 // to avoid log flood
                 if(System.nanoTime() % 30 == 0) {
-                    LOG.info("iteration {}, workers compelted: {}, still {} workers are not synced.",
+                    LOG.info("Iteration {}, workers compelted: {}, still {} workers are not synced.",
                             context.getCurrentIteration(), doneWorkers, (context.getWorkers() - doneWorkers));
                 }
-                return isTerminated(doneWorkers, context.getWorkers(), context.getMinWorkersRatio(),
-                        context.getMinWorkersTimeOut());
+
+                boolean isTerminated = false;
+                if(context.isFirstIteration() || context.getCurrentIteration() == context.getTotalIteration()) {
+                    // in the first iteration or last iteration, make sure all workers loading data successfully, use
+                    // default 1.0 as worker ratio.
+                    isTerminated = isTerminated(doneWorkers, context.getWorkers(), context.getMinWorkersRatio(),
+                            GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
+                    if(isTerminated) {
+                        // update canUpdateWorkerResultsMap to false no accept other results
+                        synchronized(LOCK) {
+                            NettyMasterCoordinator.this.canUpdateWorkerResultMap = false;
+                        }
+                        LOG.info(
+                                "Iteration {}, master waiting is terminated by workers {} doneWorkers {} minWorkersRatio {} minWorkersTimeOut {}.",
+                                context.getCurrentIteration(), context.getWorkers(), doneWorkers,
+                                context.getMinWorkersRatio(), GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
+                    }
+                } else {
+                    isTerminated = isTerminated(doneWorkers, context.getWorkers(), context.getMinWorkersRatio(),
+                            context.getMinWorkersTimeOut());
+                    if(isTerminated) {
+                        // update canUpdateWorkerResultsMap to false no accept other results
+                        synchronized(LOCK) {
+                            NettyMasterCoordinator.this.canUpdateWorkerResultMap = false;
+                        }
+                        LOG.info(
+                                "Iteration {}, master waiting is terminated by workers {} doneWorkers {} minWorkersRatio {} minWorkersTimeOut {}.",
+                                context.getCurrentIteration(), context.getWorkers(), doneWorkers,
+                                context.getMinWorkersRatio(), context.getMinWorkersTimeOut());
+                    }
+                }
+                return isTerminated;
             }
         }.execute();
 
-        // switch state to read
+        // switch state to read and not accept other results
         synchronized(LOCK) {
+            this.canUpdateWorkerResultMap = false;
             this.iterResults.switchState();
         }
         // set worker results.
+        final int currentIter = this.currentInteration;
         context.setWorkerResults(new Iterable<WORKER_RESULT>() {
             @Override
             public Iterator<WORKER_RESULT> iterator() {
@@ -378,6 +448,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
                     private volatile AtomicBoolean isStart = new AtomicBoolean();
 
+                    BytableWrapper current = null;
+
                     @Override
                     public boolean hasNext() {
                         boolean hasNext;
@@ -386,6 +458,20 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                                 this.localItr = NettyMasterCoordinator.this.iterResults.iterator();
                             }
                             hasNext = this.localItr.hasNext();
+                            if(hasNext) {
+                                this.current = this.localItr.next();
+                                // check if iteration number is the same, remove unneccasary results.
+                                while(this.current.getCurrentIteration() != currentIter) {
+                                    hasNext = this.localItr.hasNext();
+                                    if(hasNext) {
+                                        this.current = this.localItr.next();
+                                        continue;
+                                    } else {
+                                        // no elements, break
+                                        break;
+                                    }
+                                }
+                            }
                             if(!hasNext) {
                                 // to make sure it can be iterated again, it shouldn't be a good case for iterator, we
                                 // will iterate again to check if all workers are halt.
@@ -400,7 +486,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     public WORKER_RESULT next() {
                         synchronized(LOCK) {
                             return NettyMasterCoordinator.this.getWorkerSerializer().bytesToObject(
-                                    localItr.next().getBytes(), context.getWorkerResultClassName());
+                                    this.current.getBytes(), context.getWorkerResultClassName());
                         }
                     }
 
@@ -425,11 +511,10 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         new BasicCoordinatorCommand() {
             @Override
             public void doExecute() throws KeeperException, InterruptedException {
+                // set master result in each iteration.
+                NettyMasterCoordinator.this.masterResult = context.getMasterResult();
                 // update master halt status.
                 updateMasterHaltStatus(context);
-
-                // after master result and status set in zookeeper, clear resources here at once for next iteration.
-                clear(context.getProps());
 
                 // create master znode
                 boolean isSplit = false;
@@ -442,18 +527,31 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     byte[] bytes = getMasterSerializer().objectToBytes(context.getMasterResult());
                     isSplit = setBytesToZNode(appCurrentMasterNode, appCurrentMasterSplitNode, bytes,
                             CreateMode.PERSISTENT);
+                    // after master result and status set in zookeeper, clear resources here at once for next iteration.
+                    // there is race condition here, after master znode is visible, worker computes result and send
+                    // results to master, while at here current iteration is still not next iteration.
+                    synchronized(LOCK) {
+                        clear(context.getProps());
+                        // update current iteration to avoid receive messages of last iteration in ServerHandler
+                        NettyMasterCoordinator.this.currentInteration = context.getCurrentIteration() + 1;
+                        NettyMasterCoordinator.this.canUpdateWorkerResultMap = true;
+                    }
                 } catch (KeeperException.NodeExistsException e) {
                     LOG.warn("Has such node:", e);
                 }
 
-                // remove -2 znode, no need, 0 is needed for fail-over.
-                if(context.getCurrentIteration() >= 3) {
-                    String znode = getMasterNode(context.getAppId(), context.getCurrentIteration() - 2).toString();
+                // cleaning up znode, 0 is needed for fail-over.
+                int resultCleanUpInterval = NumberFormatUtils.getInt(
+                        context.getProps().getProperty(GuaguaConstants.GUAGUA_CLEANUP_INTERVAL),
+                        GuaguaConstants.GUAGUA_DEFAULT_CLEANUP_INTERVAL);
+                if(context.getCurrentIteration() >= (resultCleanUpInterval + 1)) {
+                    String znode = getMasterNode(context.getAppId(),
+                            context.getCurrentIteration() - resultCleanUpInterval).toString();
                     try {
                         getZooKeeper().deleteExt(znode, -1, false);
                         if(isSplit) {
-                            znode = getCurrentMasterSplitNode(context.getAppId(), context.getCurrentIteration() - 2)
-                                    .toString();
+                            znode = getCurrentMasterSplitNode(context.getAppId(),
+                                    context.getCurrentIteration() - resultCleanUpInterval).toString();
                             getZooKeeper().deleteExt(znode, -1, true);
                         }
                     } catch (KeeperException.NoNodeException e) {
@@ -474,8 +572,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     @Override
     public void postApplication(final MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
         // update current iteration for unregister iteration
-        this.currentInteration = context.getCurrentIteration();
-
+        synchronized(LOCK) {
+            this.currentInteration = context.getCurrentIteration();
+        }
         new BasicCoordinatorCommand() {
             @Override
             public void doExecute() throws Exception, InterruptedException {
@@ -486,6 +585,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                             context.getProps().getProperty(GuaguaConstants.GUAGUA_ZK_CLEANUP_ENABLE),
                             GuaguaConstants.GUAGUA_ZK_DEFAULT_CLEANUP_VALUE);
 
+                    final long start = System.nanoTime();
                     if(Boolean.TRUE.toString().equalsIgnoreCase(zkCleanUpEnabled)) {
                         new RetryCoordinatorCommand(isFixedTime(), getSleepTime()) {
                             @Override
@@ -495,14 +595,23 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                                     // long to int is assumed successful as no such many workers need using long
                                     doneWorkers = (int) NettyMasterCoordinator.this.iterResults.size();
                                 }
+                                if(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) > 120 * 1000L) {
+                                    LOG.info(
+                                            "unregister step, worker(s) compelted: {}, still {} workers are not unregistered, but time out to terminate.",
+                                            doneWorkers, (context.getWorkers() - doneWorkers));
+                                    return true;
+                                }
                                 // to avoid log flood
                                 if(System.nanoTime() % 30 == 0) {
                                     LOG.info(
                                             "unregister step, worker(s) compelted: {}, still {} workers are not unregistered.",
                                             doneWorkers, (context.getWorkers() - doneWorkers));
                                 }
-                                return isTerminated(doneWorkers, context.getWorkers(), context.getMinWorkersRatio(),
-                                        context.getMinWorkersTimeOut());
+
+                                // master should wait for all workers done in post application.
+                                return isTerminated(doneWorkers, context.getWorkers(),
+                                        GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_RATIO,
+                                        GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
                             }
                         }.execute();
 

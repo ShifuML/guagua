@@ -66,4 +66,9 @@ public @interface ComputableMonitor {
      * @return Number of time units after which the execution should be halted or default returned.
      */
     long duration() default 60;
+
+    /**
+     * Soft means to return null if worker or master is time out. If not soft means to kill process if time out.
+     */
+    boolean isSoft() default true;
 }

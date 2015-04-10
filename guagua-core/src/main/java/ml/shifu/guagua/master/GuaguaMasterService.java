@@ -150,6 +150,12 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
      */
     private boolean isMonitored;
 
+    /**
+     * Check {@link ComputableMonitor#isSoft()} for details
+     */
+    @SuppressWarnings("unused")
+    private boolean isSoftForComputableTimeout = true;
+
     /*
      * (non-Javadoc)
      * 
@@ -211,6 +217,9 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         }
 
         MASTER_RESULT masterResult = null;
+        // if time out in thread
+        @SuppressWarnings("unused")
+        boolean isTimeOutInThread = false;
 
         if(this.isMonitored) {
             if(this.executor.isTerminated() || this.executor.isShutdown()) {
@@ -233,13 +242,14 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                 Thread.currentThread().interrupt();
             } catch (ExecutionException e) {
                 LOG.error("Error in master computation:", e);
+                throw new GuaguaRuntimeException(e);
             } catch (TimeoutException e) {
+                isTimeOutInThread = true;
                 LOG.warn("Time out for master computation, null will be returned");
                 // We should use shutdown to terminate computation in current iteration
                 executor.shutdownNow();
                 masterResult = null;
             }
-
         } else {
             masterResult = masterComputable.compute(context);
         }
@@ -257,6 +267,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         }
         status = "Complete master iteration ( %s/%s ), progress %s%%";
         if(progress != null) {
+            // TODO kill function add to master, look master
             progress.progress(iteration, getTotalIteration(),
                     String.format(status, iteration, getTotalIteration(), (iteration * 100 / getTotalIteration())),
                     true, false);
@@ -318,6 +329,8 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
         this.setMasterComputable(newMasterComputable());
         this.isMonitored = this.getMasterComputable().getClass().isAnnotationPresent(ComputableMonitor.class);
         if(this.isMonitored) {
+            this.isSoftForComputableTimeout = masterComputable.getClass().getAnnotation(ComputableMonitor.class)
+                    .isSoft();
             this.executor = Executors.newSingleThreadExecutor();
         }
         this.setTotalIteration(Integer.valueOf(this.getProps().getProperty(GuaguaConstants.GUAGUA_ITERATION_COUNT,
@@ -330,7 +343,8 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                 this.getProps().getProperty(GuaguaConstants.GUAGUA_MIN_WORKERS_RATIO),
                 GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_RATIO);
         this.setMinWorkersRatio(minWorkersRatio);
-        long minWorkersTimeOut = NumberFormatUtils.getLong(GuaguaConstants.GUAGUA_MIN_WORKERS_TIMEOUT,
+        long minWorkersTimeOut = NumberFormatUtils.getLong(
+                this.getProps().getProperty(GuaguaConstants.GUAGUA_MIN_WORKERS_TIMEOUT),
                 GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
         this.setMinWorkersTimeOut(minWorkersTimeOut);
     }
