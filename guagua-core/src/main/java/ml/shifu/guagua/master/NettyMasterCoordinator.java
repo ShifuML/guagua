@@ -82,6 +82,11 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     private static final Logger LOG = LoggerFactory.getLogger(NettyMasterCoordinator.class);
 
     /**
+     * Internal lock used for multiple thread synchronization of message results readning and writing.
+     */
+    private static final Object LOCK = new Object();
+
+    /**
      * A server instance used to communicate with all workers.
      */
     private ServerBootstrap messageServer;
@@ -90,8 +95,6 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
      * Message server port used to for Netty server to communicate with workers.
      */
     private int messageServerPort;
-
-    private static final Object LOCK = new Object();
 
     /**
      * Worker results for each iteration. It should store each worker result in each iteration once.

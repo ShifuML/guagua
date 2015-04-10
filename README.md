@@ -21,6 +21,9 @@ This graph shows the iterative computing process for **Guagua**.
 
 Typical use cases for **Guagua** are distributed machine learning model training based on Hadoop. By using **Guagua**, we implement distributed neural network algorithm which can reduce model training time from days to hours on 500GB data sets. Distributed neural network algorithm is based on [Encog](http://www.heatonresearch.com/encog) and **Guagua**. Any details please check our example [source code](https://github.com/ShifuML/guagua/tree/master/guagua-mapreduce-examples/src/main/java/ml/shifu/guagua/mapreduce/example/nn).
 
+## Google Group
+
+Please join [Guagua group](https://groups.google.com/forum/#!forum/shifu-guagua) if questions, bugs or anything else.
 
 ## Copyright and License
 
