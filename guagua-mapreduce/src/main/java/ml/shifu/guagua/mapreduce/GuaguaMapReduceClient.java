@@ -246,7 +246,8 @@ public class GuaguaMapReduceClient {
     public synchronized Job createJob(String[] args) throws IOException {
         Configuration conf = new Configuration();
         // set it here to make it can be over-written. Set task timeout to a long period 20 minutes.
-        conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 1200000);
+        conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT,
+                conf.getInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 1200000));
         GuaguaOptionsParser parser = new GuaguaOptionsParser(conf, args);
         CommandLine cmdLine = parser.getCommandLine();
         checkInputSetting(conf, cmdLine);
@@ -263,13 +264,15 @@ public class GuaguaMapReduceClient {
         // speculative execution should be disabled
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_MAP_TASKS_SPECULATIVE_EXECUTION, false);
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_REDUCE_TASKS_SPECULATIVE_EXECUTION, false);
-        // set mapreduce.job.max.split.locations to 30 to suppress warnings
-        conf.setInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_MAX_SPLIT_LOCATIONS, 30);
+        // set mapreduce.job.max.split.locations to 100 to suppress warnings
+        conf.setInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_MAX_SPLIT_LOCATIONS,
+                conf.getInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_MAX_SPLIT_LOCATIONS, 100));
 
         // Set cache to 0.
         conf.setInt(GuaguaMapReduceConstants.IO_SORT_MB, 0);
         // Most users won't hit this hopefully and can set it higher if desired
-        conf.setInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_COUNTERS_LIMIT, 512);
+        conf.setInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_COUNTERS_LIMIT,
+                conf.getInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_COUNTERS_LIMIT, 512));
         conf.setInt(GuaguaMapReduceConstants.MAPRED_JOB_REDUCE_MEMORY_MB, 0);
         // Set the ping interval to 5 minutes instead of one minute (DEFAULT_PING_INTERVAL)
         // Client.setPingInterval(conf, 60000 * 5);
