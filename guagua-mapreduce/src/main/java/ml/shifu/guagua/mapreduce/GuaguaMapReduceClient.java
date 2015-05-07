@@ -274,8 +274,7 @@ public class GuaguaMapReduceClient {
         conf.setInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_COUNTERS_LIMIT,
                 conf.getInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_COUNTERS_LIMIT, 512));
         conf.setInt(GuaguaMapReduceConstants.MAPRED_JOB_REDUCE_MEMORY_MB, 0);
-        // Set the ping interval to 5 minutes instead of one minute (DEFAULT_PING_INTERVAL)
-        // Client.setPingInterval(conf, 60000 * 5);
+
         // append concurrent gc to avoid long gc stop-the-world
         String childJavaOpts = conf.get(GuaguaMapReduceConstants.MAPRED_CHILD_JAVA_OPTS, "");
         if(childJavaOpts == null || childJavaOpts.length() == 0) {
@@ -485,8 +484,8 @@ public class GuaguaMapReduceClient {
             System.err.println("WARN: ZooKeeper server is not set, embeded ZooKeeper server will be started.");
             System.err.println("WARN: For big data guagua application, independent ZooKeeper instance is recommended.");
             System.err.println("WARN: Zookeeper servers can be provided by '-z' parameter with non-empty value.");
-
-            boolean isZkInClient = conf.getBoolean(GuaguaConstants.GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT, true);
+            // change default embedded zookeeper server to master zonde
+            boolean isZkInClient = conf.getBoolean(GuaguaConstants.GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT, false);
             if(isZkInClient) {
                 synchronized(GuaguaMapReduceClient.class) {
                     if(embededZooKeeperServer == null) {
