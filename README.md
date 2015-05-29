@@ -31,4 +31,4 @@ Please join [Guagua group](https://groups.google.com/forum/#!forum/shifu-guagua)
 
 ## Copyright and License
 
-Copyright 2013-2014, eBay Software Foundation under the [Apache License V2.0](LICENSE.txt).
+Copyright 2013-2014, PayPal Software Foundation under the [Apache License V2.0](LICENSE.txt).
