@@ -18,7 +18,7 @@
 BIN_DIR="$( cd -P "$( dirname "${BASH_SOURCE:-0}" )" && pwd )"
 hadoop fs -put $BIN_DIR/../data/lr /user/$USER/
 
-$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-examples-0.7.1.jar \
+$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-examples-0.8.0-SNAPSHOT.jar \
         -i lr  \
         -w ml.shifu.guagua.example.lr.LogisticRegressionWorker  \
         -m ml.shifu.guagua.example.lr.LogisticRegressionMaster  \

@@ -21,7 +21,7 @@ BIN_DIR="$( cd -P "$( dirname "${BASH_SOURCE:-0}" )" && pwd )"
 hadoop fs -put $BIN_DIR/../data/kmeans /user/$USER/
 
 # Comments for all parameters:
-#  '../mapreduce-lib/guagua-examples-0.7.1.jar': Jar files include master, worker and user intercepters
+#  '../mapreduce-lib/guagua-examples-0.8.0-SNAPSHOT.jar': Jar files include master, worker and user intercepters
 #  '-i kmeans': '-i' means guagua application input, should be HDFS input file or folder
 #  '-z ${ZOOKEEPER_SERVERS}': '-z' is used to configure zookeeper server, this should be placed by real zookeeper server
 #                            The format is like '<zkServer1:zkPort1,zkServer2:zkPort2>'
@@ -42,7 +42,7 @@ hadoop fs -put $BIN_DIR/../data/kmeans /user/$USER/
 #  '-Dkmeans.data.output=kmeans-tags': new data file folder with tag at last column
 #  '-Dguagua.master.intercepters=ml.shifu.guagua.example.kmeans.KMeansCentriodsOutput': User master interceptors
 
-$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-examples-0.7.1.jar \
+$BIN_DIR/guagua jar $BIN_DIR/../mapreduce-lib/guagua-examples-0.8.0-SNAPSHOT.jar \
         -i kmeans  \
         -w ml.shifu.guagua.example.kmeans.KMeansWorker  \
         -m ml.shifu.guagua.example.kmeans.KMeansMaster  \
