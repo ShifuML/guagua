@@ -24,14 +24,23 @@
 #
 #   GUAGUA_CONF_DIR     Guagua conf folder, default is in GUAUGA_HOME/conf
 
-# friendly message for those who forget to tell us what to do
-if [ $# = 0 ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "h" ] || [ "$1" == "help" ] ; then
-  echo "Usage: guagua [-y(enable beta guagua-yarn version on hadoop 2.0)] jar <the jar containing master and worker class> [-D<hadoop/guagua property>] <parameters to jar>"
-  exit 1
-fi
-
 # locate and run the guagua-env script to populate env vars, classpath, etc.
 GUAGUA_ENV_DIR="$( cd -P "$( dirname "${BASH_SOURCE:-0}" )" && pwd )"
+
+# print version string
+if  [ "$1" == "-v" ] || [ "$1" == "-version" ] || [ "$1" == "v" ] || [ "$1" == "version" ] ; then
+    client_jar=`ls -al ${GUAGUA_ENV_DIR}/../common-lib | grep guagua-client | awk '{print $NF}'`
+    java -jar ${GUAGUA_ENV_DIR}/../common-lib/${client_jar} v
+    exit 0
+fi
+
+# friendly message for those who forget to tell us what to do
+if [ $# = 0 ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "h" ] || [ "$1" == "help" ] ; then
+    client_jar=`ls -al ${GUAGUA_ENV_DIR}/../common-lib | grep guagua-client | awk '{print $NF}'`
+    java -jar ${GUAGUA_ENV_DIR}/../common-lib/${client_jar} h
+    exit 1
+fi
+
 source $GUAGUA_ENV_DIR/guagua-env
 
 exec "$HADOOP_ROOT/bin/hadoop" jar $JAR $CLASS -libjars $GUAGUA_JARS "$@" $HADOOP_PROPERTIES

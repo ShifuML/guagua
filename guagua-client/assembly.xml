@@ -75,6 +75,7 @@
             <outputDirectory>common-lib</outputDirectory>
             <includes>
                 <include>*:guagua-core:*</include>
+                <include>*:guagua-client:*</include>
                 <include>*:zookeeper:*</include>
                 <include>*:encog-core:*</include>
                 <include>*:guava*:*</include>

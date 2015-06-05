@@ -44,6 +44,25 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <archive>
+                        <index>true</index>
+                        <manifest>
+                            <mainClass>ml.shifu.guagua.client.PrintInfo</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <vendor>PayPal</vendor>
+                            <title>Guagua</title>
+                            <version>${project.version}</version>
+                            <timestamp>${maven.build.timestamp}</timestamp>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.3</version>
                 <configuration>
