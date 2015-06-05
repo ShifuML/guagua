@@ -168,6 +168,7 @@ public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT ext
      * @throws InvalidInputException
      *             If any IOException for input files.
      */
+    @SuppressWarnings("deprecation")
     protected List<FileStatus> listStatus(Configuration conf, String input) throws IOException {
         List<FileStatus> result = new ArrayList<FileStatus>();
         Path[] dirs = getInputPaths(input);

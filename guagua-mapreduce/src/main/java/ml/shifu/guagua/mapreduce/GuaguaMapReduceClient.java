@@ -243,6 +243,7 @@ public class GuaguaMapReduceClient {
     /**
      * Create Hadoop job according to arguments from main.
      */
+    @SuppressWarnings("deprecation")
     public synchronized Job createJob(String[] args) throws IOException {
         Configuration conf = new Configuration();
         // set it here to make it can be over-written. Set task timeout to a long period 20 minutes.
