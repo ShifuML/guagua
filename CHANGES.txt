@@ -16,6 +16,11 @@
  
 Guagua Change Logs
 
+Changes for Guagua-0.7.1
+    * Change license from eBay to PayPal
+      https://github.com/ShifuML/guagua/issues/83
+    * Fix a bug to let user set 'mapreduce.job.max.split.locations' 
+      https://github.com/ShifuML/guagua/issues/84
 Changes for Guagua-0.7.0
     * Add workers partial complete feature: 
       https://github.com/ShifuML/guagua/issues/81
