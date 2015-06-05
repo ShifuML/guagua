@@ -19,11 +19,11 @@
 OLD_HADOOP_CLASSPATH="$HADOOP_CLASSPATH"
 
 # set new HADOOP_CLASSPATH to run guagua
-export HADOOP_CLASSPATH="../lib/guagua-yarn-examples-0.8.0-SNAPSHOT.jar:../lib/guava-14.0.1.jar:../lib/encog-core-3.0.0.jar:../lib/guagua-yarn-0.8.0-SNAPSHOT.jar:../lib/guagua-core-0.8.0-SNAPSHOT.jar:../lib/zookeeper-3.4.5.jar:../lib/gson-2.2.2.jar"
+export HADOOP_CLASSPATH="../lib/guagua-yarn-examples-0.7.1.jar:../lib/guava-14.0.1.jar:../lib/encog-core-3.0.0.jar:../lib/guagua-yarn-0.7.1.jar:../lib/guagua-core-0.7.1.jar:../lib/zookeeper-3.4.5.jar:../lib/gson-2.2.2.jar"
 
-hadoop jar ../lib/guagua-yarn-0.8.0-SNAPSHOT.jar \
+hadoop jar ../lib/guagua-yarn-0.7.1.jar \
     ml.shifu.guagua.yarn.GuaguaYarnClient  \
-    -libjars ../lib/guagua-yarn-examples-0.8.0-SNAPSHOT.jar,../lib/guava-14.0.1.jar,../lib/encog-core-3.0.0.jar,../lib/gson-2.2.2.jar,../lib/guagua-yarn-0.8.0-SNAPSHOT.jar,../lib/guagua-core-0.8.0-SNAPSHOT.jar,../lib/zookeeper-3.4.5.jar \
+    -libjars ../lib/guagua-yarn-examples-0.7.1.jar,../lib/guava-14.0.1.jar,../lib/encog-core-3.0.0.jar,../lib/gson-2.2.2.jar,../lib/guagua-yarn-0.7.1.jar,../lib/guagua-core-0.7.1.jar,../lib/zookeeper-3.4.5.jar \
     -i nn  \
     -w ml.shifu.guagua.yarn.example.nn.NNWorker  \
     -m ml.shifu.guagua.yarn.example.nn.NNMaster  \
