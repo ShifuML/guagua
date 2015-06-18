@@ -112,7 +112,7 @@ public class ZooKeeperWorkerInterceptor<MASTER_RESULT extends Bytable, WORKER_RE
         }
     }
 
-    // TODO merge this function together with the one in worker
+    // TODO merge this function together with the one in master
     private String getZookeeperServerFolder(WorkerContext<MASTER_RESULT, WORKER_RESULT> context) {
         String defaultZooKeeperServePath = new StringBuilder(200).append("tmp").append(Path.SEPARATOR)
                 .append("_guagua").append(Path.SEPARATOR).append(context.getAppId()).append(Path.SEPARATOR).toString();

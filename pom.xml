@@ -174,8 +174,5 @@
         <module>guagua-yarn</module>
         <module>guagua-client</module>
         <module>guagua-examples</module>
-        <!-- These two modules will be replaced by guagua-examples -->
-        <module>guagua-mapreduce-examples</module>
-        <module>guagua-yarn-examples</module>
     </modules>
 </project>

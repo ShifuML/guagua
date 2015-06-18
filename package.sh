@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-mvn clean install -DskipTests
+mvn clean install -Pcdh-20 -DskipTests
 
 cd guagua-mapreduce
 mvn install -Phdp-yarn -DskipTests

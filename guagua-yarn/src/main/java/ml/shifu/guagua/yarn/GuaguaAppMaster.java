@@ -38,6 +38,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ml.shifu.guagua.GuaguaConstants;
+import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.hadoop.io.GuaguaInputSplit;
 import ml.shifu.guagua.yarn.util.GsonUtils;
 import ml.shifu.guagua.yarn.util.YarnUtils;
@@ -358,6 +359,9 @@ public class GuaguaAppMaster {
                 }
             }
             LOG.info("Done {}", isDone());
+        } catch (Throwable t) {
+            LOG.error("Error in AppMaster run.", t);
+            throw new GuaguaRuntimeException(t);
         } finally {
             shutdown();
             success = finish();
@@ -514,7 +518,6 @@ public class GuaguaAppMaster {
         this.inputSplits = getNewSplits(getYarnConf());
 
         this.setContainersToLaunch(this.inputSplits.size());
-
         LOG.info("Input split size including master: {}", this.inputSplits.size());
     }
 
@@ -527,6 +530,7 @@ public class GuaguaAppMaster {
                     GuaguaInputSplit.class));
             this.partitionProgress.put(i, new GuaguaIterationStatus());
         }
+
         return newSplits;
     }
 

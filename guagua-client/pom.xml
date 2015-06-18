@@ -22,22 +22,12 @@
         </dependency>
         <dependency>
             <groupId>ml.shifu</groupId>
-            <artifactId>guagua-mapreduce-examples</artifactId>
-            <version>${guagua.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ml.shifu</groupId>
             <artifactId>guagua-examples</artifactId>
             <version>${guagua.version}</version>
         </dependency>
         <dependency>
             <groupId>ml.shifu</groupId>
             <artifactId>guagua-yarn</artifactId>
-            <version>${guagua.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ml.shifu</groupId>
-            <artifactId>guagua-yarn-examples</artifactId>
             <version>${guagua.version}</version>
         </dependency>
     </dependencies>

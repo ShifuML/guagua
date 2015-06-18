@@ -27,6 +27,7 @@ import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.coordinator.zk.ZooKeeperUtils;
 import ml.shifu.guagua.hadoop.io.GuaguaOptionsParser;
 import ml.shifu.guagua.hadoop.io.GuaguaWritableSerializer;
+import ml.shifu.guagua.hadoop.util.HDPUtils;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.master.MasterComputable;
@@ -250,6 +251,16 @@ public class GuaguaMapReduceClient {
         conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT,
                 conf.getInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 1200000));
         GuaguaOptionsParser parser = new GuaguaOptionsParser(conf, args);
+        
+        // process a bug on hdp 2.2.4
+        String hdpVersion = HDPUtils.getHdpVersionForHDP224();
+        if(hdpVersion != null && hdpVersion.length() != 0) {
+            conf.set("hdp.version", hdpVersion);
+            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("hdfs-site.xml"), conf);
+            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("core-site.xml"), conf);
+            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("mapred-site.xml"), conf);
+            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("yarn-site.xml"), conf);
+        }
         CommandLine cmdLine = parser.getCommandLine();
         checkInputSetting(conf, cmdLine);
         checkZkServerSetting(conf, cmdLine);

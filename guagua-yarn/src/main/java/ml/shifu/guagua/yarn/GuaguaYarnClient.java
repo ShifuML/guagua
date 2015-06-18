@@ -39,6 +39,7 @@ import ml.shifu.guagua.coordinator.zk.ZooKeeperUtils;
 import ml.shifu.guagua.hadoop.io.GuaguaOptionsParser;
 import ml.shifu.guagua.hadoop.io.GuaguaWritableSerializer;
 import ml.shifu.guagua.hadoop.io.GuaguaInputSplit;
+import ml.shifu.guagua.hadoop.util.HDPUtils;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.master.MasterComputable;
@@ -205,8 +206,8 @@ public class GuaguaYarnClient extends Configured {
     private void copyResourcesToFS() throws IOException {
         LOG.debug("Copying resources to filesystem");
         YarnUtils.exportGuaguaConfiguration(getConf(), getAppId());
-        YarnUtils.copyLocalResourcesToFs(getConf(), getAppId()); // Local
-                                                                 // resources
+        YarnUtils.copyLocalResourcesToFs(getConf(), getAppId()); // Local resources
+
         // log4j can be ignored with a warning
         try {
             YarnUtils.copyLocalResourceToFs(GuaguaYarnConstants.GUAGUA_LOG4J_PROPERTIES,
@@ -263,11 +264,21 @@ public class GuaguaYarnClient extends Configured {
     private static GuaguaOptionsParser parseOpts(String[] args, Configuration conf) throws IOException,
             ClassNotFoundException {
         GuaguaOptionsParser parser = new GuaguaOptionsParser(conf, args);
-        conf.set(GuaguaYarnConstants.GUAGUA_YARN_APP_LIB_JAR, conf.get("tmpjars"));
+
+        // we have use InputSplit while it is in mr jar but mr jar in newest yarn is not in container classpath
+        String mrJar = HDPUtils.findContainingJar(InputSplit.class);
+        conf.set(GuaguaYarnConstants.GUAGUA_YARN_APP_LIB_JAR, conf.get("tmpjars") + "," + mrJar);
+
         String jar = findContainingJar(Class.forName(conf.get(GuaguaConstants.MASTER_COMPUTABLE_CLASS,
                 GuaguaYarnClient.class.getName())));
         if(jar != null) {
             conf.set(GuaguaYarnConstants.GUAGUA_YARN_APP_JAR, jar);
+        }
+
+        // with a bug in hdp 2.2.4, we have to set hdp version
+        String hdpVersion = HDPUtils.getHdpVersionForHDP224();
+        if(hdpVersion != null && hdpVersion.length() != 0) {
+            conf.set("hdp.version", hdpVersion);
         }
         CommandLine cmdLine = parser.getCommandLine();
         checkInputSetting(conf, cmdLine);
@@ -444,7 +455,7 @@ public class GuaguaYarnClient extends Configured {
             System.err.println("WARN: For big data guagua application, independent ZooKeeper instance is recommended.");
             System.err.println("WARN: Zookeeper servers can be provided by '-z' parameter with non-empty value.");
 
-            boolean isZkInClient = conf.getBoolean(GuaguaConstants.GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT, true);
+            boolean isZkInClient = conf.getBoolean(GuaguaConstants.GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT, false);
             if(isZkInClient) {
                 synchronized(GuaguaYarnClient.class) {
                     if(embededZooKeeperServer == null) {

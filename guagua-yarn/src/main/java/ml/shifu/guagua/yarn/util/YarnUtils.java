@@ -71,7 +71,7 @@ public final class YarnUtils {
         // yarn app jar
         addFileToResourceMap(localResources, fs,
                 getPathForResource(fs, conf.get(GuaguaYarnConstants.GUAGUA_YARN_APP_JAR), appId));
-        //
+
         try {
             addFileToResourceMap(localResources, fs,
                     getPathForResource(fs, GuaguaYarnConstants.GUAGUA_LOG4J_PROPERTIES, appId));
