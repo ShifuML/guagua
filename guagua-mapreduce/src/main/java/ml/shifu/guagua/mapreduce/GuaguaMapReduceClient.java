@@ -251,7 +251,7 @@ public class GuaguaMapReduceClient {
         conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT,
                 conf.getInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 1200000));
         GuaguaOptionsParser parser = new GuaguaOptionsParser(conf, args);
-        
+
         // process a bug on hdp 2.2.4
         String hdpVersion = HDPUtils.getHdpVersionForHDP224();
         if(hdpVersion != null && hdpVersion.length() != 0) {
@@ -277,8 +277,11 @@ public class GuaguaMapReduceClient {
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_MAP_TASKS_SPECULATIVE_EXECUTION, false);
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_REDUCE_TASKS_SPECULATIVE_EXECUTION, false);
         // set mapreduce.job.max.split.locations to 100 to suppress warnings
-        conf.setInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_MAX_SPLIT_LOCATIONS,
-                conf.getInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_MAX_SPLIT_LOCATIONS, 100));
+        int maxSplits = conf.getInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_MAX_SPLIT_LOCATIONS, 100);
+        if(maxSplits < 100) {
+            maxSplits = 100;
+        }
+        conf.setInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_MAX_SPLIT_LOCATIONS, maxSplits);
 
         // Set cache to 0.
         conf.setInt(GuaguaMapReduceConstants.IO_SORT_MB, 0);
@@ -494,7 +497,8 @@ public class GuaguaMapReduceClient {
     private static void checkZkServerSetting(Configuration conf, CommandLine cmdLine) {
         if(!cmdLine.hasOption("-z")) {
             System.err.println("WARN: ZooKeeper server is not set, embeded ZooKeeper server will be started.");
-            System.err.println("WARN: For big data guagua application, independent ZooKeeper instance is recommended.");
+            System.err
+                    .println("WARN: For big data guagua application with fail-over zookeeper servers, independent ZooKeeper instances are recommended.");
             System.err.println("WARN: Zookeeper servers can be provided by '-z' parameter with non-empty value.");
             // change default embedded zookeeper server to master zonde
             boolean isZkInClient = conf.getBoolean(GuaguaConstants.GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT, false);

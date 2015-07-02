@@ -516,7 +516,7 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         return Integer.valueOf(o1).compareTo(Integer.valueOf(o2));
                     }
                 });
-                LOG.info("DEBUG: master children:{}", masterIterations);
+                LOG.debug("DEBUG: master children:{}", masterIterations);
                 try {
                     return Integer.valueOf(masterIterations.get(masterIterations.size() - 1));
                 } catch (NumberFormatException e) {

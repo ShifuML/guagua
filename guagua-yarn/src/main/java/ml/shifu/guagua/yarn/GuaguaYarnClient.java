@@ -452,7 +452,8 @@ public class GuaguaYarnClient extends Configured {
     private static void checkZkServerSetting(Configuration conf, CommandLine cmdLine) {
         if(!cmdLine.hasOption("-z")) {
             System.err.println("WARN: ZooKeeper server is not set, embeded ZooKeeper server will be started.");
-            System.err.println("WARN: For big data guagua application, independent ZooKeeper instance is recommended.");
+            System.err
+                    .println("WARN: For big data guagua application with fail-over zookeeper servers, independent ZooKeeper instances are recommended.");
             System.err.println("WARN: Zookeeper servers can be provided by '-z' parameter with non-empty value.");
 
             boolean isZkInClient = conf.getBoolean(GuaguaConstants.GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT, false);
