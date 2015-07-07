@@ -86,7 +86,7 @@
                     <id>HortonWorks HDP LOCAL</id>
                     <url>http://repo.hortonworks.com/service/local/repositories/releases/content</url>
                 </repository>
-				<repository>
+                <repository>
                     <id>HortonWorks HDP</id>
                     <url>http://repo.hortonworks.com/nexus/content/repositories/releases</url>
                 </repository>
@@ -142,7 +142,7 @@
                     <id>HortonWorks HDP LOCAL</id>
                     <url>http://repo.hortonworks.com/service/local/repositories/releases/content</url>
                 </repository>
-				<repository>
+                <repository>
                     <id>HortonWorks HDP</id>
                     <url>http://repo.hortonworks.com/nexus/content/repositories/releases</url>
                 </repository>
@@ -197,7 +197,6 @@
                 </plugins>
             </build>
         </profile>
-
         <!-- For hadoop 0.20.2 apache version -->
         <profile>
             <id>apache-20</id>
@@ -347,5 +346,4 @@
             </build>
         </profile>
     </profiles>
-
 </project>
