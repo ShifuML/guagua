@@ -500,7 +500,7 @@ public class GuaguaInputFormat extends TextInputFormat {
         }
 
         // gz can not be split.
-        if(file.getName().endsWith("gz")) {
+        if(file.getName().endsWith("gz") || file.getName().endsWith("parquet")) {
             return false;
         }
         // other compression can not be split, maybe for lzo I should add it to split list.
