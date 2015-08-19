@@ -36,8 +36,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -494,18 +492,11 @@ public class GuaguaInputFormat extends TextInputFormat {
 
     @Override
     protected boolean isSplitable(JobContext context, Path file) {
-        // bzip2 can be split.
-        if(file.getName().endsWith(GuaguaMapReduceConstants.BZ2)) {
-            return true;
-        }
-
-        // gz can not be split.
-        if(file.getName().endsWith("gz") || file.getName().endsWith("parquet")) {
+        // parquet shouldn't be split
+        if(file.getName().endsWith("parquet")) {
             return false;
         }
-        // other compression can not be split, maybe for lzo I should add it to split list.
-        CompressionCodec codec = new CompressionCodecFactory(context.getConfiguration()).getCodec(file);
-        return codec == null;
+        return super.isSplitable(context, file);
     }
 
     @Override

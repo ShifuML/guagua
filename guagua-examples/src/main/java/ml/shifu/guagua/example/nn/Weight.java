@@ -67,12 +67,10 @@ public class Weight {
         for(int i = 0; i < gradients.length; i++) {
             weights[i] += updateWeight(i, weights, gradients);
         }
-
         return weights;
     }
 
     private double updateWeight(int index, double[] weights, double[] gradients) {
-
         if(this.algorithm.equalsIgnoreCase(NNConstants.BACK_PROPAGATION)) {
             return updateWeightBP(index, weights, gradients);
         } else if(this.algorithm.equalsIgnoreCase(NNConstants.QUICK_PROPAGATION)) {
@@ -84,9 +82,7 @@ public class Weight {
         } else if(this.algorithm.equalsIgnoreCase(NNConstants.RESILIENTPROPAGATION)) {
             return updateWeightRLP(index, weights, gradients);
         }
-
         return 0.0;
-
     }
 
     private double updateWeightBP(int index, double[] weights, double[] gradients) {
@@ -96,7 +92,6 @@ public class Weight {
     }
 
     private double updateWeightQBP(int index, double[] weights, double[] gradients) {
-
         final double w = weights[index];
         final double d = this.lastDelta[index];
         final double s = -gradients[index] + this.decay * w;
@@ -145,7 +140,6 @@ public class Weight {
     }
 
     private double updateWeightMHP(int index, double[] weights, double[] gradients) {
-
         if(Math.abs(gradients[index]) < ZERO_TOLERANCE) {
             return 0;
         } else if(gradients[index] > 0) {

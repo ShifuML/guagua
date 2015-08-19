@@ -15,9 +15,11 @@
  */
 package ml.shifu.guagua;
 
+import ml.shifu.guagua.master.GcMasterInterceptor;
 import ml.shifu.guagua.master.MasterTimer;
 import ml.shifu.guagua.master.MemoryStatsMasterInterceptor;
 import ml.shifu.guagua.master.NettyMasterCoordinator;
+import ml.shifu.guagua.worker.GcWorkerInterceptor;
 import ml.shifu.guagua.worker.MemoryStatsWorkerInterceptor;
 import ml.shifu.guagua.worker.NettyWorkerCoordinator;
 import ml.shifu.guagua.worker.WorkerTimer;
@@ -82,10 +84,12 @@ public final class GuaguaConstants {
 
     // using class get name to make sure if class or package changed, such default values will also be changed.
     public static final String GUAGUA_MASTER_DEFAULT_SYSTEM_INTERCEPTERS = MasterTimer.class.getName() + ","
-            + MemoryStatsMasterInterceptor.class.getName() + "," + NettyMasterCoordinator.class.getName();
+            + GcMasterInterceptor.class.getName() + "," + MemoryStatsMasterInterceptor.class.getName() + ","
+            + NettyMasterCoordinator.class.getName();
 
     public static final String GUAGUA_WORKER_DEFAULT_SYSTEM_INTERCEPTERS = WorkerTimer.class.getName() + ","
-            + MemoryStatsWorkerInterceptor.class.getName() + "," + NettyWorkerCoordinator.class.getName();
+            + GcWorkerInterceptor.class.getName() + "," + MemoryStatsWorkerInterceptor.class.getName() + ","
+            + NettyWorkerCoordinator.class.getName();
 
     public static final String GUAGUA_ZK_CLEANUP_ENABLE = "guagua.zk.cleanup.enable";
 
@@ -167,7 +171,8 @@ public final class GuaguaConstants {
 
     public static final String GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT = "guagua.zk.embedbed.isInClient";
 
-    public static final String GUAGUA_CHILD_DEFAULT_ZKSERVER_OPTS = "-Xms1G -Xmx1G -server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70";
+    public static final String GUAGUA_CHILD_DEFAULT_ZKSERVER_OPTS = "-Xms512m -Xmx512m -server -XX:+UseParNewGC "
+            + "-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70";
 
     public static final String GUAGUA_CHILD_ZKSERVER_OPTS = "guagua.child.zkserver.opts";
 

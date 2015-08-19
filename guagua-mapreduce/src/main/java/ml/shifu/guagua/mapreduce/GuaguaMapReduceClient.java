@@ -19,8 +19,10 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import ml.shifu.guagua.GuaguaConstants;
@@ -65,6 +67,12 @@ import org.slf4j.LoggerFactory;
  * client.addJob(args);
  * client.run();
  * </pre>
+ * 
+ * <p>
+ * WARNING: In one GuaguaMapReduceClient instance, {@link #addJob(String[])} to make sure job names are no duplicated.
+ * 
+ * <p>
+ * If one job is failed, it will be re-submitted again and try, if failed times over two, no re-try.
  */
 public class GuaguaMapReduceClient {
 
@@ -84,6 +92,16 @@ public class GuaguaMapReduceClient {
      */
     private JobControl jc;
 
+    private int jobIndex = 0;
+
+    private Map<String, Integer> jobIndexMap = new HashMap<String, Integer>();
+
+    private Map<Integer, Integer> jobRunningTimes = new HashMap<Integer, Integer>();
+
+    private Map<Integer, String[]> jobIndexParams = new HashMap<Integer, String[]>();
+
+    private Set<String> failedCheckingJobs = new HashSet<String>();
+
     /**
      * Default constructor. Construct default JobControl instance.
      */
@@ -95,7 +113,15 @@ public class GuaguaMapReduceClient {
      * Add new job to JobControl instance.
      */
     public synchronized void addJob(String[] args) throws IOException {
-        this.jc.addJob(new ControlledJob(createJob(args), null));
+        Job job = createJob(args);
+        this.jc.addJob(new ControlledJob(job, null));
+        if(this.jobIndexMap.containsKey(job.getJobName())) {
+            throw new IllegalStateException("Job name should be unique. please check name with: " + job.getJobName());
+        }
+        this.jobIndexMap.put(job.getJobName(), this.jobIndex);
+        this.jobIndexParams.put(this.jobIndex, args);
+        this.jobRunningTimes.put(this.jobIndex, 1);
+        this.jobIndex += 1;
     }
 
     /**
@@ -104,7 +130,7 @@ public class GuaguaMapReduceClient {
     public void run() throws IOException {
         // Initially, all jobs are in wait state.
         List<ControlledJob> jobsWithoutIds = this.jc.getWaitingJobList();
-        int totalMRJobs = jobsWithoutIds.size();
+        int totalNeededMRJobs = jobsWithoutIds.size();
         LOG.info("{} map-reduce job(s) waiting for submission.", jobsWithoutIds.size());
         Thread jcThread = new Thread(this.jc, "Guagua-MapReduce-JobControl");
         jcThread.start();
@@ -120,7 +146,7 @@ public class GuaguaMapReduceClient {
             } catch (InterruptedException ignore) {
                 Thread.currentThread().interrupt();
             }
-            List<ControlledJob> jobsAssignedIdInThisRun = new ArrayList<ControlledJob>(totalMRJobs);
+            List<ControlledJob> jobsAssignedIdInThisRun = new ArrayList<ControlledJob>(totalNeededMRJobs);
 
             for(ControlledJob job: jobsWithoutIds) {
                 if(job.getJob().getJobID() != null) {
@@ -140,7 +166,28 @@ public class GuaguaMapReduceClient {
                     sucessfulJobs.add(jobId);
                 }
             }
-            double prog = calculateProgress(jc, jobClient) / totalMRJobs;
+
+            List<ControlledJob> failedJobs = jc.getFailedJobList();
+            for(ControlledJob controlledJob: failedJobs) {
+                String failedJobId = controlledJob.getJob().getJobID().toString();
+                if(!this.failedCheckingJobs.contains(failedJobId)) {
+                    this.failedCheckingJobs.add(failedJobId);
+                    String jobName = controlledJob.getJob().getJobName();
+                    Integer jobIndex = this.jobIndexMap.get(jobName);
+                    Integer runTimes = this.jobRunningTimes.get(jobIndex);
+                    if(runTimes <= 1) {
+                        LOG.warn("Job {} is failed, will be submitted again.", jobName);
+                        Job newJob = createJob(this.jobIndexParams.get(jobIndex));
+                        this.jc.addJob(new ControlledJob(newJob, null));
+                        this.jobRunningTimes.put(jobIndex, runTimes + 1);
+                        this.jobIndexMap.put(newJob.getJobName(), jobIndex);
+                        jobsWithoutIds = this.jc.getWaitingJobList();
+                    } else {
+                        LOG.warn("Job {} is failed twice, will not be submitted again.", jobName);
+                    }
+                }
+            }
+            double prog = calculateProgress(jc, jobClient) / totalNeededMRJobs;
             notifyProgress(prog, lastProg);
             lastProg = prog;
 
@@ -157,11 +204,19 @@ public class GuaguaMapReduceClient {
         for(ControlledJob controlledJob: successfulJobs) {
             LOG.info("Job: {} ", controlledJob);
         }
-        if(totalMRJobs == successfulJobs.size()) {
+        if(totalNeededMRJobs == successfulJobs.size()) {
             LOG.info("Guagua jobs: 100% complete");
+            // add failed jobs to debug since all jobs are finished.
+            List<ControlledJob> failedJobs = jc.getFailedJobList();
+            if(failedJobs != null && failedJobs.size() > 0) {
+                LOG.info("Failed jobs:");
+                for(ControlledJob controlledJob: failedJobs) {
+                    LOG.debug("Job: {} ", controlledJob);
+                }
+            }
         } else {
             List<ControlledJob> failedJobs = jc.getFailedJobList();
-            if(failedJobs.size() > 0) {
+            if(failedJobs != null && failedJobs.size() > 0) {
                 LOG.info("Failed jobs:");
                 for(ControlledJob controlledJob: failedJobs) {
                     LOG.warn("Job: {} ", controlledJob);
