@@ -15,12 +15,14 @@
  */
 package ml.shifu.guagua.worker;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.GuaguaFileSplit;
+import ml.shifu.guagua.io.HaltBytable;
 
 /**
  * {@link WorkerContext} is a context to contain all useful info which can be used in worker computation.
@@ -103,6 +105,13 @@ public class WorkerContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
      * @since 0.4.1
      */
     private Object attachment;
+
+    /**
+     * Call back list
+     * 
+     * @since 0.8.1
+     */
+    private List<WorkerCompletionCallBack<MASTER_RESULT, WORKER_RESULT>> callBackList = new ArrayList<WorkerCompletionCallBack<MASTER_RESULT, WORKER_RESULT>>();
 
     public WorkerContext(int totalIteration, String appId, Properties props, String containerId,
             List<GuaguaFileSplit> fileSplits, String masterResultClassName, String workerResultClassName) {
@@ -189,11 +198,40 @@ public class WorkerContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
         return getCurrentIteration() == GuaguaConstants.GUAGUA_INIT_STEP;
     }
 
+    /**
+     * Add callback function. Be careful not add it in each iteration.
+     */
+    public void addCompletionCallBack(WorkerCompletionCallBack<MASTER_RESULT, WORKER_RESULT> callback) {
+        this.callBackList.add(callback);
+    }
+
+    /**
+     * @return the callBackList
+     */
+    public List<WorkerCompletionCallBack<MASTER_RESULT, WORKER_RESULT>> getCallBackList() {
+        return callBackList;
+    }
+
     @Override
     public String toString() {
         return String
                 .format("WorkerContext [currentIteration=%s, totalIteration=%s, lastMasterResult=%s, workerResult=%s, appId=%s, containerId=%s, fileSplits=%s, masterResultClassName=%s, workerResultClassName=%s]",
                         currentIteration, totalIteration, lastMasterResult, workerResult, appId, containerId,
                         fileSplits, masterResultClassName, workerResultClassName);
+    }
+
+    /**
+     * Define callback for completion of worker computation.
+     * 
+     * @author Zhang David (pengzhang@paypal.com)
+     */
+    public static interface WorkerCompletionCallBack<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
+
+        /**
+         * Callback function which will be called at the end of last iteration of worker computation. The last iteration
+         * is not the last maximal iteration, it may be some iteration at which computation is halt though
+         * {@link HaltBytable#isHalt}
+         */
+        void callback(WorkerContext<MASTER_RESULT, WORKER_RESULT> context);
     }
 }

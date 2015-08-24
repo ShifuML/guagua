@@ -41,6 +41,7 @@ import ml.shifu.guagua.util.NumberFormatUtils;
 import ml.shifu.guagua.util.Progressable;
 import ml.shifu.guagua.util.ReflectionUtils;
 import ml.shifu.guagua.util.StringUtils;
+import ml.shifu.guagua.worker.WorkerContext.WorkerCompletionCallBack;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -210,15 +211,31 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
 
         int firstIteration = context.getCurrentIteration() + 1;
         int iteration = context.getCurrentIteration();
-        while(iteration < getTotalIteration()) {
-            int currIter = iteration + 1;
-            context.setCurrentIteration(currIter);
-            iterate(context, firstIteration, progress);
-            iteration = context.getCurrentIteration();
-            // master says we should stop now.
-            MASTER_RESULT masterResult = context.getLastMasterResult();
-            if((masterResult instanceof HaltBytable) && ((HaltBytable) masterResult).isHalt()) {
-                break;
+        try {
+            while(iteration < getTotalIteration()) {
+                int currIter = iteration + 1;
+                context.setCurrentIteration(currIter);
+                iterate(context, firstIteration, progress);
+                iteration = context.getCurrentIteration();
+                // master says we should stop now.
+                MASTER_RESULT masterResult = context.getLastMasterResult();
+                if((masterResult instanceof HaltBytable) && ((HaltBytable) masterResult).isHalt()) {
+                    break;
+                }
+            }
+        } finally {
+            List<Exception> exceptionList = new ArrayList<Exception>();
+            for(WorkerCompletionCallBack<MASTER_RESULT, WORKER_RESULT> callBack: context.getCallBackList()) {
+                try {
+                    callBack.callback(context);
+                } catch (Exception e) {
+                    // make all call backs run through even exception and throw the first exception at last.
+                    LOG.error("Error in worker callbacks starting.", e);
+                    exceptionList.add(e);
+                }
+            }
+            if(exceptionList.size() > 0) {
+                throw new GuaguaRuntimeException(exceptionList.get(0));
             }
         }
     }

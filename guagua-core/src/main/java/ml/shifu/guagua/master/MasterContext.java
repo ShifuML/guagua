@@ -15,10 +15,13 @@
  */
 package ml.shifu.guagua.master;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.io.Bytable;
+import ml.shifu.guagua.io.HaltBytable;
 
 /**
  * {@link MasterContext} is a context object which contains all useful info used in master computation.
@@ -117,6 +120,13 @@ public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
      */
     private Object attachment;
 
+    /**
+     * Call back list
+     * 
+     * @since 0.8.1
+     */
+    private List<MasterCompletionCallBack<MASTER_RESULT, WORKER_RESULT>> callBackList = new ArrayList<MasterCompletionCallBack<MASTER_RESULT, WORKER_RESULT>>();
+
     public MasterContext(int totalIteration, int workers, Properties props, String appId, String containerId,
             String masterResultClassName, String workerResultClassName, double minWorkersRatio, long minWorkersTimeOut) {
         this.totalIteration = totalIteration;
@@ -212,12 +222,41 @@ public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
         return getCurrentIteration() == GuaguaConstants.GUAGUA_INIT_STEP;
     }
 
+    /**
+     * Add callback function. Be careful not add it in each iteration.
+     */
+    public void addCompletionCallBack(MasterCompletionCallBack<MASTER_RESULT, WORKER_RESULT> callback) {
+        this.callBackList.add(callback);
+    }
+
+    /**
+     * @return the callBackList
+     */
+    public List<MasterCompletionCallBack<MASTER_RESULT, WORKER_RESULT>> getCallBackList() {
+        return callBackList;
+    }
+
     @Override
     public String toString() {
         return String
                 .format("MasterContext [workerResults=%s, masterResult=%s, currentIteration=%s, totalIteration=%s, workers=%s, appId=%s, masterResultClassName=%s, workerResultClassName=%s, containerId=%s, minWorkersRatio=%s, minWorkersTimeOut=%s]",
                         workerResults, masterResult, currentIteration, totalIteration, workers, appId,
                         masterResultClassName, workerResultClassName, containerId, minWorkersRatio, minWorkersTimeOut);
+    }
+
+    /**
+     * Define callback for compeletion of master computation.
+     * 
+     * @author Zhang David (pengzhang@paypal.com)
+     */
+    public static interface MasterCompletionCallBack<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> {
+
+        /**
+         * Callback function which will be called at the end of last iteration of master computation. The last iteration
+         * is not the last maximal iteration, it may be some iteration at which computation is halt though
+         * {@link HaltBytable#isHalt}
+         */
+        void callback(MasterContext<MASTER_RESULT, WORKER_RESULT> context);
     }
 
 }

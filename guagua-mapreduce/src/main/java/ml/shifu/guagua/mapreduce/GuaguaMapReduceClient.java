@@ -304,7 +304,7 @@ public class GuaguaMapReduceClient {
         Configuration conf = new Configuration();
         // set it here to make it can be over-written. Set task timeout to a long period 20 minutes.
         conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT,
-                conf.getInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 1200000));
+                conf.getInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 1800000));
         GuaguaOptionsParser parser = new GuaguaOptionsParser(conf, args);
 
         // process a bug on hdp 2.2.4

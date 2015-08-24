@@ -36,6 +36,7 @@ import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.GuaguaFileSplit;
 import ml.shifu.guagua.io.HaltBytable;
 import ml.shifu.guagua.io.Serializer;
+import ml.shifu.guagua.master.MasterContext.MasterCompletionCallBack;
 import ml.shifu.guagua.util.NumberFormatUtils;
 import ml.shifu.guagua.util.Progressable;
 import ml.shifu.guagua.util.ReflectionUtils;
@@ -184,15 +185,31 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
     public void run(Progressable progress) {
         MasterContext<MASTER_RESULT, WORKER_RESULT> context = buildContext();
         int initialIteration = context.getCurrentIteration();
-        for(int i = initialIteration; i < getTotalIteration(); i++) {
-            int iteration = i + 1;
-            context.setCurrentIteration(iteration);
-            iterate(context, iteration, progress);
+        try {
+            for(int i = initialIteration; i < getTotalIteration(); i++) {
+                int iteration = i + 1;
+                context.setCurrentIteration(iteration);
+                iterate(context, iteration, progress);
 
-            // master says we should stop now.
-            MASTER_RESULT masterResult = context.getMasterResult();
-            if((masterResult instanceof HaltBytable) && ((HaltBytable) masterResult).isHalt()) {
-                break;
+                // master says we should stop now.
+                MASTER_RESULT masterResult = context.getMasterResult();
+                if((masterResult instanceof HaltBytable) && ((HaltBytable) masterResult).isHalt()) {
+                    break;
+                }
+            }
+        } finally {
+            List<Exception> exceptionList = new ArrayList<Exception>();
+            for(MasterCompletionCallBack<MASTER_RESULT, WORKER_RESULT> callBack: context.getCallBackList()) {
+                try {
+                    callBack.callback(context);
+                } catch (Exception e) {
+                    // make all call backs run through even exception and throw the first exception at last.
+                    LOG.error("Error in master callbacks starting.", e);
+                    exceptionList.add(e);
+                }
+            }
+            if(exceptionList.size() > 0) {
+                throw new GuaguaRuntimeException(exceptionList.get(0));
             }
         }
     }
@@ -344,8 +361,7 @@ public class GuaguaMasterService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                 GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_RATIO);
         this.setMinWorkersRatio(minWorkersRatio);
         long minWorkersTimeOut = NumberFormatUtils.getLong(
-                this.getProps().getProperty(GuaguaConstants.GUAGUA_MIN_WORKERS_TIMEOUT),
-                GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
+                this.getProps().getProperty(GuaguaConstants.GUAGUA_MIN_WORKERS_TIMEOUT), 5 * 1000l);
         this.setMinWorkersTimeOut(minWorkersTimeOut);
     }
 

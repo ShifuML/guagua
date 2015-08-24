@@ -37,9 +37,6 @@ import org.slf4j.LoggerFactory;
  * iteration logic.
  * 
  * <p>
- * TODO how to add the first iteration to computation.
- * 
- * <p>
  * TODO add multi-thread version to load data.
  * 
  * @param <MASTER_RESULT>
