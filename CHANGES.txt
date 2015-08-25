@@ -16,6 +16,15 @@
  
 Guagua Change Logs
 
+Changes for Guagua-0.7.2
+    * Add GC timer for each iteration.
+      https://github.com/ShifuML/guagua/issues/90
+    * Change Embeded zooKeeper default memory from 1G to 512M
+      https://github.com/ShifuML/guagua/issues/89
+    * Add completion call back for master and worker
+      https://github.com/ShifuML/guagua/issues/88
+    * Auto-retry for bagging failed job.
+      https://github.com/ShifuML/guagua/issues/77
 Changes for Guagua-0.7.1
     * Change license from eBay to PayPal
       https://github.com/ShifuML/guagua/issues/83
