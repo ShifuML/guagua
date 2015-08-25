@@ -59,7 +59,7 @@ public class GcWorkerInterceptor<MASTER_RESULT extends Bytable, WORKER_RESULT ex
 
     @Override
     public void preIteration(WorkerContext<MASTER_RESULT, WORKER_RESULT> context) {
-        this.iterGCStartTime = System.nanoTime();
+        this.iterGCStartTime = computeGCTime();
         LOG.info("Application {} container {} iteration {} starts master computation.", context.getAppId(),
                 context.getContainerId(), context.getCurrentIteration());
     }

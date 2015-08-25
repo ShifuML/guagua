@@ -205,4 +205,64 @@ public final class NumberFormatUtils {
         }
     }
 
+    /**
+     * Parse string object to float type.
+     * 
+     * @param str
+     *            string needed to be parsed
+     * @param defaultValue
+     *            default value
+     */
+    public static float getFloat(String str, float defaultValue) {
+        return getFloat(str, false, defaultValue);
+    }
+
+    /**
+     * Parse string object to float type. If invalid format, use 0 to replace.
+     * 
+     * @param str
+     *            string needed to be parsed
+     */
+    public static float getFloat(String str) {
+        return getFloat(str, false, 0.0f);
+    }
+
+    /**
+     * Parse string object to float type. If invalid format, use 0 to replace.
+     * 
+     * @param str
+     *            string needed to be parsed
+     * @param required
+     *            if required, should be parsed successfully without default value to replace
+     * @throws Exception
+     *             if invalid format with required set 'true'
+     */
+    public static float getFloat(String str, boolean required) {
+        return getFloat(str, required, 0.0f);
+    }
+
+    /**
+     * Parse string object to float type.
+     * 
+     * @param str
+     *            string needed to be parsed
+     * @param required
+     *            if required, should be parsed successfully without default value to replace; else use default value.
+     * @param defaultValue
+     *            default value
+     * @throws IllegalArgumentException
+     *             if invalid format with required set 'true'
+     */
+    public static float getFloat(String str, boolean required, float defaultValue) {
+        try {
+            return Float.valueOf(str);
+        } catch (Exception e) {
+            if(required) {
+                throw new IllegalArgumentException("Not a valid input", e);
+            } else {
+                return defaultValue;
+            }
+        }
+    }
+
 }

@@ -37,11 +37,6 @@
             <artifactId>hadoop-yarn-client</artifactId>
             <version>${hadoop.version}</version>
         </dependency>
- <!--        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-yarn-applications-unmanaged-am-launcher</artifactId>
-            <version>${hadoop.version}</version>
-        </dependency> -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
