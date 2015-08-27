@@ -207,8 +207,8 @@ public class BytableDiskList<T extends Bytable> implements AppendList<T> {
     }
 
     @Override
-    public long size() {
-        return this.count;
+    public int size() {
+        return (int)this.count;
     }
 
     /**

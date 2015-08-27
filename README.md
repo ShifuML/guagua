@@ -6,7 +6,7 @@ An iterative computing framework on both Hadoop MapReduce and Hadoop YARN.
 
 ## News
 
-Guagua 0.6.0 is released with a lot of improvements. Check our [changes] (https://github.com/ShifuML/guagua/blob/master/CHANGES.txt#L19) and our [issues](https://github.com/ShifuML/guagua/issues?q=milestone%3A0.7.0+is%3Aclosed) for details.
+Guagua 0.7.2 is released with a lot of improvements. Check our [changes] (https://github.com/ShifuML/guagua/blob/master/CHANGES.txt#L19) and our [issues](https://github.com/ShifuML/guagua/issues?q=milestone%3A0.7.2+is%3Aclosed) for details.
 
 ## Conference
 
@@ -31,4 +31,4 @@ Please join [Guagua group](https://groups.google.com/forum/#!forum/shifu-guagua)
 
 ## Copyright and License
 
-Copyright 2013-2014, PayPal Software Foundation under the [Apache License V2.0](LICENSE.txt).
+Copyright 2013-2015, PayPal Software Foundation under the [Apache License V2.0](LICENSE.txt).

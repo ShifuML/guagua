@@ -66,7 +66,7 @@ public interface AppendList<T> extends Iterable<T> {
     /**
      * Return size of this list.
      */
-    long size();
+    int size();
 
     /**
      * Clear all elements.

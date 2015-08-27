@@ -161,7 +161,7 @@ public final class GuaguaConstants {
 
     public static final int GUAGUA_NETTY_SEVER_DEFAULT_PORT = 44323;
 
-    public static final String GUAGUA_MASTER_WORKERESULTS_DEFAULT_MEMORY_FRACTION = "0.6";
+    public static final String GUAGUA_MASTER_WORKERESULTS_DEFAULT_MEMORY_FRACTION = "0.7";
 
     public static final String GUAGUA_MASTER_WORKERESULTS_MEMORY_FRACTION = "guagua.master.workeresults.memoryFraction";
 
@@ -179,4 +179,9 @@ public final class GuaguaConstants {
     public static final int GUAGUA_DEFAULT_CLEANUP_INTERVAL = 2;
 
     public static final String GUAGUA_CLEANUP_INTERVAL = "guagua.cleanup.interval";
+    
+    public static final String GUAGUA_MASTER_RESULT_MERGE_THRESHOLD = "guagua.master.result.merge.threshold";
+
+    public static final String GUAGUA_MASTER_RESULT_NONSPILL = "guagua.master.result.nonspill";
+
 }

@@ -209,7 +209,7 @@ public class GuaguaMapReduceClient {
             // add failed jobs to debug since all jobs are finished.
             List<ControlledJob> failedJobs = jc.getFailedJobList();
             if(failedJobs != null && failedJobs.size() > 0) {
-                LOG.info("Failed jobs:");
+                LOG.debug("Failed jobs:");
                 for(ControlledJob controlledJob: failedJobs) {
                     LOG.debug("Job: {} ", controlledJob);
                 }

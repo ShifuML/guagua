@@ -215,8 +215,8 @@ public class MemoryDiskList<T extends Serializable> implements AppendList<T> {
     }
 
     @Override
-    public long size() {
-        return this.count;
+    public int size() {
+        return (int)this.count;
     }
 
     /*
