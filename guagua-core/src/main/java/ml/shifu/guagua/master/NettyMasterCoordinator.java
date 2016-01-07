@@ -77,7 +77,7 @@ import org.slf4j.LoggerFactory;
  * A master coordinator to coordinate with workers through Netty server.
  * 
  * <p>
- * Master still updates results to Zookeeper znodes for fail-over. While workers sends results to master through Netty
+ * Master still updates results to ZooKeeper znodes for fail-over. While workers sends results to master through Netty
  * server connection.
  * 
  * <p>
@@ -152,6 +152,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             AppendList<WorkerResultWrapper> {
 
         public MergeWorkerResultList(int threshold) {
+            if(threshold <= 0) {
+                throw new IllegalArgumentException("Threshold cannot be <= 0.");
+            }
             this.threshold = threshold;
         }
 
@@ -172,14 +175,17 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         public synchronized boolean add(WorkerResultWrapper e) {
             this.rawSize += 1;
             if(e.isWorkerCombinable()) {
+                this.currIndex += 1;
                 if(this.currIndex == this.threshold - 1) {
-                    while(this.currIndex > 0) {
+                    while(this.currIndex > 1) {
                         e.combine(this.removeLast());
                         this.currIndex -= 1;
                     }
+                    if(currIndex != 1) {
+                        throw new IllegalStateException();
+                    }
                     return super.add(e);
                 } else {
-                    this.currIndex += 1;
                     return super.add(e);
                 }
             } else {
@@ -229,11 +235,19 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         initIterResults(props);
     }
 
+    private boolean isWorkerCombinable(String workerClassName) {
+        try {
+            return workerClassName != null && Combinable.class.isAssignableFrom(Class.forName(workerClassName));
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
     private void initIterResults(Properties props) {
         synchronized(LOCK) {
             boolean nonSpill = "true".equalsIgnoreCase(props.getProperty(GuaguaConstants.GUAGUA_MASTER_RESULT_NONSPILL,
                     "true"));
-            if(nonSpill) {
+            if(nonSpill && isWorkerCombinable(props.getProperty(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS))) {
                 int mergeThreshold = NumberFormatUtils.getInt(
                         props.getProperty(GuaguaConstants.GUAGUA_MASTER_RESULT_MERGE_THRESHOLD, "10"), 10);
                 this.iterResults = new MergeWorkerResultList(mergeThreshold);
@@ -532,35 +546,26 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                             context.getCurrentIteration(), doneWorkers, (context.getWorkers() - doneWorkers));
                 }
 
-                boolean isTerminated = false;
+                long timeOut = 0L;
                 if(context.isFirstIteration() || context.getCurrentIteration() == context.getTotalIteration()) {
-                    // in the first iteration or last iteration, make sure all workers loading data successfully, use
-                    // default 1.0 as worker ratio.
-                    isTerminated = isTerminated(doneWorkers, context.getWorkers(), context.getMinWorkersRatio(),
-                            GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
-                    if(isTerminated) {
-                        // update canUpdateWorkerResultsMap to false no accept other results
-                        synchronized(LOCK) {
-                            NettyMasterCoordinator.this.canUpdateWorkerResultMap = false;
-                        }
-                        LOG.info(
-                                "Iteration {}, master waiting is terminated by workers {} doneWorkers {} minWorkersRatio {} minWorkersTimeOut {}.",
-                                context.getCurrentIteration(), context.getWorkers(), doneWorkers,
-                                context.getMinWorkersRatio(), GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
-                    }
+                    // in the first iteration or last iteration, make sure all workers loading data successfully, set
+                    // timeout to 60s to wait for more workers to be finished.
+                    timeOut = GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT;
                 } else {
-                    isTerminated = isTerminated(doneWorkers, context.getWorkers(), context.getMinWorkersRatio(),
-                            context.getMinWorkersTimeOut());
-                    if(isTerminated) {
-                        // update canUpdateWorkerResultsMap to false no accept other results
-                        synchronized(LOCK) {
-                            NettyMasterCoordinator.this.canUpdateWorkerResultMap = false;
-                        }
-                        LOG.info(
-                                "Iteration {}, master waiting is terminated by workers {} doneWorkers {} minWorkersRatio {} minWorkersTimeOut {}.",
-                                context.getCurrentIteration(), context.getWorkers(), doneWorkers,
-                                context.getMinWorkersRatio(), context.getMinWorkersTimeOut());
+                    timeOut = context.getMinWorkersTimeOut();
+                }
+
+                boolean isTerminated = isTerminated(doneWorkers, context.getWorkers(), context.getMinWorkersRatio(),
+                        timeOut);
+                if(isTerminated) {
+                    // update canUpdateWorkerResultsMap to false no accept other results
+                    synchronized(LOCK) {
+                        NettyMasterCoordinator.this.canUpdateWorkerResultMap = false;
                     }
+                    LOG.info("Iteration {}, master waiting is terminated by workers {} doneWorkers {} "
+                            + "minWorkersRatio {} minWorkersTimeOut {}.", context.getCurrentIteration(),
+                            context.getWorkers(), doneWorkers, context.getMinWorkersRatio(),
+                            GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
                 }
                 return isTerminated;
             }
@@ -741,16 +746,15 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                                     doneWorkers = (int) NettyMasterCoordinator.this.iterResults.size();
                                 }
                                 if(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) > 120 * 1000L) {
-                                    LOG.info(
-                                            "unregister step, worker(s) compelted: {}, still {} workers are not unregistered, but time out to terminate.",
-                                            doneWorkers, (context.getWorkers() - doneWorkers));
+                                    LOG.info("unregister step, worker(s) compelted: {}, still {} workers are "
+                                            + "not unregistered, but time out to terminate.", doneWorkers,
+                                            (context.getWorkers() - doneWorkers));
                                     return true;
                                 }
                                 // to avoid log flood
                                 if(System.nanoTime() % 30 == 0) {
-                                    LOG.info(
-                                            "unregister step, worker(s) compelted: {}, still {} workers are not unregistered.",
-                                            doneWorkers, (context.getWorkers() - doneWorkers));
+                                    LOG.info("unregister step, worker(s) compelted: {}, still {} workers are "
+                                            + "not unregistered.", doneWorkers, (context.getWorkers() - doneWorkers));
                                 }
 
                                 // master should wait for all workers done in post application.
@@ -788,7 +792,10 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     }
 
     /**
-     * Wrapper worker result for using
+     * Wrapper worker result for master merging.
+     * 
+     * <p>
+     * {@link Combinable} is used to combine worker results when received.
      */
     private static class WorkerResultWrapper implements Bytable, Combinable<WorkerResultWrapper> {
 
@@ -811,7 +818,6 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
             } catch (ClassNotFoundException e) {
                 return false;
             }
-
         }
 
         @Override

@@ -343,12 +343,11 @@ public abstract class AbstractMasterCoordinator<MASTER_RESULT extends Bytable, W
      * Wait until it is the first bid, then it is elected as master.
      * 
      * <p>
-     * Since fail-over in hadop map-reduce tasks is very fast. Using multiple-master is not a good choice expecially
+     * Since fail-over in Hadoop map-reduce tasks is very fast. Using multiple-master is not a good choice especially
      * time out is too large.
      * 
      * <p>
      * Multiple masters are used in environment in which no fail-over.
-     * 
      */
     protected class MasterElectionCommand extends BasicCoordinatorCommand {
 

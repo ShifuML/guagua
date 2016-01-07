@@ -305,6 +305,8 @@ public class GuaguaMapReduceClient {
         // set it here to make it can be over-written. Set task timeout to a long period 20 minutes.
         conf.setInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT,
                 conf.getInt(GuaguaMapReduceConstants.MAPRED_TASK_TIMEOUT, 1800000));
+        conf.setInt(GuaguaMapReduceConstants.MAPREDUCE_TASK_TIMEOUT,
+                conf.getInt(GuaguaMapReduceConstants.MAPREDUCE_TASK_TIMEOUT, 1800000));
         GuaguaOptionsParser parser = new GuaguaOptionsParser(conf, args);
 
         // process a bug on hdp 2.2.4
@@ -380,8 +382,8 @@ public class GuaguaMapReduceClient {
                         inputFormatClassName.trim()), e);
             } catch (ClassCastException e) {
                 printUsage();
-                throw new IllegalArgumentException(
-                        "Mapreduce input format class set by 'inputformat' should extend 'org.apache.hadoop.mapreduce.InputFormat' class.");
+                throw new IllegalArgumentException("Mapreduce input format class set by 'inputformat' should extend "
+                        + "'org.apache.hadoop.mapreduce.InputFormat' class.");
             }
         }
         return inputFormatClass;
@@ -420,7 +422,8 @@ public class GuaguaMapReduceClient {
             } else {
                 printUsage();
                 throw new IllegalArgumentException(
-                        "Master result class name provided by '-mr' parameter should implement 'com.paypal.guagua.io.Bytable' or 'org.apache.hadoop.io.Writable'.");
+                        "Master result class name provided by '-mr' parameter should implement "
+                                + "'com.paypal.guagua.io.Bytable' or 'org.apache.hadoop.io.Writable'.");
             }
         }
 
@@ -449,7 +452,8 @@ public class GuaguaMapReduceClient {
             } else {
                 printUsage();
                 throw new IllegalArgumentException(
-                        "Worker result class name provided by '-wr' parameter should implement 'com.paypal.guagua.io.Bytable' or 'org.apache.hadoop.io.Writable'.");
+                        "Worker result class name provided by '-wr' parameter should implement "
+                                + "'com.paypal.guagua.io.Bytable' or 'org.apache.hadoop.io.Writable'.");
             }
         }
 

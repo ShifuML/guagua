@@ -39,7 +39,7 @@ import com.google.common.base.Splitter;
  * href=http://en.wikipedia.org/wiki/Logistic_regression >logistic regression</a> gradients.
  * 
  * <p>
- * At first iteration, wait for master to use the consistent initiating model.
+ * At first iteration, wait for master to use the consistent initiated model.
  * 
  * <p>
  * At other iterations, workers include:
@@ -94,7 +94,7 @@ public class LogisticRegressionWorker
         String tmpFolder = context.getProps().getProperty("guagua.data.tmpfolder", System.getProperty("user.dir"));
         this.dataList = new MemoryDiskList<Data>((long) (Runtime.getRuntime().maxMemory() * memoryFraction), tmpFolder
                 + File.separator + System.currentTimeMillis());
-        // cannot find a good place to close these two data set, using Shutdown hook
+        // cannot find a good place to close these two data set, using shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {

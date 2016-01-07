@@ -245,7 +245,7 @@ public class MasterContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
     }
 
     /**
-     * Define callback for compeletion of master computation.
+     * Define callback for completion of master computation.
      * 
      * @author Zhang David (pengzhang@paypal.com)
      */

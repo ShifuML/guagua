@@ -37,17 +37,17 @@ public class KMeansDataOutput extends BasicWorkerInterceptor<KMeansMasterParams,
 
     private static final Logger LOG = LoggerFactory.getLogger(KMeansDataOutput.class);
 
+    @SuppressWarnings("unchecked")
     @Override
     public void postApplication(WorkerContext<KMeansMasterParams, KMeansWorkerParams> context) {
         Path outFolder = new Path(context.getProps().getProperty(KMeansContants.KMEANS_DATA_OUTPUT,
                 "part-g-" + context.getContainerId()));
         String separator = context.getProps().getProperty(KMeansContants.KMEANS_DATA_SEPERATOR);
 
-        @SuppressWarnings("unchecked")
-        MemoryDiskList<TaggedRecord> dataList = (MemoryDiskList<TaggedRecord>) context.getAttachment();
-
+        MemoryDiskList<TaggedRecord> dataList = null;
         PrintWriter pw = null;
         try {
+            dataList = (MemoryDiskList<TaggedRecord>) context.getAttachment();
             FileSystem fileSystem = FileSystem.get(new Configuration());
             fileSystem.mkdirs(outFolder);
 
@@ -63,6 +63,9 @@ public class KMeansDataOutput extends BasicWorkerInterceptor<KMeansMasterParams,
             LOG.error("Error in writing output.", e);
         } finally {
             IOUtils.closeStream(pw);
+            if(dataList != null) {
+                dataList.close();
+            }
         }
     }
 

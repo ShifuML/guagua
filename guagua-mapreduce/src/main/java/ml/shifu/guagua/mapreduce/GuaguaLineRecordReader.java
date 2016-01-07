@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A reader read HDFS file line by line.
+ * A reader reads HDFS file line by line.
  * 
  * <p>
  * Copy some code from {@link org.apache.hadoop.mapred.LineRecordReader} but to support {@link GuaguaRecordReader}
