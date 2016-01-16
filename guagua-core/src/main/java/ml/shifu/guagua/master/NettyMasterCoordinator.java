@@ -284,6 +284,21 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
         // Fail over checking to check current iteration.
         new FailOverCommand(context).execute();
+        // if not init iteration, which means fail over from failed iteration, currentIteration is set in
+        // FailOverCommand; we need recover last master result for MasterComputable fail over.
+        if(!context.isInitIteration()) {
+            new BasicCoordinatorCommand() {
+                @Override
+                public void doExecute() throws KeeperException, InterruptedException {
+                    String appId = context.getAppId();
+                    int lastIteration = context.getCurrentIteration();
+                    final String appMasterNode = getCurrentMasterNode(appId, lastIteration).toString();
+                    final String appMasterSplitNode = getCurrentMasterSplitNode(appId, lastIteration).toString();
+                    // actually, this is last master result for fault recovery
+                    setMasterResult(context, appMasterNode, appMasterSplitNode);
+                }
+            }.execute();
+        }
 
         // Start master netty server
         startNettyServer(context.getProps());

@@ -321,6 +321,19 @@ public abstract class AbstractMasterCoordinator<MASTER_RESULT extends Bytable, W
         }
     }
 
+    protected void setMasterResult(final MasterContext<MASTER_RESULT, WORKER_RESULT> context,
+            final String appMasterNode, final String appMasterSplitNode) throws KeeperException, InterruptedException {
+        if(context.getCurrentIteration() == GuaguaConstants.GUAGUA_INIT_STEP) {
+            return;
+        }
+        byte[] data = getBytesFromZNode(appMasterNode, appMasterSplitNode);
+        if(data != null && data.length > 0) {
+            MASTER_RESULT lastMasterResult = getMasterSerializer().bytesToObject(data,
+                    context.getMasterResultClassName());
+            context.setMasterResult(lastMasterResult);
+        }
+    }
+
     /**
      * Check whether all workers are halted.
      */
