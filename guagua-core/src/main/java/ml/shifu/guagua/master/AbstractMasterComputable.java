@@ -39,7 +39,20 @@ public abstract class AbstractMasterComputable<MASTER_RESULT extends Bytable, WO
     }
 
     /**
-     * Initialization logic.
+     * Initialization logic. This is used to initialize some useful fields like config parameters. And another important
+     * feature can be done here: If state in {@link MasterComputable}, for fail-over, the state should also be recoverd.
+     * To do that, like this in this method:
+     * 
+     * <pre>
+     * if (!context.isFirstIteration) { // not first iteration means we need recover state
+     *     lastMasterResult = context.getMasterResult();
+     *     if ( lasterMasterResult != null ) {
+     *         this.weights = lastMasterResult.getWeights()
+     *     } else {
+     *         this.weights = initWeights();
+     *     }
+     * }
+     * </pre>
      */
     public abstract void init(MasterContext<MASTER_RESULT, WORKER_RESULT> context);
 

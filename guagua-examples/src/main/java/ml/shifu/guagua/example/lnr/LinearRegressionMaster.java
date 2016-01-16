@@ -18,7 +18,7 @@ package ml.shifu.guagua.example.lnr;
 import java.util.Arrays;
 import java.util.Random;
 
-import ml.shifu.guagua.master.MasterComputable;
+import ml.shifu.guagua.master.AbstractMasterComputable;
 import ml.shifu.guagua.master.MasterContext;
 import ml.shifu.guagua.util.NumberFormatUtils;
 
@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * <li>3. Send new global model to workers by returning model parameters.</li>
  * </ul>
  */
-public class LinearRegressionMaster implements MasterComputable<LinearRegressionParams, LinearRegressionParams> {
+public class LinearRegressionMaster extends AbstractMasterComputable<LinearRegressionParams, LinearRegressionParams> {
 
     private static final Logger LOG = LoggerFactory.getLogger(LinearRegressionMaster.class);
 
@@ -52,21 +52,30 @@ public class LinearRegressionMaster implements MasterComputable<LinearRegression
 
     private double learnRate;
 
-    private void init(MasterContext<LinearRegressionParams, LinearRegressionParams> context) {
+    @Override
+    public void init(MasterContext<LinearRegressionParams, LinearRegressionParams> context) {
         this.inputNum = NumberFormatUtils.getInt(LinearRegressionContants.LR_INPUT_NUM,
                 LinearRegressionContants.LR_INPUT_DEFAULT_NUM);
         this.learnRate = NumberFormatUtils.getDouble(LinearRegressionContants.LR_LEARNING_RATE,
                 LinearRegressionContants.LR_LEARNING_DEFAULT_RATE);
+
+        // not initialized and not first iteration, should be fault tolerence, recover state in LogisticRegressionMaster
+        if(!context.isFirstIteration()) {
+            LinearRegressionParams lastMasterResult = context.getMasterResult();
+            if(lastMasterResult != null && lastMasterResult.getParameters() != null) {
+                // recover state in current master computable and return to workers
+                this.weights = lastMasterResult.getParameters();
+            } else {
+                // no weights, restarted from the very beginning, this may not happen
+                initWeights();
+            }
+        }
     }
 
     @Override
-    public LinearRegressionParams compute(MasterContext<LinearRegressionParams, LinearRegressionParams> context) {
+    public LinearRegressionParams doCompute(MasterContext<LinearRegressionParams, LinearRegressionParams> context) {
         if(context.isFirstIteration()) {
-            init(context);
-            weights = new double[this.inputNum + 1];
-            for(int i = 0; i < weights.length; i++) {
-                weights[i] = RANDOM.nextDouble();
-            }
+            initWeights();
         } else {
             double[] gradients = new double[this.inputNum + 1];
             double sumError = 0.0d;
@@ -87,6 +96,16 @@ public class LinearRegressionMaster implements MasterComputable<LinearRegression
             LOG.info("Iteration {} with error {}", context.getCurrentIteration(), sumError / size);
         }
         return new LinearRegressionParams(weights);
+    }
+
+    /**
+     * 
+     */
+    private void initWeights() {
+        weights = new double[this.inputNum + 1];
+        for(int i = 0; i < weights.length; i++) {
+            weights[i] = RANDOM.nextDouble();
+        }
     }
 
 }
