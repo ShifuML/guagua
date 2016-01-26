@@ -221,7 +221,14 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
+            LOG.error("error in client handler", e.getCause());
             e.getChannel().close();
+            Throwable cause = e.getCause();
+            if(cause != null && cause instanceof GuaguaRuntimeException) {
+                throw (GuaguaRuntimeException) cause;
+            } else {
+                throw new GuaguaRuntimeException(e.getCause());
+            }
         }
 
         @Override
@@ -361,7 +368,7 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         workerMessage.setCurrentIteration(context.getCurrentIteration());
                         workerMessage.setContainerId(context.getContainerId());
                         workerMessage.setStopMessage(false);
-                        LOG.debug("Message:{}", workerMessage);
+                        LOG.info("Message:{}", workerMessage);
                         NettyWorkerCoordinator.this.clientChannel.write(workerMessage);
 
                         final long start = System.nanoTime();

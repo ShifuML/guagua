@@ -399,8 +399,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         this.messageServerPort = NumberFormatUtils.getInt(props.getProperty(GuaguaConstants.GUAGUA_NETTY_SEVER_PORT),
                 GuaguaConstants.GUAGUA_NETTY_SEVER_DEFAULT_PORT);
         this.messageServerPort = NetworkUtils.getValidServerPort(this.messageServerPort);
-        this.messageServer = new ServerBootstrap(new NioServerSocketChannelFactory(
-                Executors.newFixedThreadPool(GuaguaConstants.GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT),
+        this.messageServer = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newFixedThreadPool(
+                GuaguaConstants.GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT, new MasterThreadFactory()),
                 Executors.newCachedThreadPool(new MasterThreadFactory())));
 
         // Set up the pipeline factory.
@@ -531,7 +531,14 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
+            LOG.error("error in service handler", e.getCause());
             e.getChannel().close();
+            Throwable cause = e.getCause();
+            if(cause != null && cause instanceof GuaguaRuntimeException) {
+                throw (GuaguaRuntimeException) cause;
+            } else {
+                throw new GuaguaRuntimeException(e.getCause());
+            }
         }
     }
 
