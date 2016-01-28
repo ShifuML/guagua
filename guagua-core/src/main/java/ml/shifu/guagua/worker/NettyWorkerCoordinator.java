@@ -368,7 +368,7 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         workerMessage.setCurrentIteration(context.getCurrentIteration());
                         workerMessage.setContainerId(context.getContainerId());
                         workerMessage.setStopMessage(false);
-                        LOG.info("Message:{}", workerMessage);
+                        LOG.debug("Message:{}", workerMessage);
                         NettyWorkerCoordinator.this.clientChannel.write(workerMessage);
 
                         final long start = System.nanoTime();
