@@ -10,7 +10,7 @@ Guagua 0.7.2 is released with a lot of improvements. Check our [changes] (https:
 
 ## Conference
 
-[QCON Shanghai 2015](http://2015.qconshanghai.com/presentation/2827) [Slides](http://www.slideshare.net/pengshanzhang/large-scale-machine-learning-at-pay-pal-risk)
+[QCON Shanghai 2014](http://2014.qconshanghai.com/node/474) [Slides](http://www.slideshare.net/pengshanzhang/guagua-an-iterative-computing-framework-on-hadoop)
 
 ## Getting Started
 
