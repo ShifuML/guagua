@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ml.shifu</groupId>
     <artifactId>guagua</artifactId>
-    <version>0.8.0-SNAPSHOT</version>
+    <version>0.7.3</version>
     <packaging>pom</packaging>
     <name>Guagua</name>
     <description>An iterative computing framework on both Hadoop MapReduce and Hadoop YARN.</description>
@@ -29,7 +29,7 @@
     </scm>
     <properties>
         <jdk.version>1.6</jdk.version>
-        <guagua.version>0.8.0-SNAPSHOT</guagua.version>
+        <guagua.version>0.7.3</guagua.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
     </properties>
