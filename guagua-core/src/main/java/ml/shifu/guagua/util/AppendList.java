@@ -19,7 +19,7 @@ package ml.shifu.guagua.util;
  * Appendable list interface definition.
  * 
  * <p>
- * Two states are in this list. State {@link State#WRITE} when instance created, then element can be append to tail.
+ * Two states are in this list. State {@link State#WRITE} when instance created, then element can be appended to tail.
  * After all elements are appended, switch state to {@link State#READ}. When state is {@link State#READ}, data cannot be
  * appended, only can be iterative.
  * 
@@ -66,7 +66,7 @@ public interface AppendList<T> extends Iterable<T> {
     /**
      * Return size of this list.
      */
-    long size();
+    int size();
 
     /**
      * Clear all elements.

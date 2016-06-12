@@ -69,15 +69,23 @@ public class NettyBytableEncoder extends ObjectEncoder {
         if(!(msg instanceof Bytable)) {
             throw new IllegalStateException("Only Bytable message can be encoded.");
         }
-        ChannelBufferOutputStream bout = new ChannelBufferOutputStream(dynamicBuffer(estimatedLength, ctx.getChannel()
-                .getConfig().getBufferFactory()));
-        bout.write(LENGTH_PLACEHOLDER);
-        byte[] classNameBytes = msg.getClass().getName().getBytes("UTF-8");
-        bout.writeInt(classNameBytes.length);
-        bout.write(classNameBytes);
-        bout.write(this.serializer.objectToBytes((Bytable) msg));
-        ChannelBuffer encoded = bout.buffer();
-        encoded.setInt(0, encoded.writerIndex() - 4);
+        ChannelBufferOutputStream bout = null;
+        ChannelBuffer encoded;
+        try {
+            bout = new ChannelBufferOutputStream(
+                    dynamicBuffer(estimatedLength, ctx.getChannel().getConfig().getBufferFactory()));
+            bout.write(LENGTH_PLACEHOLDER);
+            byte[] classNameBytes = msg.getClass().getName().getBytes("UTF-8");
+            bout.writeInt(classNameBytes.length);
+            bout.write(classNameBytes);
+            bout.write(this.serializer.objectToBytes((Bytable) msg));
+            encoded = bout.buffer();
+            encoded.setInt(0, encoded.writerIndex() - 4);
+        } finally {
+            if(bout != null) {
+                bout.close();
+            }
+        }
         return encoded;
     }
 }

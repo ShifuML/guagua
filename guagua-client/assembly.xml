@@ -89,7 +89,6 @@
         <dependencySet>
             <outputDirectory>mapreduce-lib</outputDirectory>
             <includes>
-                <include>*:guagua-mapreduce-examples:*</include>
                 <include>*:guagua-examples:*</include>
             </includes>
             <excludes>
@@ -100,7 +99,6 @@
             <outputDirectory>yarn-lib</outputDirectory>
             <includes>
                 <include>*:guagua-yarn:*</include>
-                <include>*:guagua-yarn-examples:*</include>
                 <include>*:guagua-examples:*</include>
                 <include>*:gson*:*</include>
             </includes>

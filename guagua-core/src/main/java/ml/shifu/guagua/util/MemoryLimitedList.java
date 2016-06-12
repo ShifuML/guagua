@@ -134,8 +134,8 @@ public class MemoryLimitedList<T> implements AppendList<T> {
      * @see ml.shifu.guagua.util.AppendList#size()
      */
     @Override
-    public long size() {
-        return this.count;
+    public int size() {
+        return (int) this.count;
     }
 
     /*

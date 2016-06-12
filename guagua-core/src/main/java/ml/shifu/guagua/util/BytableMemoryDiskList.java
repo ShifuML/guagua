@@ -21,6 +21,9 @@ import java.util.List;
 
 import ml.shifu.guagua.io.Bytable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A list to store {@link Bytable} data firstly into memory then into disk if over threshold.
  * 
@@ -62,6 +65,11 @@ public class BytableMemoryDiskList<T extends Bytable> implements AppendList<T> {
      * Number of elements in this list
      */
     private long count;
+
+    /**
+     * How many records located into memory
+     */
+    private long memoryCount = 0L;
 
     /**
      * Internal current state
@@ -131,19 +139,27 @@ public class BytableMemoryDiskList<T extends Bytable> implements AppendList<T> {
         this.diskList = new BytableDiskList<T>(System.currentTimeMillis() + "", className);
     }
 
+    private static final Logger LOG = LoggerFactory.getLogger(BytableMemoryDiskList.class);
+
     @Override
     public boolean append(T t) {
-        if(this.state != State.WRITE) {
-            throw new IllegalStateException();
-        }
-        this.count += 1;
-        long current = SizeEstimator.estimate(t);
-        if(byteSize + current > maxByteSize) {
-            this.byteSize += current;
-            return this.diskList.append(t);
-        } else {
-            this.byteSize += current;
-            return this.delegationList.add(t);
+        try {
+            if(this.state != State.WRITE) {
+                throw new IllegalStateException();
+            }
+            this.count += 1;
+            long current = SizeEstimator.estimate(t);
+            if(this.byteSize + current > this.maxByteSize) {
+                this.byteSize += current;
+                return this.diskList.append(t);
+            } else {
+                this.memoryCount += 1;
+                this.byteSize += current;
+                return this.delegationList.add(t);
+            }
+        } catch (Throwable e) {
+            LOG.error("append error", e);
+            return false;
         }
     }
 
@@ -219,8 +235,8 @@ public class BytableMemoryDiskList<T extends Bytable> implements AppendList<T> {
     }
 
     @Override
-    public long size() {
-        return this.count;
+    public int size() {
+        return (int) this.count;
     }
 
     /*
@@ -232,6 +248,20 @@ public class BytableMemoryDiskList<T extends Bytable> implements AppendList<T> {
     public void clear() {
         this.delegationList.clear();
         this.diskList.clear();
+    }
+
+    /**
+     * @return the memoryCount
+     */
+    public long getMemoryCount() {
+        return this.memoryCount;
+    }
+
+    /**
+     * @return the diskCount
+     */
+    public long getDiskCount() {
+        return this.count - this.memoryCount;
     }
 
 }

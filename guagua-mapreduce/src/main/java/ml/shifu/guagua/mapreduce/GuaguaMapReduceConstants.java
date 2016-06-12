@@ -34,6 +34,8 @@ public final class GuaguaMapReduceConstants {
 
     public static final String MAPRED_TASK_TIMEOUT = "mapred.task.timeout";
 
+    public static final String MAPREDUCE_TASK_TIMEOUT = "mapreduce.task.timeout";
+
     public static final String MAPRED_MAP_MAX_ATTEMPTS = "mapred.map.max.attempts";
 
     public static final String MAPRED_REDUCE_TASKS_SPECULATIVE_EXECUTION = "mapred.reduce.tasks.speculative.execution";
@@ -66,7 +68,8 @@ public final class GuaguaMapReduceConstants {
 
     public static final String MAPRED_CHILD_JAVA_OPTS = "mapred.child.java.opts";
 
-    public static final String MAPRED_DEFAULT_CHILD_JAVA_OPTS = "-server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70";
+    public static final String MAPRED_DEFAULT_CHILD_JAVA_OPTS = "-server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC "
+            + "-XX:CMSInitiatingOccupancyFraction=70";
 
     public static final String GUAGUA_PROGRESS_COUNTER_GROUP_NAME = "guagua";
 

@@ -18,7 +18,7 @@ package ml.shifu.guagua.example.lr;
 import java.util.Arrays;
 import java.util.Random;
 
-import ml.shifu.guagua.master.MasterComputable;
+import ml.shifu.guagua.master.AbstractMasterComputable;
 import ml.shifu.guagua.master.MasterContext;
 import ml.shifu.guagua.util.NumberFormatUtils;
 
@@ -43,7 +43,8 @@ import org.slf4j.LoggerFactory;
  */
 // FIXME miss one parameter: size, the formula should be weights[i] -= learnRate * (1/size) * gradients[i]; pass from
 // workers
-public class LogisticRegressionMaster implements MasterComputable<LogisticRegressionParams, LogisticRegressionParams> {
+public class LogisticRegressionMaster extends
+        AbstractMasterComputable<LogisticRegressionParams, LogisticRegressionParams> {
 
     private static final Logger LOG = LoggerFactory.getLogger(LogisticRegressionMaster.class);
 
@@ -55,21 +56,28 @@ public class LogisticRegressionMaster implements MasterComputable<LogisticRegres
 
     private double learnRate;
 
-    private void init(MasterContext<LogisticRegressionParams, LogisticRegressionParams> context) {
+    @Override
+    public void init(MasterContext<LogisticRegressionParams, LogisticRegressionParams> context) {
         this.inputNum = NumberFormatUtils.getInt(LogisticRegressionContants.LR_INPUT_NUM,
                 LogisticRegressionContants.LR_INPUT_DEFAULT_NUM);
         this.learnRate = NumberFormatUtils.getDouble(LogisticRegressionContants.LR_LEARNING_RATE,
                 LogisticRegressionContants.LR_LEARNING_DEFAULT_RATE);
+
+        // if not first iteration, means this is fail-over and should be recovered for state in master.
+        if(!context.isFirstIteration()) {
+            LogisticRegressionParams masterResult = context.getMasterResult();
+            if(masterResult != null && masterResult.getParameters() != null) {
+                this.weights = masterResult.getParameters();
+            } else {
+                initWeights();
+            }
+        }
     }
 
     @Override
-    public LogisticRegressionParams compute(MasterContext<LogisticRegressionParams, LogisticRegressionParams> context) {
+    public LogisticRegressionParams doCompute(MasterContext<LogisticRegressionParams, LogisticRegressionParams> context) {
         if(context.isFirstIteration()) {
-            init(context);
-            weights = new double[this.inputNum + 1];
-            for(int i = 0; i < weights.length; i++) {
-                weights[i] = RANDOM.nextDouble();
-            }
+            initWeights();
         } else {
             double[] gradients = new double[this.inputNum + 1];
             double sumError = 0.0d;
@@ -90,6 +98,13 @@ public class LogisticRegressionMaster implements MasterComputable<LogisticRegres
             LOG.info("Iteration {} with error {}", context.getCurrentIteration(), sumError / size);
         }
         return new LogisticRegressionParams(weights);
+    }
+
+    private void initWeights() {
+        weights = new double[this.inputNum + 1];
+        for(int i = 0; i < weights.length; i++) {
+            weights[i] = RANDOM.nextDouble();
+        }
     }
 
 }

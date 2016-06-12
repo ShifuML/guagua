@@ -518,8 +518,12 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
          * minWorkersRatio))} workers completed.
          */
         protected boolean isTerminated(int workersCompleted, int workers, double minWorkersRatio, long minWorkersTimeout) {
+            if(workers <= 10) {
+                minWorkersRatio = 1d;
+            }
             LOG.debug("DEBUG: workersCompleted={}, workers={}, minWorkersRatio={}, minWorkersTimeout={}",
                     workersCompleted, workers, minWorkersRatio, minWorkersTimeout);
+
             return workers == workersCompleted
                     || (getElapsedTime() >= minWorkersTimeout && workersCompleted >= (int) (workers * minWorkersRatio));
         }
