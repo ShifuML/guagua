@@ -426,7 +426,7 @@ public final class ZooKeeperUtils {
             LOG.info("run: Shutdown hook started.");
             synchronized(this) {
                 if(process != null) {
-                    LOG.warn("onlineZooKeeperServers: " + "Forced a shutdown hook kill of the " + "ZooKeeper process.");
+                    LOG.warn("onlineZooKeeperServers: Forced a shutdown hook kill of the ZooKeeper process.");
                     process.destroy();
                     int exitCode = -1;
                     try {
