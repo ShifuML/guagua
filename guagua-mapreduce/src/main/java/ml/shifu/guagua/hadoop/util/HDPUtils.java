@@ -54,7 +54,7 @@ public class HDPUtils {
      */
     public static String getHdpVersionForHDP224() {
         String hdfsJarWithVersion = findContainingJar(DistributedFileSystem.class);
-        String hdpVersion = "";
+        StringBuilder hdpVersion = new StringBuilder(20);
         if(hdfsJarWithVersion != null) {
             if(hdfsJarWithVersion.contains(File.separator)) {
                 hdfsJarWithVersion = hdfsJarWithVersion.substring(hdfsJarWithVersion.lastIndexOf(File.separator) + 1);
@@ -65,14 +65,14 @@ public class HDPUtils {
             if(splits.length > 2) {
                 for(int i = 3; i < splits.length; i++) {
                     if(i == splits.length - 1) {
-                        hdpVersion += splits[i];
+                        hdpVersion.append(splits[i]);
                     } else {
-                        hdpVersion += splits[i] + ".";
+                        hdpVersion.append(splits[i]).append(".");
                     }
                 }
             }
         }
-        return hdpVersion;
+        return hdpVersion.toString();
     }
 
     /**
