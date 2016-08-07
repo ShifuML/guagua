@@ -95,7 +95,7 @@ public abstract class AbstractWorkerCoordinator<MASTER_RESULT extends Bytable, W
         if(context.getCurrentIteration() == GuaguaConstants.GUAGUA_INIT_STEP) {
             return;
         }
-        byte[] data = getBytesFromZNode(appMasterNode, appMasterSplitNode);
+        byte[] data = getBytesFromZNode(appMasterNode, appMasterSplitNode);        LOG.info("Master result size is {}", data.length);
         if(data != null && data.length > 0) {
             MASTER_RESULT lastMasterResult = getMasterSerializer().bytesToObject(data,
                     context.getMasterResultClassName());

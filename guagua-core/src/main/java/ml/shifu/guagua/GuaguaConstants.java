@@ -183,5 +183,7 @@ public final class GuaguaConstants {
     public static final String GUAGUA_MASTER_RESULT_MERGE_THRESHOLD = "guagua.master.result.merge.threshold";
 
     public static final String GUAGUA_MASTER_RESULT_NONSPILL = "guagua.master.result.nonspill";
+    
+    public static final String GUAGUA_UNREGISTER_MASTER_TIMEROUT = "guagua.unregister.master.timerout";
 
 }
