@@ -216,7 +216,8 @@ public class GuaguaMapReduceClient {
         }
 
         List<ControlledJob> successfulJobs = jc.getSuccessfulJobList();
-
+        List<ControlledJob> failedJobs = jc.getFailedJobList();
+        LOG.debug("success {}; failed {}; total needed {}", successfulJobs.size(), failedJobs.size(), totalNeededMRJobs);
         for(ControlledJob controlledJob: successfulJobs) {
             LOG.info("Sucessful job:");
             LOG.info("Job: {} ", controlledJob);
@@ -224,7 +225,7 @@ public class GuaguaMapReduceClient {
         if(totalNeededMRJobs == successfulJobs.size()) {
             LOG.info("Guagua jobs: 100% complete");
             // add failed jobs to debug since all jobs are finished.
-            List<ControlledJob> failedJobs = jc.getFailedJobList();
+            failedJobs = jc.getFailedJobList();
             if(failedJobs != null && failedJobs.size() > 0) {
                 for(ControlledJob controlledJob: failedJobs) {
                     Counters counters = controlledJob.getJob().getCounters();
@@ -244,7 +245,7 @@ public class GuaguaMapReduceClient {
                 }
             }
         } else {
-            List<ControlledJob> failedJobs = jc.getFailedJobList();
+            failedJobs = jc.getFailedJobList();
             if(failedJobs != null && failedJobs.size() > 0) {
                 for(ControlledJob controlledJob: failedJobs) {
                     Counters counters = controlledJob.getJob().getCounters();
