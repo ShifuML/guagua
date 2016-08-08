@@ -760,10 +760,10 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                             context.getProps().getProperty(GuaguaConstants.GUAGUA_ZK_CLEANUP_ENABLE),
                             GuaguaConstants.GUAGUA_ZK_DEFAULT_CLEANUP_VALUE);
 
-                    // master unregister timeout in second
+                    // master unregister timeout in second, by default 200s
                     final int masterUnregisterTimeout = NumberFormatUtils.getInt(context.getProps().getProperty(
-                            GuaguaConstants.GUAGUA_UNREGISTER_MASTER_TIMEROUT, "300"));
-                    LOG.info("guagua mster un register timeout is {}", masterUnregisterTimeout);
+                            GuaguaConstants.GUAGUA_UNREGISTER_MASTER_TIMEROUT, "200000"));
+                    LOG.info("guagua master un register timeout is {}", masterUnregisterTimeout);
                     final long start = System.nanoTime();
                     if(Boolean.TRUE.toString().equalsIgnoreCase(zkCleanUpEnabled)) {
                         new RetryCoordinatorCommand(isFixedTime(), getSleepTime()) {
@@ -774,7 +774,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                                     // long to int is assumed successful as no such many workers need using long
                                     doneWorkers = (int) NettyMasterCoordinator.this.iterResults.size();
                                 }
-                                if(TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - start) > masterUnregisterTimeout) {
+                                if(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) > masterUnregisterTimeout) {
                                     LOG.info("unregister step, worker(s) compelted: {}, still {} workers are "
                                             + "not unregistered, but time out to terminate.", doneWorkers,
                                             (context.getWorkers() - doneWorkers));
