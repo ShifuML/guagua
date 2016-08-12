@@ -79,7 +79,6 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
     protected void setup(Context context) throws java.io.IOException, InterruptedException {
         GuaguaInputSplit inputSplit = (GuaguaInputSplit) context.getInputSplit();
         this.setMaster(inputSplit.isMaster());
-
         if(this.isMaster()) {
             context.setStatus("Master initializing ...");
             this.setGuaguaService(new GuaguaMasterService<MASTER_RESULT, WORKER_RESULT>());
@@ -88,8 +87,13 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
             this.setGuaguaService(new GuaguaWorkerService<MASTER_RESULT, WORKER_RESULT>());
 
             List<GuaguaFileSplit> splits = new LinkedList<GuaguaFileSplit>();
-            for(FileSplit fs: inputSplit.getFileSplits()) {
-                splits.add(new GuaguaFileSplit(fs.getPath().toString(), fs.getStart(), fs.getLength()));
+            for(int i = 0; i < inputSplit.getFileSplits().length; i++) {
+                FileSplit fs = inputSplit.getFileSplits()[i];
+                GuaguaFileSplit gfs = new GuaguaFileSplit(fs.getPath().toString(), fs.getStart(), fs.getLength());
+                if(inputSplit.getExtensions()!=null&&i<inputSplit.getExtensions().length){
+                    gfs.setExtension(inputSplit.getExtensions()[i]);
+                }
+                splits.add(gfs);
             }
             this.getGuaguaService().setSplits(splits);
         }
