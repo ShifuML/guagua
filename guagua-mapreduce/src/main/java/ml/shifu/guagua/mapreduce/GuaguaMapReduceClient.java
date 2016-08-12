@@ -44,6 +44,8 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.jobcontrol.ControlledJob;
@@ -170,6 +172,21 @@ public class GuaguaMapReduceClient {
             List<ControlledJob> failedJobs = jc.getFailedJobList();
             for(ControlledJob controlledJob: failedJobs) {
                 String failedJobId = controlledJob.getJob().getJobID().toString();
+                Counters counters = controlledJob.getJob().getCounters();
+                if(counters != null) {
+                    // sleep 1s to make sure job state is finalized
+                    try {
+                        Thread.sleep(1 * 1000L);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    Counter doneCounter = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
+                            GuaguaMapReduceConstants.DONE_WORKERS);
+                    if(doneCounter != null && doneCounter.getValue() > 0) {
+                        LOG.info("Job {} is successful with done workers {}", failedJobId, doneCounter.getValue());
+                        continue;
+                    }
+                }
                 if(!this.failedCheckingJobs.contains(failedJobId)) {
                     this.failedCheckingJobs.add(failedJobId);
                     String jobName = controlledJob.getJob().getJobName();
@@ -199,31 +216,67 @@ public class GuaguaMapReduceClient {
         }
 
         List<ControlledJob> successfulJobs = jc.getSuccessfulJobList();
-
-        LOG.info("Sucessful jobs:");
+        List<ControlledJob> failedJobs = jc.getFailedJobList();
+        LOG.debug("success {}; failed {}; total needed {}", successfulJobs.size(), failedJobs.size(), totalNeededMRJobs);
         for(ControlledJob controlledJob: successfulJobs) {
+            LOG.info("Sucessful job:");
             LOG.info("Job: {} ", controlledJob);
         }
         if(totalNeededMRJobs == successfulJobs.size()) {
             LOG.info("Guagua jobs: 100% complete");
             // add failed jobs to debug since all jobs are finished.
-            List<ControlledJob> failedJobs = jc.getFailedJobList();
+            failedJobs = jc.getFailedJobList();
             if(failedJobs != null && failedJobs.size() > 0) {
-                LOG.debug("Failed jobs:");
                 for(ControlledJob controlledJob: failedJobs) {
-                    LOG.debug("Job: {} ", controlledJob);
+                    Counters counters = controlledJob.getJob().getCounters();
+                    if(counters != null) {
+                        Counter doneWorkers = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
+                                GuaguaMapReduceConstants.DONE_WORKERS);
+                        // LOG.debug("Job {} is successful with doneworkers {}", controlledJob.getJob().getJobID()
+                        // .toString(), doneWorkers.getValue());
+                        if(doneWorkers != null && doneWorkers.getValue() > 0) {
+                            LOG.info("Successful job although failed state (job is treated as successful):");
+                            LOG.warn("Job: {} ", toFakedStateString(controlledJob));
+                        } else {
+                            LOG.info("Failed job:");
+                            LOG.warn("Job: {} ", controlledJob);
+                        }
+                    }
                 }
             }
         } else {
-            List<ControlledJob> failedJobs = jc.getFailedJobList();
+            failedJobs = jc.getFailedJobList();
             if(failedJobs != null && failedJobs.size() > 0) {
-                LOG.info("Failed jobs:");
                 for(ControlledJob controlledJob: failedJobs) {
-                    LOG.warn("Job: {} ", controlledJob);
+                    Counters counters = controlledJob.getJob().getCounters();
+                    if(counters != null) {
+                        Counter doneWorkers = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
+                                GuaguaMapReduceConstants.DONE_WORKERS);
+                        // LOG.debug("Job {} is successful with doneworkers {}", controlledJob.getJob().getJobID()
+                        // .toString(), doneWorkers.getValue());
+                        if(doneWorkers != null && doneWorkers.getValue() > 0) {
+                            LOG.info("Successful job although failed state (job is treated as successful):");
+                            LOG.warn("Job: {} ", toFakedStateString(controlledJob));
+                        } else {
+                            LOG.info("Failed job:");
+                            LOG.warn("Job: {} ", controlledJob);
+                        }
+                    }
                 }
             }
         }
         this.jc.stop();
+    }
+
+    public String toFakedStateString(ControlledJob controlledJob) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("job name:\t").append(controlledJob.getJob().getJobName()).append("\n");
+        sb.append("job id:\t").append(controlledJob.getJobID()).append("\n");
+        sb.append("job state:\t").append("SUCCESS").append("\n");
+        sb.append("job mapred id:\t").append(controlledJob.getJob().getJobID()).append("\n");
+        sb.append("job message:\t").append(" successful job").append("\n");
+        sb.append("job has no depending job:\t").append("\n");
+        return sb.toString();
     }
 
     /**
@@ -559,6 +612,8 @@ public class GuaguaMapReduceClient {
             System.err
                     .println("WARN: For big data guagua application with fail-over zookeeper servers, independent ZooKeeper instances are recommended.");
             System.err.println("WARN: Zookeeper servers can be provided by '-z' parameter with non-empty value.");
+
+            conf.set(GuaguaConstants.GUAGUA_ZK_EMBEDED, "true");
             // change default embedded zookeeper server to master zonde
             boolean isZkInClient = conf.getBoolean(GuaguaConstants.GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT, false);
             if(isZkInClient) {
@@ -597,6 +652,7 @@ public class GuaguaMapReduceClient {
             }
             return;
         } else {
+            conf.set(GuaguaConstants.GUAGUA_ZK_EMBEDED, "false");
             String zkServers = cmdLine.getOptionValue("z");
             if(zkServers == null || zkServers.length() == 0) {
                 throw new IllegalArgumentException(
