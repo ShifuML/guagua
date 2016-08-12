@@ -31,10 +31,10 @@ public class NettyBytableDecoder extends LengthFieldBasedFrameDecoder {
     private BytableSerializer<Bytable> serializer;
 
     /**
-     * Default constructor with max object size 64M.
+     * Default constructor with max object size 256M.
      */
     public NettyBytableDecoder() {
-        this(64 * 1024 * 1024);
+        this(256 * 1024 * 1024);
     }
 
     /**

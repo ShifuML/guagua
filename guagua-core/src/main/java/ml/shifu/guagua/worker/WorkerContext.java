@@ -30,7 +30,7 @@ import ml.shifu.guagua.io.HaltBytable;
  * <p>
  * The info includes:
  * <ul>
- * <li>Application ID: Job ID for Hadoop mapreduce Job, application ID for YARN application.</li>
+ * <li>Application ID: Job ID for Hadoop mapreduce job, application id for YARN application.</li>
  * <li>Container ID: Task index for Hadoop mapreduce task, Task index for YARN Container.</li>
  * <li>Total iteration number.</li>
  * <li>Current iteration number.</li>
@@ -66,13 +66,13 @@ public class WorkerContext<MASTER_RESULT extends Bytable, WORKER_RESULT extends 
     private WORKER_RESULT workerResult;
 
     /**
-     * App id for whole application. For example: Job id in MapReduce(hadoop 1.0) or application id in Yarn.
+     * App id for whole application. For example: Job id in MapReduce(Hadoop 1.0) or application id in Yarn.
      */
     private final String appId;
 
     /**
-     * This props is used to store any key-value pairs for configurations. It will be set from hadoop configuration. The
-     * reason we don't want to use Configuration is that we don't want to depend on hadoop for guagua-core.
+     * This props is used to store any key-value pairs for configurations. It will be set from Hadoop configuration. The
+     * reason we don't want to use Configuration is that we don't want to depend on Hadoop for guagua-core.
      */
     private final Properties props;
 

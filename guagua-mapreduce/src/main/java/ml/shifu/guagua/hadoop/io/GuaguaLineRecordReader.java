@@ -89,7 +89,8 @@ public class GuaguaLineRecordReader implements
      */
     @Override
     public void initialize(GuaguaFileSplit split) throws IOException {
-        this.maxLineLength = Integer.MAX_VALUE;
+        this.maxLineLength = this.conf.getInt("mapred.linerecordreader.maxlength", Integer.MAX_VALUE);
+        int ioBufferSize = this.conf.getInt("io.file.buffer.size", GuaguaConstants.DEFAULT_IO_BUFFER_SIZE);
         start = split.getOffset();
         end = start + split.getLength();
         final Path file = new Path(split.getPath());
@@ -101,17 +102,15 @@ public class GuaguaLineRecordReader implements
         FSDataInputStream fileIn = fs.open(file);
         boolean skipFirstLine = false;
         if(codec != null) {
-            LOG.info("codec_not_null");
             in = new LineReader(codec.createInputStream(fileIn), GuaguaConstants.DEFAULT_IO_BUFFER_SIZE);
             end = Long.MAX_VALUE;
         } else {
-            LOG.info("codec_null");
             if(start != 0) {
                 skipFirstLine = true;
                 --start;
                 fileIn.seek(start);
             }
-            in = new LineReader(fileIn, GuaguaConstants.DEFAULT_IO_BUFFER_SIZE);
+            in = new LineReader(fileIn, ioBufferSize);
         }
         if(skipFirstLine) { // skip first line and re-establish "start".
             start += in.readLine(new Text(), 0, (int) Math.min((long) Integer.MAX_VALUE, end - start));

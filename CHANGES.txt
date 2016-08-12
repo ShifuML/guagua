@@ -16,6 +16,11 @@
  
 Guagua Change Logs
 
+Changes for Guagua-0.7.3
+    * Master StateS Recovery
+      https://github.com/ShifuML/guagua/issues/94
+    * Add Combinable Interface to Merge Worker Results When Collecting
+      https://github.com/ShifuML/guagua/issues/93
 Changes for Guagua-0.7.2
     * Add GC timer for each iteration.
       https://github.com/ShifuML/guagua/issues/90
