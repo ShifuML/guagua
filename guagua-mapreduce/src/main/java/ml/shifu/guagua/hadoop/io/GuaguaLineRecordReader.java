@@ -102,7 +102,7 @@ public class GuaguaLineRecordReader implements
         FSDataInputStream fileIn = fs.open(file);
         boolean skipFirstLine = false;
         if(codec != null) {
-            in = new LineReader(codec.createInputStream(fileIn), ioBufferSize);
+            in = new LineReader(codec.createInputStream(fileIn), GuaguaConstants.DEFAULT_IO_BUFFER_SIZE);
             end = Long.MAX_VALUE;
         } else {
             if(start != 0) {

@@ -38,6 +38,12 @@ public class GuaguaFileSplit {
      * Size of data read in this split.
      */
     private long length;
+    
+    /**
+     * Arbitrary object for extension 
+     */
+    private Object extension;
+
 
     /**
      * Default constructor.
@@ -77,6 +83,15 @@ public class GuaguaFileSplit {
     public void setLength(long length) {
         this.length = length;
     }
+    
+    public Object getExtension() {
+        return extension;
+    }
+
+    public void setExtension(Object extension) {
+        this.extension = extension;
+    }
+    
 
     @Override
     public String toString() {
