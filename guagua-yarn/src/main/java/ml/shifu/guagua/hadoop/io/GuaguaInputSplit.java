@@ -42,6 +42,9 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
      * support combining small files into one split.
      */
     private FileSplit[] fileSplits;
+    
+    private Object[] extensions;
+
 
     /**
      * Default constructor without any setting
@@ -159,6 +162,14 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
 
     public void setFileSplits(FileSplit[] fileSplits) {
         this.fileSplits = fileSplits;
+    }
+    
+    public Object[] getExtensions() {
+        return extensions;
+    }
+
+    public void setExtensions(Object[] extensions) {
+        this.extensions = extensions;
     }
 
     @Override

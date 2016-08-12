@@ -295,6 +295,7 @@ public class GuaguaMapReduceClient {
         String dirs = conf.get(GuaguaMapReduceConstants.MAPRED_INPUT_DIR);
         conf.set(GuaguaMapReduceConstants.MAPRED_INPUT_DIR, dirs == null ? dirStr : dirs + "," + dirStr);
     }
+    
 
     /**
      * Create Hadoop job according to arguments from main.

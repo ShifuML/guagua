@@ -15,16 +15,25 @@
  */
 package ml.shifu.guagua.hadoop.io;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link InputSplit} implementation in guagua for Hadoop MapReduce job.
@@ -39,6 +48,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
  */
 public class GuaguaInputSplit extends InputSplit implements Writable {
 
+    private static final Logger LOG = LoggerFactory.getLogger(GuaguaInputSplit.class);
     /**
      * Whether the input split is master split.
      */
@@ -49,12 +59,16 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
      * support combining small files into one GuaguaInputSplit.
      */
     private FileSplit[] fileSplits;
+    
+    private Object[] extensions;
 
     /**
      * Default constructor without any setting.
      */
     public GuaguaInputSplit() {
     }
+    
+    
 
     /**
      * Constructor with {@link #isMaster} and {@link #fileSplits} settings.
@@ -95,6 +109,24 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
             for(int i = 0; i < length; i++) {
                 this.getFileSplits()[i].write(out);
             }
+            if(this.extensions != null) {
+                out.writeInt(extensions.length);
+                for(int i = 0; i < extensions.length; i++) {
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutput ext = null;
+                    try {
+                        ext = new ObjectOutputStream(bos);
+                        ext.writeObject(extensions[i]);
+                        byte[] bytes = bos.toByteArray();
+                        out.writeInt(bytes.length);
+                        out.write(bytes);
+                    } finally {
+                        IOUtils.closeQuietly(bos);
+                    }
+                }
+            }else{
+                out.writeInt(0);
+            }
         }
     }
 
@@ -114,6 +146,26 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
                 splits[i].readFields(in);
             }
             this.setFileSplits(splits);
+            int extLen = in.readInt();
+            if(extLen > 0) {
+                Object[] exts = new Object[extLen];
+                for(int i = 0; i < extLen; i++) {
+                    int objectLen = in.readInt();
+                    byte[] bytes = new byte[objectLen];
+                    in.readFully(bytes);
+                    ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+                    ObjectInput ext = new ObjectInputStream(bis);
+                    try {                      
+                        Object extension = ext.readObject();
+                        exts[i] = extension;
+                    } catch (ClassNotFoundException ce) {
+                        LOG.error(ce.getMessage(), ce);
+                    } finally {
+                        IOUtils.closeQuietly(bis);
+                    }
+                }
+               this.setExtensions(exts);
+            }
         }
     }
 
@@ -166,6 +218,14 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
 
     public void setFileSplits(FileSplit[] fileSplits) {
         this.fileSplits = fileSplits;
+    }
+    
+    public Object[] getExtensions() {
+        return extensions;
+    }
+
+    public void setExtensions(Object[] extensions) {
+        this.extensions = extensions;
     }
 
     @Override

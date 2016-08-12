@@ -144,7 +144,7 @@ public class GuaguaInputFormat extends TextInputFormat {
         List<InputSplit> splits = new ArrayList<InputSplit>();
         List<FileStatus> files = listStatus(job);
         for(FileStatus file: files) {
-            Path path = file.getPath();
+            Path path = file.getPath();  
             if(isPigOrHadoopMetaFile(path)) {
                 continue;
             }
