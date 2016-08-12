@@ -91,7 +91,6 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
                 FileSplit fs = inputSplit.getFileSplits()[i];
                 GuaguaFileSplit gfs = new GuaguaFileSplit(fs.getPath().toString(), fs.getStart(), fs.getLength());
                 if(inputSplit.getExtensions()!=null&&i<inputSplit.getExtensions().length){
-                    LOG.info("inputSplit:"+inputSplit+" "+i+" "+inputSplit.getExtensions()[i]);
                     gfs.setExtension(inputSplit.getExtensions()[i]);
                 }
                 splits.add(gfs);
