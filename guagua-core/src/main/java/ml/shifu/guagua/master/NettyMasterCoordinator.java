@@ -558,6 +558,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
         long start = System.nanoTime();
         new RetryCoordinatorCommand(isFixedTime(), getSleepTime()) {
+
             @Override
             public boolean retryExecution() throws KeeperException, InterruptedException {
                 // long to int is assumed successful as no such many workers need using long
@@ -698,6 +699,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 String appCurrentMasterSplitNode = getCurrentMasterSplitNode(context.getAppId(),
                         context.getCurrentIteration()).toString();
                 LOG.debug("master result:{}", context.getMasterResult());
+                final long start = System.nanoTime();
                 try {
                     byte[] bytes = getMasterSerializer().objectToBytes(context.getMasterResult());
                     isSplit = setBytesToZNode(appCurrentMasterNode, appCurrentMasterSplitNode, bytes,
@@ -714,6 +716,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 } catch (KeeperException.NodeExistsException e) {
                     LOG.warn("Has such node:", e);
                 }
+                LOG.debug("set results to zookeeper with time {}ms",
+                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
 
                 // cleaning up znode, 0 is needed for fail-over.
                 int resultCleanUpInterval = NumberFormatUtils.getInt(

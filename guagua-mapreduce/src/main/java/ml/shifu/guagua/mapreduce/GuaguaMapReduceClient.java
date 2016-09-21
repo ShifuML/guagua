@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import ml.shifu.guagua.GuaguaConstants;
+import ml.shifu.guagua.GuaguaRuntimeException;
 import ml.shifu.guagua.coordinator.zk.ZooKeeperUtils;
 import ml.shifu.guagua.hadoop.io.GuaguaOptionsParser;
 import ml.shifu.guagua.hadoop.io.GuaguaWritableSerializer;
@@ -43,6 +44,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Counters;
@@ -103,6 +105,10 @@ public class GuaguaMapReduceClient {
     private Map<Integer, String[]> jobIndexParams = new HashMap<Integer, String[]>();
 
     private Set<String> failedCheckingJobs = new HashSet<String>();
+    
+    private static Map<String, Long> firstMasterSuccessTimeMap = new HashMap<String, Long>();
+
+    private static Set<String> killedSuccessJobSet = new HashSet<String>();
 
     /**
      * Default constructor. Construct default JobControl instance.
@@ -160,6 +166,37 @@ public class GuaguaMapReduceClient {
             }
             jobsWithoutIds.removeAll(jobsAssignedIdInThisRun);
 
+            List<ControlledJob> runningJobs = jc.getRunningJobList();
+            for(ControlledJob controlledJob: runningJobs) {
+                String jobId = controlledJob.getJob().getJobID().toString();
+                Counters counters = controlledJob.getJob().getCounters();
+                Counter doneMaster = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
+                        GuaguaMapReduceConstants.MASTER_SUCCESS);
+                Counter doneWorkers = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
+                        GuaguaMapReduceConstants.DONE_WORKERS);
+                if((doneMaster != null && doneMaster.getValue() > 0)
+                        || (doneWorkers != null && doneWorkers.getValue() > 0)) {
+                    // master is done, while workers may be not, wait for at most 2 minutes check
+                    // or workers are all done, while master is not, wait for at most 2 minutes check
+                    Long initTime = firstMasterSuccessTimeMap.get(jobId);
+                    if(initTime == null) {
+                        firstMasterSuccessTimeMap.put(jobId, System.currentTimeMillis());
+                    } else {
+                        if(System.currentTimeMillis() - initTime >= 2 * 60 * 1000L) {
+                            killedSuccessJobSet.add(jobId);
+                            killJob(controlledJob.getJob().getConfiguration(), jobId,
+                                    "Kill job because of master is already finished");
+                            // wait extra 1s to wait for job to be stopped
+                            try {
+                                Thread.sleep(1 * 1000L);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                        }
+                    }
+                }
+            }
+
             List<ControlledJob> successfulJobs = jc.getSuccessfulJobList();
             for(ControlledJob controlledJob: successfulJobs) {
                 String jobId = controlledJob.getJob().getJobID().toString();
@@ -172,20 +209,8 @@ public class GuaguaMapReduceClient {
             List<ControlledJob> failedJobs = jc.getFailedJobList();
             for(ControlledJob controlledJob: failedJobs) {
                 String failedJobId = controlledJob.getJob().getJobID().toString();
-                Counters counters = controlledJob.getJob().getCounters();
-                if(counters != null) {
-                    // sleep 1s to make sure job state is finalized
-                    try {
-                        Thread.sleep(1 * 1000L);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                    Counter doneCounter = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
-                            GuaguaMapReduceConstants.DONE_WORKERS);
-                    if(doneCounter != null && doneCounter.getValue() > 0) {
-                        LOG.info("Job {} is successful with done workers {}", failedJobId, doneCounter.getValue());
-                        continue;
-                    }
+                if(killedSuccessJobSet.contains(failedJobId)) {
+                    continue;
                 }
                 if(!this.failedCheckingJobs.contains(failedJobId)) {
                     this.failedCheckingJobs.add(failedJobId);
@@ -230,11 +255,12 @@ public class GuaguaMapReduceClient {
                 for(ControlledJob controlledJob: failedJobs) {
                     Counters counters = controlledJob.getJob().getCounters();
                     if(counters != null) {
+                        Counter doneMaster = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
+                                GuaguaMapReduceConstants.MASTER_SUCCESS);
                         Counter doneWorkers = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
                                 GuaguaMapReduceConstants.DONE_WORKERS);
-                        // LOG.debug("Job {} is successful with doneworkers {}", controlledJob.getJob().getJobID()
-                        // .toString(), doneWorkers.getValue());
-                        if(doneWorkers != null && doneWorkers.getValue() > 0) {
+                        if((doneMaster != null && doneMaster.getValue() > 0)
+                                || (doneWorkers != null && doneWorkers.getValue() > 0)) {
                             LOG.info("Successful job although failed state (job is treated as successful):");
                             LOG.warn("Job: {} ", toFakedStateString(controlledJob));
                         } else {
@@ -266,6 +292,20 @@ public class GuaguaMapReduceClient {
             }
         }
         this.jc.stop();
+    }
+
+    private static void killJob(Configuration conf, String jobIdStr, String reason) {
+        LOG.info(reason);
+        // "Kill job because of master is already finished
+        try {
+            org.apache.hadoop.mapred.JobClient jobClient = new org.apache.hadoop.mapred.JobClient(
+                    (org.apache.hadoop.mapred.JobConf) conf);
+            JobID jobId = JobID.forName(jobIdStr);
+            RunningJob job = jobClient.getJob(jobId);
+            job.killJob();
+        } catch (IOException ioe) {
+            throw new GuaguaRuntimeException(ioe);
+        }
     }
 
     public String toFakedStateString(ControlledJob controlledJob) {
@@ -348,7 +388,6 @@ public class GuaguaMapReduceClient {
         String dirs = conf.get(GuaguaMapReduceConstants.MAPRED_INPUT_DIR);
         conf.set(GuaguaMapReduceConstants.MAPRED_INPUT_DIR, dirs == null ? dirStr : dirs + "," + dirStr);
     }
-    
 
     /**
      * Create Hadoop job according to arguments from main.

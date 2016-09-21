@@ -90,7 +90,7 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
             for(int i = 0; i < inputSplit.getFileSplits().length; i++) {
                 FileSplit fs = inputSplit.getFileSplits()[i];
                 GuaguaFileSplit gfs = new GuaguaFileSplit(fs.getPath().toString(), fs.getStart(), fs.getLength());
-                if(inputSplit.getExtensions()!=null&&i<inputSplit.getExtensions().length){
+                if(inputSplit.getExtensions() != null && i < inputSplit.getExtensions().length) {
                     gfs.setExtension(inputSplit.getExtensions()[i]);
                 }
                 splits.add(gfs);
@@ -187,21 +187,10 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
             context.getCounter(GuaguaMapReduceConstants.GUAGUA_STATUS, GuaguaMapReduceConstants.DONE_WORKERS)
                     .increment(1L);
         }
-        // if master is stopped without failures, wait to see job state if over five minutes still not complete, kill
-        // job
         if(e == null && this.isMaster) {
-            // check state in five minutes then if still not complete killJob
+            // update master done counters
             context.getCounter(GuaguaMapReduceConstants.GUAGUA_STATUS, GuaguaMapReduceConstants.MASTER_SUCCESS)
                     .increment(1);
-            LOG.info("In master check all worker status.");
-            if(!isJobFinised(context.getConfiguration(),
-                    context.getConfiguration().getInt("guagua.master.stop.wait.retry.count", 20))) {
-                // sleep 3s and then kill job
-                Thread.sleep(3 * 1000L);
-                this.killJob(context.getConfiguration());
-            } else {
-                LOG.info("All workers are finished well");
-            }
         }
     }
 
@@ -242,6 +231,7 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
         }
     }
 
+    @SuppressWarnings("unused")
     private void killJob(Configuration conf) {
         LOG.info("Kill job because of master is already finished");
         try {
