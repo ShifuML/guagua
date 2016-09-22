@@ -369,7 +369,7 @@ public final class ZooKeeperUtils {
         commandList.add(findContainingJar(Log4jLoggerAdapter.class) + ":" + findContainingJar(Logger.class) + ":"
                 + findContainingJar(org.apache.log4j.Logger.class) + ":" + findContainingJar(ZooKeeperUtils.class)
                 + ":" + findContainingJar(QuorumPeerMain.class));
-        commandList.add(QuorumPeerMain.class.getName());
+        commandList.add(ZooKeeperMain.class.getName());
         commandList.add(confName);
         processBuilder.command(commandList);
         File execDirectory = new File(zooKeeperWorkingDir);
