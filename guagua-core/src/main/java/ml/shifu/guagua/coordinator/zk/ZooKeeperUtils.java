@@ -367,7 +367,8 @@ public final class ZooKeeperUtils {
         }
         commandList.add("-cp");
         commandList.add(findContainingJar(Log4jLoggerAdapter.class) + ":" + findContainingJar(Logger.class) + ":"
-                + findContainingJar(org.apache.log4j.Logger.class) + ":" + findContainingJar(QuorumPeerMain.class));
+                + findContainingJar(org.apache.log4j.Logger.class) + ":" + findContainingJar(ZooKeeperUtils.class)
+                + ":" + findContainingJar(QuorumPeerMain.class));
         commandList.add(QuorumPeerMain.class.getName());
         commandList.add(confName);
         processBuilder.command(commandList);

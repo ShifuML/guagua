@@ -105,7 +105,7 @@ public class GuaguaMapReduceClient {
     private Map<Integer, String[]> jobIndexParams = new HashMap<Integer, String[]>();
 
     private Set<String> failedCheckingJobs = new HashSet<String>();
-    
+
     private static Map<String, Long> firstMasterSuccessTimeMap = new HashMap<String, Long>();
 
     private static Set<String> killedSuccessJobSet = new HashSet<String>();
@@ -276,11 +276,12 @@ public class GuaguaMapReduceClient {
                 for(ControlledJob controlledJob: failedJobs) {
                     Counters counters = controlledJob.getJob().getCounters();
                     if(counters != null) {
+                        Counter doneMaster = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
+                                GuaguaMapReduceConstants.MASTER_SUCCESS);
                         Counter doneWorkers = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
                                 GuaguaMapReduceConstants.DONE_WORKERS);
-                        // LOG.debug("Job {} is successful with doneworkers {}", controlledJob.getJob().getJobID()
-                        // .toString(), doneWorkers.getValue());
-                        if(doneWorkers != null && doneWorkers.getValue() > 0) {
+                        if((doneMaster != null && doneMaster.getValue() > 0)
+                                || (doneWorkers != null && doneWorkers.getValue() > 0)) {
                             LOG.info("Successful job although failed state (job is treated as successful):");
                             LOG.warn("Job: {} ", toFakedStateString(controlledJob));
                         } else {
