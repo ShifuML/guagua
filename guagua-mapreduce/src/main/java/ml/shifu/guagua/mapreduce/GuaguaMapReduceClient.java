@@ -169,7 +169,7 @@ public class GuaguaMapReduceClient {
             List<ControlledJob> runningJobs = jc.getRunningJobList();
             for(ControlledJob controlledJob: runningJobs) {
                 String jobId = controlledJob.getJob().getJobID().toString();
-                Counters counters = controlledJob.getJob().getCounters();
+                Counters counters = getCounters(controlledJob.getJob());
                 Counter doneMaster = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
                         GuaguaMapReduceConstants.MASTER_SUCCESS);
                 Counter doneWorkers = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
@@ -184,8 +184,9 @@ public class GuaguaMapReduceClient {
                     } else {
                         if(System.currentTimeMillis() - initTime >= 2 * 60 * 1000L) {
                             killedSuccessJobSet.add(jobId);
-                            killJob(controlledJob.getJob().getConfiguration(), jobId,
-                                    "Kill job because of master is already finished");
+                            killJob(controlledJob.getJob().getConfiguration(), jobId, "Kill job " + jobId
+                                    + "because of master is already finished, job " + jobId
+                                    + " is treated as successful as we got models. ");
                             // wait extra 1s to wait for job to be stopped
                             try {
                                 Thread.sleep(1 * 1000L);
@@ -210,6 +211,10 @@ public class GuaguaMapReduceClient {
             for(ControlledJob controlledJob: failedJobs) {
                 String failedJobId = controlledJob.getJob().getJobID().toString();
                 if(killedSuccessJobSet.contains(failedJobId)) {
+                    if(!sucessfulJobs.contains(failedJobId)) {
+                        LOG.info("Job {} is successful.", failedJobId);
+                        sucessfulJobs.add(failedJobId);
+                    }
                     continue;
                 }
                 if(!this.failedCheckingJobs.contains(failedJobId)) {
@@ -253,7 +258,7 @@ public class GuaguaMapReduceClient {
             failedJobs = jc.getFailedJobList();
             if(failedJobs != null && failedJobs.size() > 0) {
                 for(ControlledJob controlledJob: failedJobs) {
-                    Counters counters = controlledJob.getJob().getCounters();
+                    Counters counters = getCounters(controlledJob.getJob());
                     if(counters != null) {
                         Counter doneMaster = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
                                 GuaguaMapReduceConstants.MASTER_SUCCESS);
@@ -274,7 +279,7 @@ public class GuaguaMapReduceClient {
             failedJobs = jc.getFailedJobList();
             if(failedJobs != null && failedJobs.size() > 0) {
                 for(ControlledJob controlledJob: failedJobs) {
-                    Counters counters = controlledJob.getJob().getCounters();
+                    Counters counters = getCounters(controlledJob.getJob());
                     if(counters != null) {
                         Counter doneMaster = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
                                 GuaguaMapReduceConstants.MASTER_SUCCESS);
@@ -293,6 +298,15 @@ public class GuaguaMapReduceClient {
             }
         }
         this.jc.stop();
+    }
+
+    private static Counters getCounters(Job job) {
+        try {
+            return job.getCounters();
+        } catch (Exception e) {
+            // no matter IOException or IllegalStateException, just return null;
+            return null;
+        }
     }
 
     private static void killJob(Configuration conf, String jobIdStr, String reason) {
