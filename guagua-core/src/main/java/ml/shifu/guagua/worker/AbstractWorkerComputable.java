@@ -66,7 +66,6 @@ public abstract class AbstractWorkerComputable<MASTER_RESULT extends Bytable, WO
     public WORKER_RESULT compute(WorkerContext<MASTER_RESULT, WORKER_RESULT> context) throws IOException {
         if(this.isLoaded.compareAndSet(false, true)) {
             init(context);
-
             long start = System.nanoTime();
             preLoad(context);
             long count = 0;
@@ -74,6 +73,8 @@ public abstract class AbstractWorkerComputable<MASTER_RESULT extends Bytable, WO
                 LOG.info("Loading filesplit: {}", fileSplit);
                 try {
                     initRecordReader(fileSplit);
+                    LOG.info("file_extension:"+" extension:"+fileSplit.getExtension()+" "+fileSplit);
+                    context.setAttachment(fileSplit.getExtension());
                     while(getRecordReader().nextKeyValue()) {
                         load(getRecordReader().getCurrentKey(), getRecordReader().getCurrentValue(), context);
                         ++count;

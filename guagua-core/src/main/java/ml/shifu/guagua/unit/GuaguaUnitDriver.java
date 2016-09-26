@@ -16,13 +16,16 @@
 package ml.shifu.guagua.unit;
 
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.GuaguaRuntimeException;
@@ -105,6 +108,36 @@ public abstract class GuaguaUnitDriver<MASTER_RESULT extends Bytable, WORKER_RES
      */
     public abstract List<GuaguaFileSplit[]> generateWorkerSplits(String inputs) throws IOException;
 
+    static class UtDefaultThreadFactory implements ThreadFactory {
+        static final AtomicInteger poolNumber = new AtomicInteger(1);
+        final ThreadGroup group;
+        final AtomicInteger threadNumber = new AtomicInteger(1);
+        final String namePrefix;
+
+        UtDefaultThreadFactory() {
+            SecurityManager s = System.getSecurityManager();
+            group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+            namePrefix = "pool-" + poolNumber.getAndIncrement() + "-thread-";
+        }
+
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
+            if(t.isDaemon())
+                t.setDaemon(false);
+            if(t.getPriority() != Thread.NORM_PRIORITY)
+                t.setPriority(Thread.NORM_PRIORITY);
+            t.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+
+                @Override
+                public void uncaughtException(Thread t, Throwable e) {
+                    e.printStackTrace();
+                    throw new RuntimeException(e);
+                }
+            });
+            return t;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     protected void setUp() {
         try {
@@ -112,7 +145,8 @@ public abstract class GuaguaUnitDriver<MASTER_RESULT extends Bytable, WORKER_RES
         } catch (IOException e) {
             throw new GuaguaRuntimeException(e);
         }
-        this.executor = Executors.newFixedThreadPool(this.fileSplits.size() + 1);
+        this.executor = Executors.newFixedThreadPool(this.fileSplits.size() + 1, new UtDefaultThreadFactory() );
+
         // hard code system interceptors for unit test.
         this.props.setProperty(GuaguaConstants.GUAGUA_MASTER_SYSTEM_INTERCEPTERS,
                 LocalMasterCoordinator.class.getName());

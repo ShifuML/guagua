@@ -171,7 +171,7 @@ public final class GuaguaConstants {
 
     public static final String GUAGUA_ZK_EMBEDBED_IS_IN_CLIENT = "guagua.zk.embedbed.isInClient";
 
-    public static final String GUAGUA_CHILD_DEFAULT_ZKSERVER_OPTS = "-Xms512m -Xmx512m -server -XX:+UseParNewGC "
+    public static final String GUAGUA_CHILD_DEFAULT_ZKSERVER_OPTS = "-Xms512m -Xmx1024m -server -XX:+UseParNewGC "
             + "-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70";
 
     public static final String GUAGUA_CHILD_ZKSERVER_OPTS = "guagua.child.zkserver.opts";
@@ -183,5 +183,10 @@ public final class GuaguaConstants {
     public static final String GUAGUA_MASTER_RESULT_MERGE_THRESHOLD = "guagua.master.result.merge.threshold";
 
     public static final String GUAGUA_MASTER_RESULT_NONSPILL = "guagua.master.result.nonspill";
+    
+    public static final String GUAGUA_UNREGISTER_MASTER_TIMEROUT = "guagua.master.unregister.wait.timeout";
+    
+    public static final String GUAGUA_ZK_EMBEDED = "guagua.zk.embeded";
+
 
 }

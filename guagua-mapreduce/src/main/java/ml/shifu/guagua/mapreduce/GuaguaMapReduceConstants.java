@@ -74,5 +74,11 @@ public final class GuaguaMapReduceConstants {
     public static final String GUAGUA_PROGRESS_COUNTER_GROUP_NAME = "guagua";
 
     public static final String GUAGUA_PROGRESS_COUNTER_NAME = "progress";
+    
+    public static final String MASTER_SUCCESS = "MASTER_SUCCESS";
+
+    public static final String DONE_WORKERS = "DONE_WORKERS";
+
+    public static final String GUAGUA_STATUS = "GUAGUA_STATUS";
 
 }

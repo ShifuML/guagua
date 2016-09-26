@@ -44,6 +44,11 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
     private FileSplit[] fileSplits;
 
     /**
+     * Arbitrary object to store extra information for each file split
+     */
+    private Object[] extensions;
+
+    /**
      * Default constructor without any setting
      */
     public GuaguaInputSplit() {
@@ -141,7 +146,6 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
                 hosts.addAll(Arrays.asList(fileSplit.getLocations()));
             }
         }
-
         return hosts.toArray(new String[0]);
     }
 
@@ -159,6 +163,14 @@ public class GuaguaInputSplit extends InputSplit implements Writable {
 
     public void setFileSplits(FileSplit[] fileSplits) {
         this.fileSplits = fileSplits;
+    }
+
+    public Object[] getExtensions() {
+        return extensions;
+    }
+
+    public void setExtensions(Object[] extensions) {
+        this.extensions = extensions;
     }
 
     @Override

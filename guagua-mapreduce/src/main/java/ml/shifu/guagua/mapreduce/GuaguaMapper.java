@@ -34,6 +34,7 @@ import ml.shifu.guagua.worker.GuaguaWorkerService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.Counters.Counter;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.TaskAttemptID;
@@ -78,7 +79,6 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
     protected void setup(Context context) throws java.io.IOException, InterruptedException {
         GuaguaInputSplit inputSplit = (GuaguaInputSplit) context.getInputSplit();
         this.setMaster(inputSplit.isMaster());
-
         if(this.isMaster()) {
             context.setStatus("Master initializing ...");
             this.setGuaguaService(new GuaguaMasterService<MASTER_RESULT, WORKER_RESULT>());
@@ -87,8 +87,13 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
             this.setGuaguaService(new GuaguaWorkerService<MASTER_RESULT, WORKER_RESULT>());
 
             List<GuaguaFileSplit> splits = new LinkedList<GuaguaFileSplit>();
-            for(FileSplit fs: inputSplit.getFileSplits()) {
-                splits.add(new GuaguaFileSplit(fs.getPath().toString(), fs.getStart(), fs.getLength()));
+            for(int i = 0; i < inputSplit.getFileSplits().length; i++) {
+                FileSplit fs = inputSplit.getFileSplits()[i];
+                GuaguaFileSplit gfs = new GuaguaFileSplit(fs.getPath().toString(), fs.getStart(), fs.getLength());
+                if(inputSplit.getExtensions() != null && i < inputSplit.getExtensions().length) {
+                    gfs.setExtension(inputSplit.getExtensions()[i]);
+                }
+                splits.add(gfs);
             }
             this.getGuaguaService().setSplits(splits);
         }
@@ -130,6 +135,7 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
      */
     @Override
     public void run(final Context context) throws IOException, InterruptedException {
+        Exception e = null;
         try {
             this.setup(context);
             final int iterations = context.getConfiguration().getInt(GuaguaConstants.GUAGUA_ITERATION_COUNT, -1);
@@ -166,14 +172,46 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
         } catch (Throwable t) {
             LOG.error("Error in guagua main run method.", t);
             failTask(t, context.getConfiguration());
-            throw new GuaguaRuntimeException(t);
+            e = new GuaguaRuntimeException(t);
         } finally {
             try {
                 this.cleanup(context);
             } catch (Throwable t) {
                 failTask(t, context.getConfiguration());
+                e = new GuaguaRuntimeException(t);
             }
         }
+
+        if(e == null && !this.isMaster) {
+            // update worker done counters
+            context.getCounter(GuaguaMapReduceConstants.GUAGUA_STATUS, GuaguaMapReduceConstants.DONE_WORKERS)
+                    .increment(1L);
+        }
+        if(e == null && this.isMaster) {
+            // update master done counters
+            context.getCounter(GuaguaMapReduceConstants.GUAGUA_STATUS, GuaguaMapReduceConstants.MASTER_SUCCESS)
+                    .increment(1);
+        }
+    }
+
+    public static boolean isJobFinised(Configuration conf, int retryCount) throws InterruptedException, IOException {
+        int i = 0;
+        while(i < retryCount) {
+            Thread.sleep(5000);
+            org.apache.hadoop.mapred.JobClient jobClient = new org.apache.hadoop.mapred.JobClient(
+                    (org.apache.hadoop.mapred.JobConf) conf);
+            JobID jobId = JobID.forName(conf.get(GuaguaMapReduceConstants.MAPRED_JOB_ID));
+            RunningJob job = jobClient.getJob(jobId);
+            Counter counter = job.getCounters().findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
+                    GuaguaMapReduceConstants.DONE_WORKERS);
+            long workerNum = conf.getLong(GuaguaConstants.GUAGUA_WORKER_NUMBER, 0L);
+            LOG.info("done workers {} and all workers {}", counter.getValue(), workerNum);
+            if(counter.getValue() == workerNum) {
+                return true;
+            }
+            i += 1;
+        }
+        return false;
     }
 
     /**
@@ -188,6 +226,20 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
             JobID jobId = JobID.forName(conf.get(GuaguaMapReduceConstants.MAPRED_JOB_ID));
             RunningJob job = jobClient.getJob(jobId);
             job.killTask(TaskAttemptID.forName(conf.get(GuaguaMapReduceConstants.MAPRED_TASK_ID)), true);
+        } catch (IOException ioe) {
+            throw new GuaguaRuntimeException(ioe);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private void killJob(Configuration conf) {
+        LOG.info("Kill job because of master is already finished");
+        try {
+            org.apache.hadoop.mapred.JobClient jobClient = new org.apache.hadoop.mapred.JobClient(
+                    (org.apache.hadoop.mapred.JobConf) conf);
+            JobID jobId = JobID.forName(conf.get(GuaguaMapReduceConstants.MAPRED_JOB_ID));
+            RunningJob job = jobClient.getJob(jobId);
+            job.killJob();
         } catch (IOException ioe) {
             throw new GuaguaRuntimeException(ioe);
         }

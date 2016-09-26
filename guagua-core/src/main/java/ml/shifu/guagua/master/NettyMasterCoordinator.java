@@ -483,6 +483,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
             BytableWrapper bytableWrapper = (BytableWrapper) e.getMessage();
             LOG.debug("Received container id {} with message:{}", bytableWrapper.getContainerId(), bytableWrapper);
+            LOG.debug("Received message size {}",
+                    bytableWrapper != null && bytableWrapper.getBytes() != null ? bytableWrapper.getBytes().length : 0);
             String containerId = bytableWrapper.getContainerId();
             synchronized(LOCK) {
                 if(!NettyMasterCoordinator.this.canUpdateWorkerResultMap) {
@@ -514,6 +516,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     if(!NettyMasterCoordinator.this.indexMap.containsKey(containerId)
                             && NettyMasterCoordinator.this.currentInteration == bytableWrapper.getCurrentIteration()) {
                         String clazzName = NettyMasterCoordinator.this.workerClassName;
+
                         WORKER_RESULT wr = NettyMasterCoordinator.this.getWorkerSerializer().bytesToObject(
                                 bytableWrapper.getBytes(), clazzName);
                         WorkerResultWrapper wrw = new WorkerResultWrapper(bytableWrapper.getCurrentIteration(), wr,
@@ -555,6 +558,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
         long start = System.nanoTime();
         new RetryCoordinatorCommand(isFixedTime(), getSleepTime()) {
+
             @Override
             public boolean retryExecution() throws KeeperException, InterruptedException {
                 // long to int is assumed successful as no such many workers need using long
@@ -695,6 +699,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 String appCurrentMasterSplitNode = getCurrentMasterSplitNode(context.getAppId(),
                         context.getCurrentIteration()).toString();
                 LOG.debug("master result:{}", context.getMasterResult());
+                final long start = System.nanoTime();
                 try {
                     byte[] bytes = getMasterSerializer().objectToBytes(context.getMasterResult());
                     isSplit = setBytesToZNode(appCurrentMasterNode, appCurrentMasterSplitNode, bytes,
@@ -711,6 +716,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 } catch (KeeperException.NodeExistsException e) {
                     LOG.warn("Has such node:", e);
                 }
+                LOG.debug("set results to zookeeper with time {}ms",
+                        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
 
                 // cleaning up znode, 0 is needed for fail-over.
                 int resultCleanUpInterval = NumberFormatUtils.getInt(
@@ -757,6 +764,10 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                             context.getProps().getProperty(GuaguaConstants.GUAGUA_ZK_CLEANUP_ENABLE),
                             GuaguaConstants.GUAGUA_ZK_DEFAULT_CLEANUP_VALUE);
 
+                    // master unregister timeout in second, by default 200s
+                    final int masterUnregisterTimeout = NumberFormatUtils.getInt(context.getProps().getProperty(
+                            GuaguaConstants.GUAGUA_UNREGISTER_MASTER_TIMEROUT, "200000"));
+                    LOG.info("guagua master un register timeout is {}", masterUnregisterTimeout);
                     final long start = System.nanoTime();
                     if(Boolean.TRUE.toString().equalsIgnoreCase(zkCleanUpEnabled)) {
                         new RetryCoordinatorCommand(isFixedTime(), getSleepTime()) {
@@ -767,7 +778,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                                     // long to int is assumed successful as no such many workers need using long
                                     doneWorkers = (int) NettyMasterCoordinator.this.iterResults.size();
                                 }
-                                if(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) > 120 * 1000L) {
+                                if(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) > masterUnregisterTimeout) {
                                     LOG.info("unregister step, worker(s) compelted: {}, still {} workers are "
                                             + "not unregistered, but time out to terminate.", doneWorkers,
                                             (context.getWorkers() - doneWorkers));

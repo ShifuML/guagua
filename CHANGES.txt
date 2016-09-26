@@ -16,8 +16,13 @@
  
 Guagua Change Logs
 
+Changes for Guagua-0.7.4
+    * Validation data set chenage on Guagua side: add attachments for GuaguaInputSplit & GuaguaInputFormat
+    * Fix a bug on embeded ZooKeeper logging enable
+	* Fix a issue on Kerberos Hadoop: Kerberos is supported in guagua
+	* Fix Guagua job stablility issue
 Changes for Guagua-0.7.3
-    * Master StateS Recovery
+    * Master State Recovery
       https://github.com/ShifuML/guagua/issues/94
     * Add Combinable Interface to Merge Worker Results When Collecting
       https://github.com/ShifuML/guagua/issues/93

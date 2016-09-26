@@ -42,6 +42,41 @@ public final class NetworkUtils {
     public static final int TRY_PORT_COUNT = 20;
 
     private static final Random RANDOM = new Random();
+    
+    /**
+     * Check whether a server is alive.
+     * 
+     * @param host
+     *            the server host
+     * @param port
+     *            the server port
+     * @return true if a server is alive, false if a server is not alive.
+     */
+    public static boolean isServerAlive(String host, int port) {
+        Socket socket = null;
+        int i = 0;
+        while(i < RETRY_COUNT) {
+            try {
+                socket = new Socket(host, port);
+                break;
+            } catch (IOException e) {
+                i++;
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e1) {
+                    Thread.currentThread().interrupt();
+                }
+            } finally {
+                try {
+                    if(socket != null) {
+                        socket.close();
+                    }
+                } catch (IOException ignore) {
+                }
+            }
+        }
+        return i != RETRY_COUNT;
+    }
 
     /**
      * Check whether a server is alive.
