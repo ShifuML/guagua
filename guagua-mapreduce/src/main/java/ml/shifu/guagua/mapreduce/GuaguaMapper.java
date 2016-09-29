@@ -34,10 +34,6 @@ import ml.shifu.guagua.worker.GuaguaWorkerService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.Counters.Counter;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapred.TaskAttemptID;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.slf4j.Logger;
@@ -194,55 +190,13 @@ public class GuaguaMapper<MASTER_RESULT extends Bytable, WORKER_RESULT extends B
         }
     }
 
-    public static boolean isJobFinised(Configuration conf, int retryCount) throws InterruptedException, IOException {
-        int i = 0;
-        while(i < retryCount) {
-            Thread.sleep(5000);
-            org.apache.hadoop.mapred.JobClient jobClient = new org.apache.hadoop.mapred.JobClient(
-                    (org.apache.hadoop.mapred.JobConf) conf);
-            JobID jobId = JobID.forName(conf.get(GuaguaMapReduceConstants.MAPRED_JOB_ID));
-            RunningJob job = jobClient.getJob(jobId);
-            Counter counter = job.getCounters().findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
-                    GuaguaMapReduceConstants.DONE_WORKERS);
-            long workerNum = conf.getLong(GuaguaConstants.GUAGUA_WORKER_NUMBER, 0L);
-            LOG.info("done workers {} and all workers {}", counter.getValue(), workerNum);
-            if(counter.getValue() == workerNum) {
-                return true;
-            }
-            i += 1;
-        }
-        return false;
-    }
-
     /**
      * In our cluster with hadoop-0.20.2-cdh3u4a, runtime exception is thrown to Child but mapper status doesn't change
      * to failed. We fail this task to make sure our fail-over can make job successful.
      */
     private void failTask(Throwable t, Configuration conf) {
         LOG.error("failtask: Killing task: {} ", conf.get(GuaguaMapReduceConstants.MAPRED_TASK_ID));
-        try {
-            org.apache.hadoop.mapred.JobClient jobClient = new org.apache.hadoop.mapred.JobClient(
-                    (org.apache.hadoop.mapred.JobConf) conf);
-            JobID jobId = JobID.forName(conf.get(GuaguaMapReduceConstants.MAPRED_JOB_ID));
-            RunningJob job = jobClient.getJob(jobId);
-            job.killTask(TaskAttemptID.forName(conf.get(GuaguaMapReduceConstants.MAPRED_TASK_ID)), true);
-        } catch (IOException ioe) {
-            throw new GuaguaRuntimeException(ioe);
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private void killJob(Configuration conf) {
-        LOG.info("Kill job because of master is already finished");
-        try {
-            org.apache.hadoop.mapred.JobClient jobClient = new org.apache.hadoop.mapred.JobClient(
-                    (org.apache.hadoop.mapred.JobConf) conf);
-            JobID jobId = JobID.forName(conf.get(GuaguaMapReduceConstants.MAPRED_JOB_ID));
-            RunningJob job = jobClient.getJob(jobId);
-            job.killJob();
-        } catch (IOException ioe) {
-            throw new GuaguaRuntimeException(ioe);
-        }
+        throw new GuaguaFailTaskRuntimeException("Fail task because of not heathy inside.", t);
     }
 
     @Override
