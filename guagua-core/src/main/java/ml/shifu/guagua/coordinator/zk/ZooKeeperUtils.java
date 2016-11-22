@@ -230,9 +230,11 @@ public final class ZooKeeperUtils {
      */
     private static void createFolder(String folder) throws IOException {
         File file = new File(folder);
-        if(file.exists()) {
+        try {
             FileUtils.deleteDirectory(file);
+        } catch (IOException ignore) {
         }
+
         if(!file.mkdir()) {
             throw new IllegalStateException("Error to mkdir for folder " + folder);
         }

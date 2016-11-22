@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -144,6 +145,11 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
      * static class.
      */
     private static Serializer<Bytable> serializer;
+
+    /**
+     * Thread pool of clean old zk data; this is to make clean zk data run in asyc.
+     */
+    private ExecutorService cleanOldZkDataThreadPool;
 
     /**
      * Merge internal elements together to save memory.
@@ -272,6 +278,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     public void preApplication(final MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
         // Initialize zookeeper and other props
         initialize(context.getProps());
+
+        // initialize clean old zk data thread pool
+        this.cleanOldZkDataThreadPool = Executors.newFixedThreadPool(3);
 
         // initialize serrializer for WorkerResultWrapper
         NettyMasterCoordinator.serializer = (Serializer<Bytable>) getWorkerSerializer();
@@ -720,24 +729,36 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
 
                 // cleaning up znode, 0 is needed for fail-over.
-                int resultCleanUpInterval = NumberFormatUtils.getInt(
+                final int resultCleanUpInterval = NumberFormatUtils.getInt(
                         context.getProps().getProperty(GuaguaConstants.GUAGUA_CLEANUP_INTERVAL),
                         GuaguaConstants.GUAGUA_DEFAULT_CLEANUP_INTERVAL);
+                // clean resources async
                 if(context.getCurrentIteration() >= (resultCleanUpInterval + 1)) {
-                    String znode = getMasterNode(context.getAppId(),
-                            context.getCurrentIteration() - resultCleanUpInterval).toString();
-                    try {
-                        getZooKeeper().deleteExt(znode, -1, false);
-                        if(isSplit) {
-                            znode = getCurrentMasterSplitNode(context.getAppId(),
+                    final boolean isLocalSplit = isSplit;
+                    NettyMasterCoordinator.this.cleanOldZkDataThreadPool.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            String znode = getMasterNode(context.getAppId(),
                                     context.getCurrentIteration() - resultCleanUpInterval).toString();
-                            getZooKeeper().deleteExt(znode, -1, true);
+                            try {
+                                getZooKeeper().deleteExt(znode, -1, false);
+                                if(isLocalSplit) {
+                                    znode = getCurrentMasterSplitNode(context.getAppId(),
+                                            context.getCurrentIteration() - resultCleanUpInterval).toString();
+                                    getZooKeeper().deleteExt(znode, -1, true);
+                                }
+                            } catch (KeeperException.NoNodeException e) {
+                                if(System.nanoTime() % 20 == 0) {
+                                    LOG.warn("No such node:{}", znode);
+                                }
+                            } catch (KeeperException ignore) {
+                                // if failed, it's OK, just for cleaning
+                            } catch (InterruptedException ignore) {
+                                // if failed, it's OK, just for cleaning
+                            }
                         }
-                    } catch (KeeperException.NoNodeException e) {
-                        if(System.nanoTime() % 20 == 0) {
-                            LOG.warn("No such node:{}", znode);
-                        }
-                    }
+                    });
+
                 }
 
                 LOG.info("master results write to znode.");
@@ -822,6 +843,14 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 }
             }
         }.execute();
+        
+        // shut down thread pool
+        this.cleanOldZkDataThreadPool.shutdownNow();
+        try {
+            this.cleanOldZkDataThreadPool.awaitTermination(2, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**
