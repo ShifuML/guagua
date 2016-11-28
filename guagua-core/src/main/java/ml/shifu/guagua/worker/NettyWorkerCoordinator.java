@@ -491,7 +491,7 @@ public class NettyWorkerCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         shutDownMethod.invoke(NettyWorkerCoordinator.this.messageClient, (Object[]) null);
                     }
                     NettyWorkerCoordinator.this.messageClient.releaseExternalResources();
-                    closeZooKeeper();
+                    close();
                 }
             }
         }.execute();

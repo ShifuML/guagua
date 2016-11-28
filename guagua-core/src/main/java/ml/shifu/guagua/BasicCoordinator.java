@@ -18,10 +18,18 @@ package ml.shifu.guagua;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import ml.shifu.guagua.coordinator.zk.GuaguaZooKeeper;
 import ml.shifu.guagua.io.Bytable;
@@ -30,6 +38,7 @@ import ml.shifu.guagua.util.NumberFormatUtils;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
@@ -106,6 +115,12 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
      * Zookeeper has default heartbeat info, but sometimes failed, set a switch for that.
      */
     private boolean zkHeartBeatEnabled = false;
+
+    /**
+     * Create a thread pool to save master result or deserialize master result from zookeeper in parallel, only for case
+     * if size of results over 1MB which is limitation per zk znde
+     */
+    private ExecutorService threadPool;
 
     public BasicCoordinator() {
     }
@@ -195,6 +210,8 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
         setFixedTime(Boolean.TRUE.toString().equalsIgnoreCase(
                 props.getProperty(GuaguaConstants.GUAGUA_COORDINATOR_FIXED_SLEEP_ENABLE,
                         GuaguaConstants.GUAGUA_COORDINATOR_FIXED_SLEEP)));
+        this.threadPool = Executors.newFixedThreadPool(Integer.parseInt(props.getProperty(
+                "guagua.master.result.thread.number", 8 + "")));
     }
 
     /**
@@ -234,13 +251,20 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
         // remember to stop it
     }
 
-    protected void closeZooKeeper() throws InterruptedException {
+    /**
+     * Close resources like zookeeper, thread pool
+     */
+    protected void close() throws InterruptedException {
         if(this.zkHeartBeatEnabled) {
             stopHeartBeat();
         }
         if(getZooKeeper() != null) {
             getZooKeeper().close();
         }
+
+        // shut down thread pool
+        this.threadPool.shutdownNow();
+        this.threadPool.awaitTermination(2, TimeUnit.SECONDS);
     }
 
     protected void startHeartbeat() {
@@ -282,29 +306,78 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
         LOG.debug("bytes length:{}", bytes.length);
         final int zkDataLimit = GuaguaConstants.GUAGUA_ZK_DATA_LIMIT;
         if(bytes.length > zkDataLimit) {
-            // TODO don't recursively create split znode to void too many requests to zk servers.
+            // TODO don't recursively create split znode to avoid too many requests to zk servers.
             getZooKeeper().createExt(splitZnode, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, true);
             int childrenSize = (bytes.length % zkDataLimit == 0) ? (bytes.length / zkDataLimit)
                     : (bytes.length / zkDataLimit) + 1;
             int currentLen = bytes.length;
+
+            CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(this.threadPool);
             for(int i = 0; i < childrenSize; i++) {
-                byte[] currentBytes;
+                int bytesLength = 0;
                 if(currentLen >= zkDataLimit) {
                     currentLen -= zkDataLimit;
-                    currentBytes = new byte[zkDataLimit];
+                    bytesLength = zkDataLimit;
                 } else {
-                    currentBytes = new byte[currentLen];
+                    bytesLength = currentLen;
                 }
-                System.arraycopy(bytes, i * zkDataLimit, currentBytes, 0, currentBytes.length);
-                getZooKeeper().createExt(splitZnode + GuaguaConstants.ZOOKEEPER_SEPARATOR + i, currentBytes,
-                        Ids.OPEN_ACL_UNSAFE, createNode, false);
+                completionService.submit(new SaveResultToZookeeper(bytes, i, bytesLength, zkDataLimit, splitZnode,
+                        createNode));
             }
+
+            int rCnt = 0;
+            while(rCnt < childrenSize) {
+                try {
+                    completionService.take().get();
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                rCnt += 1;
+            }
+
             getZooKeeper().createExt(znode, null, Ids.OPEN_ACL_UNSAFE, createNode, false);
             return true;
         } else {
             getZooKeeper().createExt(znode, bytes, Ids.OPEN_ACL_UNSAFE, createNode, false);
             return false;
         }
+    }
+
+    public class SaveResultToZookeeper implements Callable<Integer> {
+
+        private byte[] rawBytes;
+
+        private int index;
+
+        private int currentLen;
+
+        private int zkDataLimit;
+
+        private String splitZnode;
+
+        private CreateMode createNode;
+
+        public SaveResultToZookeeper(byte[] rawBytes, int index, int currentLen, int zkDataLimit, String splitZnode,
+                CreateMode createNode) {
+            this.rawBytes = rawBytes;
+            this.index = index;
+            this.currentLen = currentLen;
+            this.zkDataLimit = zkDataLimit;
+            this.splitZnode = splitZnode;
+            this.createNode = createNode;
+        }
+
+        @Override
+        public Integer call() throws Exception {
+            byte[] currentBytes = new byte[currentLen];
+            System.arraycopy(rawBytes, index * zkDataLimit, currentBytes, 0, currentBytes.length);
+            getZooKeeper().createExt(splitZnode + GuaguaConstants.ZOOKEEPER_SEPARATOR + index, currentBytes,
+                    Ids.OPEN_ACL_UNSAFE, createNode, false);
+            return index;
+        }
+
     }
 
     /**
@@ -317,24 +390,45 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
             return data;
         }
 
-        List<String> children = getZooKeeper().getChildrenExt(splitZnode, false, true, new ChildrenComparator());
+        final List<String> children = getZooKeeper().getChildrenExt(splitZnode, false, true, new ChildrenComparator());
         if(children == null || children.size() == 0) {
             return null;
         }
 
-        List<byte[]> bytesList = new ArrayList<byte[]>(children.size());
+        CompletionService<BytesPair> completionService = new ExecutorCompletionService<BytesPair>(this.threadPool);
+
+        List<BytesPair> bytesPairList = new ArrayList<BytesPair>(children.size());
         int wholeLength = 0;
         for(int i = 0; i < children.size(); i++) {
-            byte[] currentBytes = getZooKeeper().getData(children.get(i), null, null);
-            if(currentBytes != null) {
-                wholeLength += currentBytes.length;
-                bytesList.add(currentBytes);
-            }
+            final int index = i;
+            completionService.submit(new GetSplitBytes(getZooKeeper(), index, children.get(index)));
         }
 
+        int rCnt = 0;
+        while(rCnt < children.size()) {
+            try {
+                BytesPair bp = completionService.take().get();
+                wholeLength += bp.bytes.length;
+                bytesPairList.add(bp);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            rCnt += 1;
+        }
+
+        Collections.sort(bytesPairList, new Comparator<BytesPair>() {
+            @Override
+            public int compare(BytesPair o1, BytesPair o2) {
+                // return Integer.valueOf(s1).compareTo(Integer.valueOf(s2));
+                return Integer.valueOf(o1.index).compareTo(Integer.valueOf(o2.index));
+            }
+        });
+
         byte[] results = new byte[wholeLength];
-        for(int i = 0, currentLength = 0; i < bytesList.size(); i++) {
-            byte[] currentBytes = bytesList.get(i);
+        for(int i = 0, currentLength = 0; i < bytesPairList.size(); i++) {
+            byte[] currentBytes = bytesPairList.get(i).bytes;
             if(currentBytes != null) {
                 System.arraycopy(currentBytes, 0, results, currentLength, currentBytes.length);
                 currentLength += currentBytes.length;
@@ -342,8 +436,43 @@ public class BasicCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT exten
         }
 
         LOG.debug("znode results.length:{}", results.length);
-
         return results;
+    }
+
+    public static class GetSplitBytes implements Callable<BytesPair> {
+
+        private GuaguaZooKeeper zookeeper;
+
+        private int index;
+
+        private String znode;
+
+        public GetSplitBytes(GuaguaZooKeeper zookeeper, int index, String znode) {
+            this.zookeeper = zookeeper;
+            this.index = index;
+            this.znode = znode;
+        }
+
+        @Override
+        public BytesPair call() throws Exception {
+            byte[] data = zookeeper.getData(znode, null, null);
+            return new BytesPair(index, data);
+        }
+
+    }
+
+    private static class BytesPair {
+
+        public int index;
+
+        public byte[] bytes;
+
+        public BytesPair(int index, byte[] bytes) {
+            super();
+            this.index = index;
+            this.bytes = bytes;
+        }
+
     }
 
     /**

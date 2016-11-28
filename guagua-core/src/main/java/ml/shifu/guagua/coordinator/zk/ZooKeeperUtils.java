@@ -236,18 +236,19 @@ public final class ZooKeeperUtils {
         }
 
         if(!file.mkdir()) {
-            throw new IllegalStateException("Error to mkdir for folder " + folder);
+            throw new IllegalStateException("Error to mkdir for folder " + folder
+                    + "please check if any other process is still running.");
         }
     }
 
     /**
      * Create zookeeper file with specified name and client port setting.
      */
-    public static void prepZooKeeperConf(String fileName, String clientPort) throws IOException {
+    public static void prepZooKeeperConf(String zkFolder, String fileName, String clientPort) throws IOException {
         Map<String, String> props = new HashMap<String, String>();
-        String dataDir = getZooKeeperWorkingDir() + File.separator + "zkdata";
+        String dataDir = zkFolder + File.separator + "zkdata";
         createFolder(dataDir);
-        String dataLogDir = getZooKeeperWorkingDir() + File.separator + "zklog";
+        String dataLogDir = zkFolder + File.separator + "zklog";
         createFolder(dataLogDir);
         props.put("tickTime", "2000");
         props.put("initLimit", "10");
@@ -275,7 +276,7 @@ public final class ZooKeeperUtils {
      * Retrieve zookeeper working folder.
      */
     private static String getZooKeeperWorkingDir() {
-        return getUserDir() + File.separator + "zookeeper";
+        return getUserDir() + File.separator + "zookeeper_" + System.currentTimeMillis();
     }
 
     /**
@@ -315,7 +316,7 @@ public final class ZooKeeperUtils {
         final String confName = zooKeeperWorkingDir + File.separator + "zoo.cfg";
         int validZkPort = getValidZooKeeperPort();
 
-        prepZooKeeperConf(confName, validZkPort + "");
+        prepZooKeeperConf(zooKeeperWorkingDir, confName, validZkPort + "");
 
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -353,7 +354,7 @@ public final class ZooKeeperUtils {
         // 2. prepare conf file
         final String confName = zooKeeperWorkingDir + File.separator + "zoo.cfg";
         int validZkPort = getValidZooKeeperPort();
-        prepZooKeeperConf(confName, validZkPort + "");
+        prepZooKeeperConf(zooKeeperWorkingDir, confName, validZkPort + "");
         // 3. prepare process buider command
         ProcessBuilder processBuilder = new ProcessBuilder();
         List<String> commandList = new ArrayList<String>();

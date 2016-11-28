@@ -171,7 +171,7 @@ public abstract class AbstractMasterCoordinator<MASTER_RESULT extends Bytable, W
                         }
                     }
                 } finally {
-                    closeZooKeeper();
+                    close();
                 }
             }
 

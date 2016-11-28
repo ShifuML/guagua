@@ -725,7 +725,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 } catch (KeeperException.NodeExistsException e) {
                     LOG.warn("Has such node:", e);
                 }
-                LOG.debug("set results to zookeeper with time {}ms",
+                LOG.info("set results to zookeeper with time {}ms",
                         TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
 
                 // cleaning up znode, 0 is needed for fail-over.
@@ -758,7 +758,6 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                             }
                         }
                     });
-
                 }
 
                 LOG.info("master results write to znode.");
@@ -837,7 +836,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         }
                         NettyMasterCoordinator.this.messageServer.releaseExternalResources();
                     }
-                    NettyMasterCoordinator.super.closeZooKeeper();
+                    NettyMasterCoordinator.super.close();
                     NettyMasterCoordinator.this.closeIterResults();
                     NettyMasterCoordinator.this.iterResults.clear();
                 }

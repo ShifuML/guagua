@@ -18,6 +18,7 @@ package ml.shifu.guagua.worker;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import ml.shifu.guagua.BasicCoordinator;
 import ml.shifu.guagua.GuaguaConstants;
@@ -84,7 +85,7 @@ public abstract class AbstractWorkerCoordinator<MASTER_RESULT extends Bytable, W
                                 .createExt(appWorkerNode, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, false);
                     }
                 } finally {
-                    closeZooKeeper();
+                    close();
                 }
             }
         }.execute();
@@ -95,13 +96,16 @@ public abstract class AbstractWorkerCoordinator<MASTER_RESULT extends Bytable, W
         if(context.getCurrentIteration() == GuaguaConstants.GUAGUA_INIT_STEP) {
             return;
         }
+
+        final long start = System.nanoTime();
         byte[] data = getBytesFromZNode(appMasterNode, appMasterSplitNode);
-        LOG.info("Master result size is {}", data.length);
         if(data != null && data.length > 0) {
             MASTER_RESULT lastMasterResult = getMasterSerializer().bytesToObject(data,
                     context.getMasterResultClassName());
             context.setLastMasterResult(lastMasterResult);
         }
+        LOG.info("Master result size is {} and read master result run time time {}ms", data.length,
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
     }
 
     protected class FailOverCoordinatorCommand extends BasicCoordinatorCommand {
