@@ -228,17 +228,15 @@ public final class ZooKeeperUtils {
     /**
      * Create a folder with folder name, if exist, delete it firstly.
      */
-    private static void createFolder(String folder) throws IOException {
+    private static boolean createFolder(String folder) throws IOException {
         File file = new File(folder);
         try {
             FileUtils.deleteDirectory(file);
         } catch (IOException ignore) {
+            return false;
         }
 
-        if(!file.mkdir()) {
-            throw new IllegalStateException("Error to mkdir for folder " + folder
-                    + "please check if any other process is still running.");
-        }
+        return file.mkdir();
     }
 
     /**
@@ -276,7 +274,14 @@ public final class ZooKeeperUtils {
      * Retrieve zookeeper working folder.
      */
     private static String getZooKeeperWorkingDir() {
-        return getUserDir() + File.separator + "zookeeper_" + System.currentTimeMillis();
+        return getUserDir() + File.separator + "zookeeper";
+    }
+
+    /**
+     * Retrieve zookeeper working folder.
+     */
+    private static String getZooKeeperWorkingDir(String subFolder) {
+        return getUserDir() + File.separator + subFolder;
     }
 
     /**
@@ -310,8 +315,13 @@ public final class ZooKeeperUtils {
      * Start embed zookeeper server in a daemon thread.
      */
     public static int startEmbedZooKeeper() throws IOException {
-        final String zooKeeperWorkingDir = getZooKeeperWorkingDir();
-        createFolder(zooKeeperWorkingDir);
+        String zooKeeperWorkingDir = getZooKeeperWorkingDir();
+        boolean isSuccessful = createFolder(zooKeeperWorkingDir);
+
+        if(!isSuccessful) {
+            zooKeeperWorkingDir = getZooKeeperWorkingDir("zookeeper_" + System.currentTimeMillis());
+            createFolder(zooKeeperWorkingDir);
+        }
 
         final String confName = zooKeeperWorkingDir + File.separator + "zoo.cfg";
         int validZkPort = getValidZooKeeperPort();
@@ -328,12 +338,13 @@ public final class ZooKeeperUtils {
         thread.setDaemon(true);
         thread.start();
 
+        final String cleanZkFolder = zooKeeperWorkingDir;
         // used local data should be cleaned.
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    FileUtils.deleteDirectory(new File(zooKeeperWorkingDir));
+                    FileUtils.deleteDirectory(new File(cleanZkFolder));
                 } catch (IOException ignore) {
                 }
             }
@@ -349,8 +360,14 @@ public final class ZooKeeperUtils {
      */
     public static String startChildZooKeeperProcess(String zkJavaOpts) throws IOException {
         // 1. prepare working dir
-        final String zooKeeperWorkingDir = getZooKeeperWorkingDir();
-        createFolder(zooKeeperWorkingDir);
+        String zooKeeperWorkingDir = getZooKeeperWorkingDir();
+        boolean isSuccessful = createFolder(zooKeeperWorkingDir);
+
+        if(!isSuccessful) {
+            zooKeeperWorkingDir = getZooKeeperWorkingDir("zookeeper_" + System.currentTimeMillis());
+            createFolder(zooKeeperWorkingDir);
+        }
+
         // 2. prepare conf file
         final String confName = zooKeeperWorkingDir + File.separator + "zoo.cfg";
         int validZkPort = getValidZooKeeperPort();

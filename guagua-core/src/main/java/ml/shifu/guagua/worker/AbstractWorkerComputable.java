@@ -73,11 +73,11 @@ public abstract class AbstractWorkerComputable<MASTER_RESULT extends Bytable, WO
                 LOG.info("Loading filesplit: {}", fileSplit);
                 try {
                     initRecordReader(fileSplit);
-                    LOG.info("file_extension:"+" extension:"+fileSplit.getExtension()+" "+fileSplit);
+                    LOG.info("file extension: {}, split: {}", fileSplit.getExtension(), fileSplit);
                     context.setAttachment(fileSplit.getExtension());
                     while(getRecordReader().nextKeyValue()) {
                         load(getRecordReader().getCurrentKey(), getRecordReader().getCurrentValue(), context);
-                        ++count;
+                        count += 1L;
                     }
                 } finally {
                     if(getRecordReader() != null) {
@@ -85,9 +85,13 @@ public abstract class AbstractWorkerComputable<MASTER_RESULT extends Bytable, WO
                     }
                 }
             }
+            if(count == 0L) {
+                throw new IllegalStateException(
+                        "Record account in such worker is zero, please check if any exceptions in your input data.");
+            }
             postLoad(context);
             LOG.info("Load {} records.", count);
-            LOG.info("Data loading time:{}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
+            LOG.info("Data loading time: {}ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
         }
 
         long start = System.nanoTime();

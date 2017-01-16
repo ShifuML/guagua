@@ -146,7 +146,7 @@ public class GuaguaMapReduceClient {
         JobClient jobClient = new JobClient(new JobConf(new Configuration()));
         double lastProg = -1;
 
-        Set<String> sucessfulJobs = new HashSet<String>();
+        Set<String> finalSucessfulJobIDs = new HashSet<String>();
 
         while(!this.jc.allFinished()) {
             try {
@@ -185,7 +185,7 @@ public class GuaguaMapReduceClient {
                         if(System.currentTimeMillis() - initTime >= 2 * 60 * 1000L) {
                             killedSuccessJobSet.add(jobId);
                             killJob(controlledJob.getJob().getConfiguration(), jobId, "Kill job " + jobId
-                                    + "because of master is already finished, job " + jobId
+                                    + " because of master is already finished, job " + jobId
                                     + " is treated as successful as we got models. ");
                             // wait extra 1s to wait for job to be stopped
                             try {
@@ -201,9 +201,9 @@ public class GuaguaMapReduceClient {
             List<ControlledJob> successfulJobs = jc.getSuccessfulJobList();
             for(ControlledJob controlledJob: successfulJobs) {
                 String jobId = controlledJob.getJob().getJobID().toString();
-                if(!sucessfulJobs.contains(jobId)) {
+                if(!finalSucessfulJobIDs.contains(jobId)) {
                     LOG.info("Job {} is successful.", jobId);
-                    sucessfulJobs.add(jobId);
+                    finalSucessfulJobIDs.add(jobId);
                 }
             }
 
@@ -211,9 +211,9 @@ public class GuaguaMapReduceClient {
             for(ControlledJob controlledJob: failedJobs) {
                 String failedJobId = controlledJob.getJob().getJobID().toString();
                 if(killedSuccessJobSet.contains(failedJobId)) {
-                    if(!sucessfulJobs.contains(failedJobId)) {
+                    if(!finalSucessfulJobIDs.contains(failedJobId)) {
                         LOG.info("Job {} is successful.", failedJobId);
-                        sucessfulJobs.add(failedJobId);
+                        finalSucessfulJobIDs.add(failedJobId);
                     }
                     continue;
                 }
@@ -234,7 +234,7 @@ public class GuaguaMapReduceClient {
                     }
                 }
             }
-            double prog = calculateProgress(jc, jobClient) / totalNeededMRJobs;
+            double prog = calculateProgress(finalSucessfulJobIDs, jc, jobClient) / totalNeededMRJobs;
             notifyProgress(prog, lastProg);
             lastProg = prog;
 
@@ -252,31 +252,18 @@ public class GuaguaMapReduceClient {
             LOG.info("Sucessful job:");
             LOG.info("Job: {} ", controlledJob);
         }
-        if(totalNeededMRJobs == successfulJobs.size()) {
+        if(totalNeededMRJobs == finalSucessfulJobIDs.size()) {
             LOG.info("Guagua jobs: 100% complete");
             // add failed jobs to debug since all jobs are finished.
-            failedJobs = jc.getFailedJobList();
             if(failedJobs != null && failedJobs.size() > 0) {
                 for(ControlledJob controlledJob: failedJobs) {
-                    Counters counters = getCounters(controlledJob.getJob());
-                    if(counters != null) {
-                        Counter doneMaster = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
-                                GuaguaMapReduceConstants.MASTER_SUCCESS);
-                        Counter doneWorkers = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
-                                GuaguaMapReduceConstants.DONE_WORKERS);
-                        if((doneMaster != null && doneMaster.getValue() > 0)
-                                || (doneWorkers != null && doneWorkers.getValue() > 0)) {
-                            LOG.info("Successful job although failed state (job is treated as successful):");
-                            LOG.warn("Job: {} ", toFakedStateString(controlledJob));
-                        } else {
-                            LOG.info("Failed job:");
-                            LOG.warn("Job: {} ", controlledJob);
-                        }
+                    if(finalSucessfulJobIDs.contains(controlledJob.getJob().getJobID().toString())) {
+                        LOG.info("Successful job although failed state (job is treated as successful):");
+                        LOG.warn("Job: {} ", toFakedStateString(controlledJob));
                     }
                 }
             }
         } else {
-            failedJobs = jc.getFailedJobList();
             if(failedJobs != null && failedJobs.size() > 0) {
                 for(ControlledJob controlledJob: failedJobs) {
                     Counters counters = getCounters(controlledJob.getJob());
@@ -346,7 +333,7 @@ public class GuaguaMapReduceClient {
         if(prog >= (lastProg + 0.01)) {
             int perCom = (int) (prog * 100);
             if(perCom != 100) {
-                LOG.info("Guagua jobs: {}% complete", perCom);
+                LOG.info("Guagua jobs: {}% complete.", perCom);
             }
         }
     }
@@ -362,9 +349,9 @@ public class GuaguaMapReduceClient {
      * @throws IOException
      *             In case any IOException connecting to JobTracker.
      */
-    protected double calculateProgress(JobControl jc, JobClient jobClient) throws IOException {
+    protected double calculateProgress(Set<String> successJobs, JobControl jc, JobClient jobClient) throws IOException {
         double prog = 0.0;
-        prog += jc.getSuccessfulJobList().size();
+        prog += Math.max(jc.getSuccessfulJobList().size(), successJobs.size());
 
         List<ControlledJob> runnJobs = jc.getRunningJobList();
         for(ControlledJob cjob: runnJobs) {

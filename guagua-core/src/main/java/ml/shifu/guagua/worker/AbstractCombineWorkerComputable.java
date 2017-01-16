@@ -113,13 +113,17 @@ public abstract class AbstractCombineWorkerComputable<MASTER_RESULT extends Byta
                             VALUE currentValue = getRecordReader().getCurrentValue();
                             doCompute(currentKey, currentValue, context);
                             dataMap.put(currentKey, currentValue);
-                            ++count;
+                            count += 1L;
                         }
                     } finally {
                         if(getRecordReader() != null) {
                             getRecordReader().close();
                         }
                     }
+                }
+                if(count == 0L) {
+                    throw new IllegalStateException(
+                            "Record account in such worker is zero, please check if any exceptions in your input data.");
                 }
                 postLoad(context);
                 LOG.info("Load {} records.", count);

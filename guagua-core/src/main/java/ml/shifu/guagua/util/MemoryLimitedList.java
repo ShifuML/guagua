@@ -91,6 +91,17 @@ public class MemoryLimitedList<T> implements AppendList<T> {
         }
     }
 
+    /**
+     * Retrieve record given index. This function is only provided in {@link MemoryLimitedList}.
+     * 
+     * @param index
+     *            the index of record to be returned
+     * @return the record in that index
+     */
+    public T get(int index) {
+        return this.delegationList.get(index);
+    }
+
     @Override
     public Iterator<T> iterator() {
         if(this.state != State.READ) {

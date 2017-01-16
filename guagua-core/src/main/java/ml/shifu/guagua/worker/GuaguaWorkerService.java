@@ -286,11 +286,11 @@ public class GuaguaWorkerService<MASTER_RESULT extends Bytable, WORKER_RESULT ex
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } catch (ExecutionException e) {
-                    LOG.error("Error in master computation:", e);
+                    LOG.error("Error in worker computation:", e);
                     throw new GuaguaRuntimeException(e);
                 } catch (TimeoutException e) {
                     isTimeOutInThread = true;
-                    LOG.warn("Time out for master computation, null will be returned or mapper will be killed.");
+                    LOG.warn("Time out for worker computation, null will be returned or mapper will be killed.");
                     // We should use shutdown to terminate computation in current iteration
                     executor.shutdownNow();
                     workerResult = null;
