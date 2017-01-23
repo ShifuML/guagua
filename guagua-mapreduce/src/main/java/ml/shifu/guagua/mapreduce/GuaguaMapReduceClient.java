@@ -425,9 +425,12 @@ public class GuaguaMapReduceClient {
         Class<? extends InputFormat> inputFormatClass = checkInputFormatSetting(cmdLine);
 
         // set map reduce parameters for specified master-workers architecture
-        // speculative execution should be disabled
+        // speculative execution should be disabled, for old ones
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_MAP_TASKS_SPECULATIVE_EXECUTION, false);
         conf.setBoolean(GuaguaMapReduceConstants.MAPRED_REDUCE_TASKS_SPECULATIVE_EXECUTION, false);
+        // for new hadoop speculative parameters
+        conf.setBoolean(GuaguaMapReduceConstants.MAPREDUCE_MAP_SPECULATIVE, false);
+        conf.setBoolean(GuaguaMapReduceConstants.MAPREDUCE_REDUCE_SPECULATIVE, false);
         // set mapreduce.job.max.split.locations to 100 to suppress warnings
         int maxSplits = conf.getInt(GuaguaMapReduceConstants.MAPREDUCE_JOB_MAX_SPLIT_LOCATIONS, 100);
         if(maxSplits < 100) {

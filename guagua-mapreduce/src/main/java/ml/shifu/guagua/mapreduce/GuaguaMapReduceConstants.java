@@ -80,5 +80,10 @@ public final class GuaguaMapReduceConstants {
     public static final String DONE_WORKERS = "DONE_WORKERS";
 
     public static final String GUAGUA_STATUS = "GUAGUA_STATUS";
+    
+    public static final String MAPREDUCE_MAP_SPECULATIVE = "mapreduce.map.speculative";
+
+    public static final String MAPREDUCE_REDUCE_SPECULATIVE = "mapreduce.reduce.speculative";
+
 
 }
