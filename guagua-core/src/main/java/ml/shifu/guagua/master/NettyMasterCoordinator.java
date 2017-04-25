@@ -500,6 +500,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     LOG.info("Cannot update worker result with message: containerId {} iteration {} currentIteration",
                             containerId, bytableWrapper.getCurrentIteration(),
                             NettyMasterCoordinator.this.currentInteration);
+                    // release bytes memory
+                    bytableWrapper.setBytes(null);
                     return;
                 }
                 if(bytableWrapper.isStopMessage()) {
@@ -528,6 +530,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
                         WORKER_RESULT wr = NettyMasterCoordinator.this.getWorkerSerializer().bytesToObject(
                                 bytableWrapper.getBytes(), clazzName);
+
+                        // release memory at earliest stage
+                        bytableWrapper.setBytes(null);
                         WorkerResultWrapper wrw = new WorkerResultWrapper(bytableWrapper.getCurrentIteration(), wr,
                                 clazzName);
                         NettyMasterCoordinator.this.iterResults.append(wrw);
@@ -568,6 +573,11 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         long start = System.nanoTime();
         new RetryCoordinatorCommand(isFixedTime(), getSleepTime()) {
 
+            /**
+             * Next index to for logging
+             */
+            private int nextIndex = 0;
+
             @Override
             public boolean retryExecution() throws KeeperException, InterruptedException {
                 // long to int is assumed successful as no such many workers need using long
@@ -575,9 +585,20 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 synchronized(LOCK) {
                     doneWorkers = (int) NettyMasterCoordinator.this.iterResults.size();
                 }
+
                 // to avoid log flood
-                if(System.nanoTime() % 30 == 0) {
-                    LOG.info("Iteration {}, workers compelted: {}, still {} workers are not synced.",
+                int[] dumpArray = { context.getWorkers() / 5, context.getWorkers() * 2 / 5,
+                        context.getWorkers() * 3 / 5, context.getWorkers() * 4 / 5, context.getWorkers() };
+                for(int i = nextIndex; i < dumpArray.length; i++) {
+                    if(doneWorkers >= dumpArray[i]) {
+                        nextIndex = i + 1;
+                        LOG.info("Iteration {}, workers compelted: {}, still {} workers are not synced (fixed).",
+                                context.getCurrentIteration(), doneWorkers, (context.getWorkers() - doneWorkers));
+                    }
+                }
+
+                if(System.nanoTime() % 100 == 0) {
+                    LOG.info("Iteration {}, workers compelted: {}, still {} workers are not synced (random).",
                             context.getCurrentIteration(), doneWorkers, (context.getWorkers() - doneWorkers));
                 }
 
@@ -693,6 +714,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
      */
     @Override
     public void postIteration(final MasterContext<MASTER_RESULT, WORKER_RESULT> context) {
+        // release worker results after iteration, this is to release memory earlier
+        context.setWorkerResults(null);
+
         new BasicCoordinatorCommand() {
             @Override
             public void doExecute() throws KeeperException, InterruptedException {
@@ -842,7 +866,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 }
             }
         }.execute();
-        
+
         // shut down thread pool
         this.cleanOldZkDataThreadPool.shutdownNow();
         try {

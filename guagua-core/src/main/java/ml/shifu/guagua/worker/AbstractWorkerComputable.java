@@ -70,10 +70,9 @@ public abstract class AbstractWorkerComputable<MASTER_RESULT extends Bytable, WO
             preLoad(context);
             long count = 0;
             for(GuaguaFileSplit fileSplit: context.getFileSplits()) {
-                LOG.info("Loading filesplit: {}", fileSplit);
                 try {
+                    LOG.info("Loading filesplit, file extension: {}, split: {}", fileSplit.getExtension(), fileSplit);
                     initRecordReader(fileSplit);
-                    LOG.info("file extension: {}, split: {}", fileSplit.getExtension(), fileSplit);
                     context.setAttachment(fileSplit.getExtension());
                     while(getRecordReader().nextKeyValue()) {
                         load(getRecordReader().getCurrentKey(), getRecordReader().getCurrentValue(), context);
