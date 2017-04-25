@@ -587,19 +587,14 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 }
 
                 // to avoid log flood
-                int[] dumpArray = { context.getWorkers() / 5, context.getWorkers() * 2 / 5,
-                        context.getWorkers() * 3 / 5, context.getWorkers() * 4 / 5, context.getWorkers() };
+                int[] dumpArray = { context.getWorkers() / 4, context.getWorkers() * 2 / 4,
+                        context.getWorkers() * 3 / 4, context.getWorkers() };
                 for(int i = nextIndex; i < dumpArray.length; i++) {
                     if(doneWorkers >= dumpArray[i]) {
                         nextIndex = i + 1;
                         LOG.info("Iteration {}, workers compelted: {}, still {} workers are not synced (fixed).",
                                 context.getCurrentIteration(), doneWorkers, (context.getWorkers() - doneWorkers));
                     }
-                }
-
-                if(System.nanoTime() % 100 == 0) {
-                    LOG.info("Iteration {}, workers compelted: {}, still {} workers are not synced (random).",
-                            context.getCurrentIteration(), doneWorkers, (context.getWorkers() - doneWorkers));
                 }
 
                 long timeOut = 0L;
@@ -784,7 +779,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     });
                 }
 
-                LOG.info("master results write to znode.");
+                LOG.debug("master results write to znode.");
             }
         }.execute();
     }
