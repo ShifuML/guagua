@@ -98,16 +98,49 @@ public class GuaguaInputFormat extends TextInputFormat {
         } else {
             newSplits = getGuaguaSplits(job);
         }
+
+        // use a new splits array to return
+        List<InputSplit> modeifiedSplits = new ArrayList<InputSplit>();
+        // check if still empty split, with all empty gzip files in one split, while empty gzip file has 20 bytes, which
+        // is also not 0 byte.
+        for(InputSplit inputSplit: newSplits) {
+            GuaguaInputSplit guaguaInputSplit = (GuaguaInputSplit) inputSplit;
+            if(guaguaInputSplit != null) {
+                if(!isAllFileSplitsEmptyGzip(guaguaInputSplit)) {
+                    modeifiedSplits.add(guaguaInputSplit);
+                }
+            }
+        }
+
         int masters = job.getConfiguration().getInt(GuaguaConstants.GUAGUA_MASTER_NUMBER,
                 GuaguaConstants.DEFAULT_MASTER_NUMBER);
         for(int i = 0; i < masters; i++) {
-            newSplits.add(new GuaguaInputSplit(true, (FileSplit) null));
+            modeifiedSplits.add(new GuaguaInputSplit(true, (FileSplit) null));
         }
-        int mapperSize = newSplits.size();
+        int mapperSize = modeifiedSplits.size();
         LOG.info("Input size including master: {}", mapperSize);
-        LOG.debug("input splits: {}", newSplits);
+        LOG.debug("input splits: {}", modeifiedSplits);
         job.getConfiguration().set(GuaguaConstants.GUAGUA_WORKER_NUMBER, (mapperSize - masters) + "");
-        return newSplits;
+        return modeifiedSplits;
+    }
+
+    /**
+     * Check this case: all file splits are gzip files, but they are empty with only 20 bytes. Usally if it is 0 byte
+     * can be found in getGuaguaSplits, while gzip empty file is not real empty.
+     */
+    private boolean isAllFileSplitsEmptyGzip(GuaguaInputSplit guaguaInputSplit) {
+        boolean isGzipEmptyFile = true;// by default true
+        for(FileSplit fileSplit: guaguaInputSplit.getFileSplits()) {
+            if(fileSplit.getPath().getName().toLowerCase().endsWith("gz") && fileSplit.getStart() == 0L
+                    && fileSplit.getLength() <= 20) {
+                // just set to true
+                isGzipEmptyFile = true;
+            } else {
+                // if found one is not gzip or gzip but not 20 bytes, return false to denote it is not empty gzip file
+                return false;
+            }
+        }
+        return isGzipEmptyFile;
     }
 
     /**
