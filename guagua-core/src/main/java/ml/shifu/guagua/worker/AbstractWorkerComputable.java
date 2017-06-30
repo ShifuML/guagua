@@ -86,7 +86,7 @@ public abstract class AbstractWorkerComputable<MASTER_RESULT extends Bytable, WO
             }
             if(count == 0L) {
                 throw new IllegalStateException(
-                        "Record account in such worker is zero, please check if any exceptions in your input data.");
+                        "Record count in such worker is zero, please check if any exceptions in your input data.");
             }
             postLoad(context);
             LOG.info("Load {} records.", count);
