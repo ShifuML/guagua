@@ -16,10 +16,13 @@
  
 Guagua Change Logs
 
-Changes for Guagua-0.7.6
+Changes for Guagua-0.7.7
     * Fix a bug on empty gzip files in one worker: remove such woker if size of all gzip file <= 20 bytes.
-Changes for Guagua-0.7.5
+Changes for Guagua-0.7.6
     * Release worker results at early stage to release memory intermediately
+Changes for Guagua-0.7.5
+    * Change message receiving and sending in master/workers to multiple threading.
+    * Change bug on zookeeper folder created failed exception in client embeded zookeeper.
 Changes for Guagua-0.7.4
     * Validation data set change on Guagua side: add attachments for GuaguaInputSplit & GuaguaInputFormat
     * Fix a bug on embeded ZooKeeper logging enable
