@@ -6,7 +6,7 @@ An iterative computing framework on both Hadoop MapReduce and Hadoop YARN.
 
 ## News
 
-Guagua 0.7.5 is released with a lot of improvements. Check our [changes] (https://github.com/ShifuML/guagua/blob/master/CHANGES.txt#L19)
+Guagua 0.7.7 is released with a lot of improvements. Check our [changes] (https://github.com/ShifuML/guagua/blob/master/CHANGES.txt#L19)
 
 ## Conference
 
