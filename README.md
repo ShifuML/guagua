@@ -14,7 +14,7 @@ Guagua 0.7.5 is released with a lot of improvements. Check our [changes] (https:
 
 ## Getting Started
 
-Please visit [Guagua site](http://shifu.ml/docs/guagua/) for tutorials.
+Please visit [Guagua wiki site](https://github.com/ShifuML/guagua/wiki) for tutorials.
 
 ## What is Guagua?
 **Guagua**, a sub-project of Shifu, is a distributed, pluggable and scalable iterative computing framework based on Hadoop MapReduce and YARN.
