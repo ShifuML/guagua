@@ -1,4 +1,4 @@
-[<img src="images/guagua_duck_50.png" alt="Guagua" align="left">](http://shifu.ml/docs/stable/guide/guagua/)<div align="right"> [![Build Status](https://travis-ci.org/ShifuML/guagua.svg?branch=master)](https://travis-ci.org/ShifuML/guagua)</div>
+[<img src="images/guagua_duck_50.png" alt="Guagua" align="left">](http://shifu.ml)<div align="right"><div>[![Build Status](https://travis-ci.org/ShifuML/guagua.svg)](https://travis-ci.org/ShifuML/shifu)</div><div>[![Maven Central](https://maven-badges.herokuapp.com/maven-central/ml.shifu/guagua/badge.svg)](https://maven-badges.herokuapp.com/maven-central/ml.shifu/guagua)</div></div>
 
 ## Guagua
 
