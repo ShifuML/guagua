@@ -135,10 +135,12 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <repositories>
+                <!--
                 <repository>
                     <id>HortonWorks HDP LOCAL</id>
                     <url>http://repo.hortonworks.com/service/local/repositories/releases/content</url>
                 </repository>
+                -->
                 <repository>
                     <id>HortonWorks HDP</id>
                     <url>http://repo.hortonworks.com/nexus/content/repositories/releases</url>
