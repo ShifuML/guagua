@@ -134,6 +134,9 @@ public class GuaguaMapReduceClient {
 
     /**
      * Run all jobs added to JobControl.
+     * @return
+     *      0 - if all jobs run successfully
+     *      1 - if there is any fail job
      */
     public int run() throws IOException {
         int status = 0;
