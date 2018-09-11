@@ -135,7 +135,9 @@ public class GuaguaMapReduceClient {
     /**
      * Run all jobs added to JobControl.
      */
-    public void run() throws IOException {
+    public int run() throws IOException {
+        int status = 0;
+
         // Initially, all jobs are in wait state.
         List<ControlledJob> jobsWithoutIds = this.jc.getWaitingJobList();
         int totalNeededMRJobs = jobsWithoutIds.size();
@@ -279,12 +281,14 @@ public class GuaguaMapReduceClient {
                         } else {
                             LOG.info("Failed job:");
                             LOG.warn("Job: {} ", controlledJob);
+                            status = 1;
                         }
                     }
                 }
             }
         }
         this.jc.stop();
+        return status;
     }
 
     private static Counters getCounters(Job job) {
