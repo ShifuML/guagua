@@ -4,4 +4,4 @@ target*
 .settings*
 *.iml
 test-output*
-
+.idea
