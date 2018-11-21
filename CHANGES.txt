@@ -16,6 +16,8 @@
  
 Guagua Change Logs
 
+Changes for Guagua-0.7.8
+    * Return status of Guagua MapReduce job to client.
 Changes for Guagua-0.7.7
     * Fix a bug on empty gzip files in one worker: remove such woker if size of all gzip file <= 20 bytes.
 Changes for Guagua-0.7.6
