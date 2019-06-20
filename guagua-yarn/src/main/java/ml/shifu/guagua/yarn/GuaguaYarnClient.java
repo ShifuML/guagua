@@ -290,7 +290,7 @@ public class GuaguaYarnClient extends Configured {
         checkAppName(conf, cmdLine);
         return parser;
     }
-
+    
     private static void checkAppName(Configuration conf, CommandLine cmdLine) {
         String name = "guagua";
         if(cmdLine.hasOption("-n")) {

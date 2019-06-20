@@ -415,10 +415,10 @@ public class GuaguaMapReduceClient {
         String hdpVersion = HDPUtils.getHdpVersionForHDP224();
         if(hdpVersion != null && hdpVersion.length() != 0) {
             conf.set("hdp.version", hdpVersion);
-            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("hdfs-site.xml"), conf);
-            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("core-site.xml"), conf);
-            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("mapred-site.xml"), conf);
-            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("yarn-site.xml"), conf);
+//            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("hdfs-site.xml"), conf);
+//            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("core-site.xml"), conf);
+//            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("mapred-site.xml"), conf);
+//            HDPUtils.addFileToClassPath(HDPUtils.findContainingFile("yarn-site.xml"), conf);
         }
         CommandLine cmdLine = parser.getCommandLine();
         checkInputSetting(conf, cmdLine);
