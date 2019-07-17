@@ -100,28 +100,33 @@ public class GuaguaInputFormat extends TextInputFormat {
         }
 
         // use a new splits array to return
-        List<InputSplit> modeifiedSplits = new ArrayList<InputSplit>();
+        List<InputSplit> modifiedSplits = new ArrayList<InputSplit>();
         // check if still empty split, with all empty gzip files in one split, while empty gzip file has 20 bytes, which
         // is also not 0 byte.
         for(InputSplit inputSplit: newSplits) {
             GuaguaInputSplit guaguaInputSplit = (GuaguaInputSplit) inputSplit;
             if(guaguaInputSplit != null) {
                 if(!isAllFileSplitsEmptyGzip(guaguaInputSplit)) {
-                    modeifiedSplits.add(guaguaInputSplit);
+                    modifiedSplits.add(guaguaInputSplit);
                 }
             }
+        }
+
+        if(modifiedSplits.size() == 0) {
+            throw new IllegalArgumentException(
+                    "All input files are empty, please check " + job.getConfiguration().get(INPUT_DIR));
         }
 
         int masters = job.getConfiguration().getInt(GuaguaConstants.GUAGUA_MASTER_NUMBER,
                 GuaguaConstants.DEFAULT_MASTER_NUMBER);
         for(int i = 0; i < masters; i++) {
-            modeifiedSplits.add(new GuaguaInputSplit(true, (FileSplit) null));
+            modifiedSplits.add(new GuaguaInputSplit(true, (FileSplit) null));
         }
-        int mapperSize = modeifiedSplits.size();
+        int mapperSize = modifiedSplits.size();
         LOG.info("Input size including master: {}", mapperSize);
-        LOG.debug("input splits: {}", modeifiedSplits);
+        LOG.debug("input splits: {}", modifiedSplits);
         job.getConfiguration().set(GuaguaConstants.GUAGUA_WORKER_NUMBER, (mapperSize - masters) + "");
-        return modeifiedSplits;
+        return modifiedSplits;
     }
 
     /**

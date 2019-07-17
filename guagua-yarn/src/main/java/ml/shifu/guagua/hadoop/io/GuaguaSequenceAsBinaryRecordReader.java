@@ -17,20 +17,21 @@ package ml.shifu.guagua.hadoop.io;
 
 import java.io.IOException;
 
-import ml.shifu.guagua.io.GuaguaFileSplit;
-import ml.shifu.guagua.io.GuaguaRecordReader;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.SequenceFileAsBinaryInputFormat.SequenceFileAsBinaryRecordReader;
 
+import ml.shifu.guagua.io.GuaguaFileSplit;
+import ml.shifu.guagua.io.GuaguaRecordReader;
+
 /**
  * A reader read HDFS sequence file key by key. The sequence key and value types are both {@link BytesWritable}.
  * 
  * <p>
- * Copy some code from {@link org.apache.hadoop.mapred.SequenceFileAsBinaryInputFormat} but to support
+ * Copy some code from {@link org.apache.hadoop.mapred.SequenceFileAsBinaryInputFormat.SequenceFileAsBinaryRecordReader}
+ * but to support
  * {@link GuaguaRecordReader} interface.
  * 
  * <p>
@@ -47,8 +48,8 @@ import org.apache.hadoop.mapred.SequenceFileAsBinaryInputFormat.SequenceFileAsBi
  * this.setRecordReader(new GuaguaSequenceAsBinaryRecordReader(fileSplit));
  * </pre>
  */
-public class GuaguaSequenceAsBinaryRecordReader implements
-        GuaguaRecordReader<GuaguaWritableAdapter<BytesWritable>, GuaguaWritableAdapter<BytesWritable>> {
+public class GuaguaSequenceAsBinaryRecordReader
+        implements GuaguaRecordReader<GuaguaWritableAdapter<BytesWritable>, GuaguaWritableAdapter<BytesWritable>> {
 
     private SequenceFileAsBinaryRecordReader sequenceReader;
 

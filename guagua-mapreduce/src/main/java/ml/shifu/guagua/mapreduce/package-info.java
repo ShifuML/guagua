@@ -18,17 +18,15 @@
  * This package contains guagua-mapreduce implementation details based one only mapper hadoop job.
  * 
  * <p>
- * {@link com.paypal.guagua.mapreduce.GuaguaMapReduceClient} is the entry point to trigger a guagua job by invoking its 
- * <code>main</code> method. 
+ * com.paypal.guagua.mapreduce.GuaguaMapReduceClient is the entry point to trigger a guagua job by invoking its
+ * <code>main</code> method.
  * 
  * <p>
- * {@link com.paypal.guagua.mapreduce.GuaguaMRUnitDriver} is a class for unit test, it will run guagua master-workers in 
- * one jvm instance. See SumTest in guagua-mapreduce-examples project for details.
+ * com.paypal.guagua.mapreduce.GuaguaMRUnitDriver is a class for unit test, it will run guagua master-workers in one jvm
+ * instance. See SumTest in guagua-mapreduce-examples project for details.
  * 
  * <p>
- * Hadoop input format and output format customization for guagua is in 
- * {@link com.paypal.guagua.mapreduce.GuaguaInputFormat} and {@link com.paypal.guagua.mapreduce.GuaguaOutputFormat} and 
- * other related classes.
+ * Hadoop input format and output format customization for guagua is in com.paypal.guagua.mapreduce.GuaguaInputFormat
+ * com.paypal.guagua.mapreduce.GuaguaOutputFormat and other related classes.
  */
 package ml.shifu.guagua.mapreduce;
-

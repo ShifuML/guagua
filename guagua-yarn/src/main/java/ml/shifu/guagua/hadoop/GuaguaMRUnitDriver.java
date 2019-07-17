@@ -44,8 +44,8 @@ import org.apache.hadoop.util.StringUtils;
  * 
  * @see ml.shifu.guagua.mapreduce.example.sum.SumTest in guagua-mapreduce-examples project.
  */
-public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> extends
-        GuaguaUnitDriver<MASTER_RESULT, WORKER_RESULT> {
+public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable>
+        extends GuaguaUnitDriver<MASTER_RESULT, WORKER_RESULT> {
 
     /**
      * A only constructor here for local in-memory guagua job.
@@ -99,14 +99,14 @@ public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT ext
 
                 long bytesRemaining = length;
                 while(((double) bytesRemaining) / splitSize > GuaguaYarnConstants.SPLIT_SLOP) {
-                    splits.add(new GuaguaFileSplit[] { new GuaguaFileSplit(path.toString(), length - bytesRemaining,
-                            splitSize) });
+                    splits.add(new GuaguaFileSplit[] {
+                            new GuaguaFileSplit(path.toString(), length - bytesRemaining, splitSize) });
                     bytesRemaining -= splitSize;
                 }
 
                 if(bytesRemaining != 0) {
-                    splits.add(new GuaguaFileSplit[] { new GuaguaFileSplit(path.toString(), length - bytesRemaining,
-                            bytesRemaining) });
+                    splits.add(new GuaguaFileSplit[] {
+                            new GuaguaFileSplit(path.toString(), length - bytesRemaining, bytesRemaining) });
                 }
             } else if(length != 0) {
                 splits.add(new GuaguaFileSplit[] { new GuaguaFileSplit(path.toString(), 0, length) });
@@ -159,8 +159,10 @@ public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT ext
      * List input directories.
      * Subclasses may override to, e.g., select only files matching a regular expression.
      * 
-     * @param job
-     *            the job to list input paths for
+     * @param conf
+     *            the job conf
+     * @param input
+     *            input file name or folder name
      * @return array of FileStatus objects
      * @throws IOException
      *             if zero items.

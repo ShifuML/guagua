@@ -19,11 +19,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.io.Writable;
+
 import ml.shifu.guagua.GuaguaConstants;
 import ml.shifu.guagua.io.Bytable;
 import ml.shifu.guagua.io.HaltBytable;
-
-import org.apache.hadoop.io.Writable;
+import ml.shifu.guagua.mapreduce.GuaguaMapReduceClient;
 
 /**
  * {@link GuaguaWritableAdapter} is used to adapt hadoop io to {@link Bytable} interface.

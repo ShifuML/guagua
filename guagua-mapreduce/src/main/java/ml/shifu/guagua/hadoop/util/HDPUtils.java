@@ -110,8 +110,8 @@ public class HDPUtils {
     /**
      * Find a real file that contains file name in class path.
      * 
-     * @param file
-     *            name
+     * @param fileName
+     *            the file name
      * @return real file name
      */
     public static String findContainingFile(String fileName) {

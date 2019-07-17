@@ -119,17 +119,6 @@ public class Gradient {
 
     /**
      * Construct a gradient worker.
-     * 
-     * @param theNetwork
-     *            The network to train.
-     * @param theOwner
-     *            The owner that is doing the training.
-     * @param theTraining
-     *            The training data.
-     * @param theLow
-     *            The low index to use in the training data.
-     * @param theHigh
-     *            The high index to use in the training data.
      */
     public Gradient(final FlatNetwork theNetwork, final MLDataSet theTraining, final double[] flatSpot, ErrorFunction ef) {
         this.network = theNetwork;

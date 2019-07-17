@@ -18,18 +18,17 @@
  * This package contains hadoop related common io classes.
  * 
  * <p>
- * Noticed that each class in this package is the same package and same name with the one in guagua-yarn. This is 
- * important to make sure such common hadoop io utils can be used in both guagua mapreduce and yarn implementations. 
+ * Noticed that each class in this package is the same package and same name with the one in guagua-yarn. This is
+ * important to make sure such common hadoop io utils can be used in both guagua mapreduce and yarn implementations.
  * 
  * <p>
- * IO related classes including {@link com.paypal.guagua.hadoop.io.GuaguaWritableAdapter} and 
- * {@link com.paypal.guagua.hadoop.io.GuaguaWritableSerializer} can be used to combine hadoop 
- * {@link org.apache.hadoop.io.Writable} with guagua {@link com.paypal.guagua.io.Bytable}.
+ * IO related classes including {@link ml.shifu.guagua.hadoop.io.GuaguaWritableAdapter} and
+ * {@link ml.shifu.guagua.hadoop.io.GuaguaWritableSerializer} can be used to combine hadoop
+ * {@link org.apache.hadoop.io.Writable} with guagua {@link ml.shifu.guagua.io.Bytable}.
  * 
  * <p>
- * Hadoop input format and output format customization for guagua is in 
- * {@link com.paypal.guagua.hadoop.io.GuaguaInputFormat} and {@link com.paypal.guagua.mapreduce.GuaguaOutputFormat} and 
+ * Hadoop input format and output format customization for guagua is in
+ * {@link ml.shifu.guagua.mapreduce.GuaguaInputFormat} and {@link ml.shifu.guagua.mapreduce.GuaguaOutputFormat} and
  * other related classes.
  */
 package ml.shifu.guagua.hadoop.io;
-
