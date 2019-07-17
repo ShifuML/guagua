@@ -18,7 +18,7 @@
  * This package contains guagua worker implementation.
  * 
  * <p>
- * {@link com.paypal.guagua.worker.GuaguaWorkerService} is an implementation to do worker computation and worker 
+ * {@link ml.shifu.guagua.worker.GuaguaWorkerService} is an implementation to do worker computation and worker 
  * interceptors.
  * 
  * <p>

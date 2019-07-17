@@ -18,11 +18,10 @@
  * This package contains guagua master implementation.
  * 
  * <p>
- * {@link com.paypal.guagua.master.GuaguaMasterService} is a implementation to do master computation and master 
+ * {@link ml.shifu.guagua.master.GuaguaMasterService} is a implementation to do master computation and master
  * interceptors.
  * 
  * <p>
  * Master coordinator, memory profiler and timer such kind of useful interceptors are included in this package.
  */
 package ml.shifu.guagua.master;
-

@@ -28,7 +28,7 @@ import ml.shifu.guagua.GuaguaRuntimeException;
  * are not supported in this list.
  * 
  * <p>
- * If current size is over limited size, a GuaguaRuntimeException is added when {@link #add(Object)}.
+ * If current size is over limited size, a GuaguaRuntimeException is added when {@link #append(Object)}.
  * 
  * @author Zhang David (pengzhang@paypal.com)
  */

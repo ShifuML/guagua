@@ -18,11 +18,10 @@
  * This package contains some useful utility functions to help guagua-core.
  * 
  * <p>
- * {@link com.paypal.guagua.util.JMap} and {@link com.paypal.guagua.util.MemoryUtils} are used for memory profiling.
+ * {@link ml.shifu.guagua.util.JMap} and {@link ml.shifu.guagua.util.MemoryUtils} are used for memory profiling.
  * 
  * <p>
- * Others are common utils like {@link com.paypal.guagua.util.StringUtils} are used to avoid loading extra jars into our
+ * Others are common utils like {@link ml.shifu.guagua.util.StringUtils} are used to avoid loading extra jars into our
  * guagua core framework.
  */
 package ml.shifu.guagua.util;
-

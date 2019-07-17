@@ -28,9 +28,7 @@ import java.io.IOException;
  * 
  * <p>
  * To use Hadoop original Writable, GuaguaWritableAdapter in guagua-mapreduce module is an adapter to help you re-use
- * Hadoop existing Writable in guagua application.
- * 
- * @see GuaguaWritableAdapter in guagua-mapreduce
+ * Hadoop existing Writable in guagua application. see GuaguaWritableAdapter in guagua-mapreduce.
  */
 public interface Bytable {
 
