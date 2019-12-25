@@ -113,8 +113,8 @@ public class GuaguaInputFormat extends TextInputFormat {
         }
 
         if(modifiedSplits.size() == 0) {
-            throw new IllegalArgumentException(
-                    "All input files are empty, please check " + job.getConfiguration().get(INPUT_DIR));
+            throw new IllegalArgumentException("All input files are empty, please check "
+                    + job.getConfiguration().get("mapreduce.input.fileinputformat.inputdir"));
         }
 
         int masters = job.getConfiguration().getInt(GuaguaConstants.GUAGUA_MASTER_NUMBER,
