@@ -81,11 +81,11 @@
             <repositories>
                 <repository>
                     <id>HortonWorks HDP LOCAL</id>
-                    <url>http://repo.hortonworks.com/service/local/repositories/releases/content</url>
+                    <url>https://repo.hortonworks.com/service/local/repositories/releases/content</url>
                 </repository>
                 <repository>
                     <id>HortonWorks HDP</id>
-                    <url>http://repo.hortonworks.com/nexus/content/repositories/releases</url>
+                    <url>https://repo.hortonworks.com/nexus/content/repositories/releases</url>
                 </repository>
             </repositories>
             <dependencies>
@@ -139,12 +139,12 @@
                 
                 <repository>
                     <id>HortonWorks HDP LOCAL</id>
-                    <url>http://repo.hortonworks.com/service/local/repositories/releases/content</url>
+                    <url>https://repo.hortonworks.com/service/local/repositories/releases/content</url>
                 </repository>
       
                 <repository>
                     <id>HortonWorks HDP</id>
-                    <url>http://repo.hortonworks.com/nexus/content/repositories/releases</url>
+                    <url>https://repo.hortonworks.com/nexus/content/repositories/releases</url>
                 </repository>
      
             </repositories>
