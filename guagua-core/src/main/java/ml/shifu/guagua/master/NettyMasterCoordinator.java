@@ -36,25 +36,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import ml.shifu.guagua.GuaguaConstants;
-import ml.shifu.guagua.GuaguaRuntimeException;
-import ml.shifu.guagua.io.Bytable;
-import ml.shifu.guagua.io.BytableWrapper;
-import ml.shifu.guagua.io.Combinable;
-import ml.shifu.guagua.io.HaltBytable;
-import ml.shifu.guagua.io.NettyBytableDecoder;
-import ml.shifu.guagua.io.NettyBytableEncoder;
-import ml.shifu.guagua.io.Serializer;
-import ml.shifu.guagua.util.AppendList;
-import ml.shifu.guagua.util.BytableDiskList;
-import ml.shifu.guagua.util.BytableMemoryDiskList;
-import ml.shifu.guagua.util.ClassUtils;
-import ml.shifu.guagua.util.MemoryDiskList;
-import ml.shifu.guagua.util.NetworkUtils;
-import ml.shifu.guagua.util.NumberFormatUtils;
-import ml.shifu.guagua.util.ReflectionUtils;
-import ml.shifu.guagua.util.StringUtils;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -74,6 +55,25 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ml.shifu.guagua.GuaguaConstants;
+import ml.shifu.guagua.GuaguaRuntimeException;
+import ml.shifu.guagua.io.Bytable;
+import ml.shifu.guagua.io.BytableWrapper;
+import ml.shifu.guagua.io.Combinable;
+import ml.shifu.guagua.io.HaltBytable;
+import ml.shifu.guagua.io.NettyBytableDecoder;
+import ml.shifu.guagua.io.NettyBytableEncoder;
+import ml.shifu.guagua.io.Serializer;
+import ml.shifu.guagua.util.AppendList;
+import ml.shifu.guagua.util.BytableDiskList;
+import ml.shifu.guagua.util.BytableMemoryDiskList;
+import ml.shifu.guagua.util.ClassUtils;
+import ml.shifu.guagua.util.MemoryDiskList;
+import ml.shifu.guagua.util.NetworkUtils;
+import ml.shifu.guagua.util.NumberFormatUtils;
+import ml.shifu.guagua.util.ReflectionUtils;
+import ml.shifu.guagua.util.StringUtils;
+
 /**
  * A master coordinator to coordinate with workers through Netty server.
  * 
@@ -85,8 +85,8 @@ import org.slf4j.LoggerFactory;
  * Worker results are persisted into {@link MemoryDiskList}, the reason is that for big model, limited memory may not be
  * enough to store all worker results in memory.
  */
-public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> extends
-        AbstractMasterCoordinator<MASTER_RESULT, WORKER_RESULT> {
+public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable>
+        extends AbstractMasterCoordinator<MASTER_RESULT, WORKER_RESULT> {
 
     private static final Logger LOG = LoggerFactory.getLogger(NettyMasterCoordinator.class);
 
@@ -154,12 +154,12 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
     /**
      * Merge internal elements together to save memory.
      */
-    private class MergeWorkerResultList extends LinkedList<WorkerResultWrapper> implements
-            AppendList<WorkerResultWrapper> {
+    private class MergeWorkerResultList extends LinkedList<WorkerResultWrapper>
+            implements AppendList<WorkerResultWrapper> {
 
         public MergeWorkerResultList(int threshold) {
-            if(threshold <= 0) {
-                throw new IllegalArgumentException("Threshold cannot be <= 0.");
+            if(threshold <= 1) {
+                throw new IllegalArgumentException("Threshold cannot be <= 1.");
             }
             this.threshold = threshold;
         }
@@ -181,22 +181,18 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         public synchronized boolean add(WorkerResultWrapper e) {
             this.rawSize += 1;
             if(e.isWorkerCombinable()) {
-                this.currIndex += 1;
                 if(this.currIndex == this.threshold - 1) {
-                    while(this.currIndex > 1) {
+                    while(this.currIndex >= 1) {
                         e.combine(this.removeLast());
                         this.currIndex -= 1;
                     }
-                    if(currIndex != 1) {
+                    if(currIndex != 0) {
                         throw new IllegalStateException();
                     }
-                    return super.add(e);
-                } else {
-                    return super.add(e);
                 }
-            } else {
-                return super.add(e);
+                this.currIndex += 1;
             }
+            return super.add(e);
         }
 
         @Override
@@ -251,18 +247,18 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
 
     private void initIterResults(Properties props) {
         synchronized(LOCK) {
-            boolean nonSpill = "true".equalsIgnoreCase(props.getProperty(GuaguaConstants.GUAGUA_MASTER_RESULT_NONSPILL,
-                    "true"));
+            boolean nonSpill = "true"
+                    .equalsIgnoreCase(props.getProperty(GuaguaConstants.GUAGUA_MASTER_RESULT_NONSPILL, "true"));
             if(nonSpill && isWorkerCombinable(props.getProperty(GuaguaConstants.GUAGUA_WORKER_RESULT_CLASS))) {
-                int mergeThreshold = NumberFormatUtils.getInt(
-                        props.getProperty(GuaguaConstants.GUAGUA_MASTER_RESULT_MERGE_THRESHOLD, "10"), 10);
+                int mergeThreshold = NumberFormatUtils
+                        .getInt(props.getProperty(GuaguaConstants.GUAGUA_MASTER_RESULT_MERGE_THRESHOLD, "5"), 5);
                 this.iterResults = new MergeWorkerResultList(mergeThreshold);
             } else {
                 BytableDiskList<WorkerResultWrapper> bytableDiskList = new BytableDiskList<WorkerResultWrapper>(
                         System.currentTimeMillis() + "", WorkerResultWrapper.class.getName());
-                double memoryFraction = Double.valueOf(props.getProperty(
-                        GuaguaConstants.GUAGUA_MASTER_WORKERESULTS_MEMORY_FRACTION,
-                        GuaguaConstants.GUAGUA_MASTER_WORKERESULTS_DEFAULT_MEMORY_FRACTION));
+                double memoryFraction = Double
+                        .valueOf(props.getProperty(GuaguaConstants.GUAGUA_MASTER_WORKERESULTS_MEMORY_FRACTION,
+                                GuaguaConstants.GUAGUA_MASTER_WORKERESULTS_DEFAULT_MEMORY_FRACTION));
                 long memoryStoreSize = (long) (Runtime.getRuntime().maxMemory() * memoryFraction);
                 LOG.info("Memory size in BytableMemoryDiskList for worker result list: {}", memoryStoreSize);
                 this.iterResults = new BytableMemoryDiskList<WorkerResultWrapper>(memoryStoreSize, bytableDiskList);
@@ -386,12 +382,13 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                         CreateMode.PERSISTENT, false);
                 LOG.info("Master znode initialization with server info {}", znodeValue);
             } else {
-                String existZnodeValue = new String(getZooKeeper().getData(znode, null, null), Charset.forName("UTF-8"));
+                String existZnodeValue = new String(getZooKeeper().getData(znode, null, null),
+                        Charset.forName("UTF-8"));
                 int version = NumberFormatUtils.getInt(existZnodeValue.split(":")[2], true);
                 String znodeValue = InetAddress.getLocalHost().getHostName() + ":"
                         + NettyMasterCoordinator.this.messageServerPort + ":" + (version + 1);
-                getZooKeeper().createOrSetExt(znode, znodeValue.getBytes(Charset.forName("UTF-8")),
-                        Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, false, -1);
+                getZooKeeper().createOrSetExt(znode, znodeValue.getBytes(Charset.forName("UTF-8")), Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT, false, -1);
                 LOG.info("Master znode re-initialization with server info {}", znodeValue);
             }
         } catch (KeeperException.NodeExistsException e) {
@@ -408,9 +405,21 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         this.messageServerPort = NumberFormatUtils.getInt(props.getProperty(GuaguaConstants.GUAGUA_NETTY_SEVER_PORT),
                 GuaguaConstants.GUAGUA_NETTY_SEVER_DEFAULT_PORT);
         this.messageServerPort = NetworkUtils.getValidServerPort(this.messageServerPort);
-        this.messageServer = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newFixedThreadPool(
-                GuaguaConstants.GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT, new MasterThreadFactory()),
-                Executors.newCachedThreadPool(new MasterThreadFactory())));
+
+        // Replace Excecutors.newCacheThreadPool with configured fixed thread pool to fix such OOM issue:
+        // In some cases like 200 workers but each workers with message about 30M, if cache thread pool means no limit
+        // for io worker thread pool, finally may be 200 worker threads accept 30M in a short period, thus OOM issue.
+        // Default 8 threads has been tuned for normal cases, for some extreme case, can be configured to increase such
+        // number while risky of OOM if increasing to a larger number.
+        int serverThreads = NumberFormatUtils
+                .getInt(props.getProperty(GuaguaConstants.GUAGUA_MASTER_NETTY_SERVER_THREADS,
+                        GuaguaConstants.GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT + ""));
+        int serverWorkerIOThreads = NumberFormatUtils
+                .getInt(props.getProperty(GuaguaConstants.GUAGUA_MASTER_NETTY_SERVER_IO_THREADS,
+                        GuaguaConstants.GUAGUA_NETTY_SERVER_DEFAULT_THREAD_COUNT + ""));
+        this.messageServer = new ServerBootstrap(new NioServerSocketChannelFactory(
+                Executors.newFixedThreadPool(serverThreads, new MasterThreadFactory()),
+                Executors.newFixedThreadPool(serverWorkerIOThreads, new MasterThreadFactory()), serverWorkerIOThreads));
 
         // Set up the pipeline factory.
         this.messageServer.setPipelineFactory(new ChannelPipelineFactory() {
@@ -429,8 +438,9 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
         }
 
         try {
-            LOG.info("Master netty server is started at {}", InetAddress.getLocalHost().getHostName() + ":"
-                    + InetAddress.getLocalHost().getHostAddress() + ":" + NettyMasterCoordinator.this.messageServerPort);
+            LOG.info("Master netty server is started at {}",
+                    InetAddress.getLocalHost().getHostName() + ":" + InetAddress.getLocalHost().getHostAddress() + ":"
+                            + NettyMasterCoordinator.this.messageServerPort);
         } catch (UnknownHostException e) {
             throw new GuaguaRuntimeException(e);
         }
@@ -464,7 +474,7 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                 public void uncaughtException(Thread t, Throwable e) {
                     LOG.warn("Error message in thread {} with error message {}, error root cause {}.", t, e,
                             e.getCause());
-                    // print stack???
+                    LOG.warn("Error stack:", e);
                 }
             });
             return thread;
@@ -528,8 +538,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                             && NettyMasterCoordinator.this.currentInteration == bytableWrapper.getCurrentIteration()) {
                         String clazzName = NettyMasterCoordinator.this.workerClassName;
 
-                        WORKER_RESULT wr = NettyMasterCoordinator.this.getWorkerSerializer().bytesToObject(
-                                bytableWrapper.getBytes(), clazzName);
+                        WORKER_RESULT wr = NettyMasterCoordinator.this.getWorkerSerializer()
+                                .bytesToObject(bytableWrapper.getBytes(), clazzName);
 
                         // release memory at earliest stage
                         bytableWrapper.setBytes(null);
@@ -613,10 +623,11 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     synchronized(LOCK) {
                         NettyMasterCoordinator.this.canUpdateWorkerResultMap = false;
                     }
-                    LOG.info("Iteration {}, master waiting is terminated by workers {} doneWorkers {} "
-                            + "minWorkersRatio {} minWorkersTimeOut {}.", context.getCurrentIteration(),
-                            context.getWorkers(), doneWorkers, context.getMinWorkersRatio(),
-                            GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
+                    LOG.info(
+                            "Iteration {}, master waiting is terminated by workers {} doneWorkers {} "
+                                    + "minWorkersRatio {} minWorkersTimeOut {}.",
+                            context.getCurrentIteration(), context.getWorkers(), doneWorkers,
+                            context.getMinWorkersRatio(), GuaguaConstants.GUAGUA_DEFAULT_MIN_WORKERS_TIMEOUT);
                 }
                 return isTerminated;
             }
@@ -804,8 +815,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                             GuaguaConstants.GUAGUA_ZK_DEFAULT_CLEANUP_VALUE);
 
                     // master unregister timeout in second, by default 200s
-                    final int masterUnregisterTimeout = NumberFormatUtils.getInt(context.getProps().getProperty(
-                            GuaguaConstants.GUAGUA_UNREGISTER_MASTER_TIMEROUT, "200000"));
+                    final int masterUnregisterTimeout = NumberFormatUtils.getInt(context.getProps()
+                            .getProperty(GuaguaConstants.GUAGUA_UNREGISTER_MASTER_TIMEROUT, "200000"));
                     LOG.info("guagua master un register timeout is {}", masterUnregisterTimeout);
                     final long start = System.nanoTime();
                     if(Boolean.TRUE.toString().equalsIgnoreCase(zkCleanUpEnabled)) {
@@ -818,15 +829,18 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                                     doneWorkers = (int) NettyMasterCoordinator.this.iterResults.size();
                                 }
                                 if(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) > masterUnregisterTimeout) {
-                                    LOG.info("unregister step, worker(s) compelted: {}, still {} workers are "
-                                            + "not unregistered, but time out to terminate.", doneWorkers,
-                                            (context.getWorkers() - doneWorkers));
+                                    LOG.info(
+                                            "unregister step, worker(s) compelted: {}, still {} workers are "
+                                                    + "not unregistered, but time out to terminate.",
+                                            doneWorkers, (context.getWorkers() - doneWorkers));
                                     return true;
                                 }
                                 // to avoid log flood
                                 if(System.nanoTime() % 30 == 0) {
-                                    LOG.info("unregister step, worker(s) compelted: {}, still {} workers are "
-                                            + "not unregistered.", doneWorkers, (context.getWorkers() - doneWorkers));
+                                    LOG.info(
+                                            "unregister step, worker(s) compelted: {}, still {} workers are "
+                                                    + "not unregistered.",
+                                            doneWorkers, (context.getWorkers() - doneWorkers));
                                 }
 
                                 // master should wait for all workers done in post application.
@@ -848,8 +862,8 @@ public class NettyMasterCoordinator<MASTER_RESULT extends Bytable, WORKER_RESULT
                     }
                 } finally {
                     if(NettyMasterCoordinator.this.messageServer != null) {
-                        Method shutDownMethod = ReflectionUtils.getMethod(
-                                NettyMasterCoordinator.this.messageServer.getClass(), "shutdown");
+                        Method shutDownMethod = ReflectionUtils
+                                .getMethod(NettyMasterCoordinator.this.messageServer.getClass(), "shutdown");
                         if(shutDownMethod != null) {
                             shutDownMethod.invoke(NettyMasterCoordinator.this.messageServer, (Object[]) null);
                         }

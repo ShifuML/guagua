@@ -19,7 +19,7 @@ package ml.shifu.guagua.util;
  * Helper static methods for tracking memory usage. Copy from Apache Giraph.
  */
 public final class MemoryUtils {
-    
+
     /** Do not instantiate. */
     private MemoryUtils() {
     }
@@ -65,6 +65,15 @@ public final class MemoryUtils {
      */
     public static double usedMemoryMB() {
         return megaBytes(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
+    }
+
+    /**
+     * Get use memory ratio.
+     * 
+     * @return ratio of used memory divided by total memory
+     */
+    public static double usedRatio() {
+        return Runtime.getRuntime().freeMemory() * 1d / Runtime.getRuntime().totalMemory();
     }
 
     /**
