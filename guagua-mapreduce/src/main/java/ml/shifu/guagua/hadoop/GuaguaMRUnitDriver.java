@@ -36,26 +36,24 @@ import org.apache.hadoop.mapreduce.lib.input.InvalidInputException;
 import org.apache.hadoop.util.StringUtils;
 
 /**
- * {@link GuaguaMRUnitDriver} is used to run in-memory guagua application by using hadoop MapReduce splits.
+ * {@link GuaguaMRUnitDriver} is used to run in-memory guagua application by using hadoop MapReduce splits. Please check
+ * ml.shifu.guagua.mapreduce.example.sum.SumTest in guagua-mapreduce-examples project.
  * 
  * @param <MASTER_RESULT>
  *            master result for computation in each iteration.
  * @param <WORKER_RESULT>
  *            worker result for computation in each iteration.
  * 
- * @see ml.shifu.guagua.mapreduce.example.sum.SumTest in guagua-mapreduce-examples project.
  */
-public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable> extends
-        GuaguaUnitDriver<MASTER_RESULT, WORKER_RESULT> {
+public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT extends Bytable>
+        extends GuaguaUnitDriver<MASTER_RESULT, WORKER_RESULT> {
 
     /**
-     * A only constructor here for local in-memory guagua job.
+     * A only constructor here for local in-memory guagua job. Please check
+     * ml.shifu.guagua.mapreduce.example.sum.SumTest in guagua-mapreduce-examples project.
      * 
      * @param props
      *            set all the configurations like input, output and ..
-     * 
-     * @see ml.shifu.guagua.mapreduce.example.sum.SumTest in guagua-mapreduce-examples project.
-     * 
      */
     public GuaguaMRUnitDriver(Properties props) {
         super(props);
@@ -100,14 +98,14 @@ public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT ext
 
                 long bytesRemaining = length;
                 while(((double) bytesRemaining) / splitSize > GuaguaMapReduceConstants.SPLIT_SLOP) {
-                    splits.add(new GuaguaFileSplit[] { new GuaguaFileSplit(path.toString(), length - bytesRemaining,
-                            splitSize) });
+                    splits.add(new GuaguaFileSplit[] {
+                            new GuaguaFileSplit(path.toString(), length - bytesRemaining, splitSize) });
                     bytesRemaining -= splitSize;
                 }
 
                 if(bytesRemaining != 0) {
-                    splits.add(new GuaguaFileSplit[] { new GuaguaFileSplit(path.toString(), length - bytesRemaining,
-                            bytesRemaining) });
+                    splits.add(new GuaguaFileSplit[] {
+                            new GuaguaFileSplit(path.toString(), length - bytesRemaining, bytesRemaining) });
                 }
             } else if(length != 0) {
                 splits.add(new GuaguaFileSplit[] { new GuaguaFileSplit(path.toString(), 0, length) });
@@ -160,8 +158,10 @@ public class GuaguaMRUnitDriver<MASTER_RESULT extends Bytable, WORKER_RESULT ext
      * List input directories.
      * Subclasses may override to, e.g., select only files matching a regular expression.
      * 
-     * @param job
-     *            the job to list input paths for
+     * @param conf
+     *            the job configuration
+     * @param input
+     *            the input file path
      * @return array of FileStatus objects
      * @throws IOException
      *             if zero items.

@@ -17,19 +17,18 @@ package ml.shifu.guagua.mapreduce;
 
 import java.io.IOException;
 
-import ml.shifu.guagua.io.GuaguaFileSplit;
-import ml.shifu.guagua.io.GuaguaRecordReader;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
+
+import ml.shifu.guagua.io.GuaguaFileSplit;
 
 /**
  * A reader read HDFS sequence file key by key. The sequence key and value types are both {@link BytesWritable}.
  * 
  * <p>
- * Copy some code from {@link org.apache.hadoop.mapred.GuaguaSequenceAsTextRecordReader} but to support
- * {@link GuaguaRecordReader} interface.
+ * Copy some code from {@link org.apache.hadoop.mapred.SequenceFileAsTextRecordReader} but to support
+ * {@link ml.shifu.guagua.io。GuaguaRecordReader} interface.
  * 
  * <p>
  * If use default constructor, user should also call {@link #initialize(GuaguaFileSplit)} like in below:

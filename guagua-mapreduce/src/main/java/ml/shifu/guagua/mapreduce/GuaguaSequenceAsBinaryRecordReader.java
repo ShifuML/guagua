@@ -17,11 +17,11 @@ package ml.shifu.guagua.mapreduce;
 
 import java.io.IOException;
 
-import ml.shifu.guagua.io.GuaguaFileSplit;
-import ml.shifu.guagua.io.GuaguaRecordReader;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
+
+import ml.shifu.guagua.io.GuaguaFileSplit;
+import ml.shifu.guagua.io.GuaguaRecordReader;
 
 /**
  * A reader read HDFS sequence file key by key. The sequence key and value types are both {@link BytesWritable}.

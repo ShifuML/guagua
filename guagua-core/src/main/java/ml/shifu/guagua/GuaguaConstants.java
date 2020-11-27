@@ -179,14 +179,25 @@ public final class GuaguaConstants {
     public static final int GUAGUA_DEFAULT_CLEANUP_INTERVAL = 2;
 
     public static final String GUAGUA_CLEANUP_INTERVAL = "guagua.cleanup.interval";
-    
+
     public static final String GUAGUA_MASTER_RESULT_MERGE_THRESHOLD = "guagua.master.result.merge.threshold";
 
     public static final String GUAGUA_MASTER_RESULT_NONSPILL = "guagua.master.result.nonspill";
-    
+
     public static final String GUAGUA_UNREGISTER_MASTER_TIMEROUT = "guagua.master.unregister.wait.timeout";
-    
+
     public static final String GUAGUA_ZK_EMBEDED = "guagua.zk.embeded";
 
+    public static final long GUAGUA_NETTY_MASTER_THROTTLER_DEFAULT_INTERVAL = 1000L;
+
+    public static final long GUAGUA_NETTY_MASTER_THROTTLER_DEFAULT_LIMIT = 100 * 1024 * 1024L;
+
+    public static final String GUAGUA_NETTY_MASTER_THROTTLER_INTERVAL = "guagua.netty.master.throttler.interval";
+
+    public static final String GUAGUA_NETTY_MASTER_THROTTLER_LIMIT = "guagua.netty.master.throttler.limit";
+
+    public static final String GUAGUA_MASTER_NETTY_SERVER_IO_THREADS = "guagua.master.netty.server.io-threads";
+
+    public static final String GUAGUA_MASTER_NETTY_SERVER_THREADS = "guagua.master.netty.server.threads";
 
 }

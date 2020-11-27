@@ -40,7 +40,7 @@ public abstract class AbstractMasterComputable<MASTER_RESULT extends Bytable, WO
 
     /**
      * Initialization logic. This is used to initialize some useful fields like config parameters. And another important
-     * feature can be done here: If state in {@link MasterComputable}, for fail-over, the state should also be recoverd.
+     * feature can be done here: If state in {@link MasterComputable}, for fail-over, the state should also be recovered.
      * To do that, like this in this method:
      * 
      * <pre>

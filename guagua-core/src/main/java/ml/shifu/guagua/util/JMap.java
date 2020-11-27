@@ -112,12 +112,12 @@ public class JMap {
             StreamCollector jmapStreamCollector;
             synchronized(StreamCollector.class) {
                 jmapProcess = pb.start();
-                jmapStreamCollector = new StreamCollector(jmapProcess.getInputStream());
+                jmapStreamCollector = new StreamCollector(jmapProcess.getInputStream(), numLines);
                 jmapStreamCollector.start();
             }
 
-            Runtime.getRuntime().addShutdownHook(
-                    new Thread(new JMapShutdownHook(jmapProcess, jmapStreamCollector, workingDir)));
+            Runtime.getRuntime()
+                    .addShutdownHook(new Thread(new JMapShutdownHook(jmapProcess, jmapStreamCollector, workingDir)));
         } catch (IOException e) {
             LOG.error("IOException in dump heap", e);
         } finally {
@@ -147,22 +147,26 @@ public class JMap {
 
         @Override
         public void run() {
-            LOG.info("start run shutdown hook");
-            synchronized(this) {
-                if(process != null) {
-                    LOG.warn("foeced a shutdown hook kill TomcatProcessSimServer process");
-                    process.destroy();
-                    int returnCode = -1;
-                    try {
-                        returnCode = process.waitFor();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
+            try {
+                LOG.info("start run shutdown hook");
+                synchronized(this) {
+                    if(process != null) {
+                        LOG.warn("foeced a shutdown hook to kill process");
+                        process.destroy();
+                        int returnCode = -1;
+                        try {
+                            returnCode = process.waitFor();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                        LOG.info("Current process exited with {} (note that 143 typically means killed).", returnCode);
                     }
-                    LOG.info("TomcatProcessSimServerr process exited with {} (note that 143 typically means killed).",
-                            returnCode);
+                }
+            } finally {
+                if(this.collector != null) {
+                    this.collector.close();
                 }
             }
-            this.collector.close();
             FileUtils.deleteQuietly(new File(exeDir));
         }
 
@@ -177,6 +181,7 @@ public class JMap {
         private final BufferedReader bufferedReader;
         /** Last lines (help to debug failures) */
         private final LinkedList<String> lastLines = new LinkedList<String>();
+        private final int maxLines;
 
         /**
          * Constructor.
@@ -184,8 +189,9 @@ public class JMap {
          * @param is
          *            InputStream to dump to LOG.info
          */
-        public StreamCollector(final InputStream is) {
+        public StreamCollector(final InputStream is, int maxLines) {
             super(StreamCollector.class.getName());
+            this.maxLines = maxLines;
             setDaemon(true);
             InputStreamReader streamReader = new InputStreamReader(is, Charset.defaultCharset());
             bufferedReader = new BufferedReader(streamReader);
@@ -202,11 +208,13 @@ public class JMap {
         private synchronized void readLines() {
             String line;
             try {
-                while((line = bufferedReader.readLine()) != null) {
+                int lineIndex = 0;
+                while((line = bufferedReader.readLine()) != null && lineIndex < this.maxLines) {
                     if(lastLines.size() > LAST_LINES_COUNT) {
                         lastLines.removeFirst();
                     }
                     lastLines.add(line);
+                    lineIndex += 1;
                     LOG.info("readLines: {}.", line);
                 }
             } catch (IOException e) {

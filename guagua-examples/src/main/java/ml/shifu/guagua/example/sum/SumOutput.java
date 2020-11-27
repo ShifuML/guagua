@@ -55,8 +55,10 @@ public class SumOutput extends
             pw.println(context.getMasterResult().getWritable().get());
             pw.flush();
         } catch (IOException e) {
+            e.printStackTrace();
             LOG.error("Error in writing output.", e);
         } catch (Exception e) {
+            e.printStackTrace();
             LOG.error("Error in writing output.", e);
         } finally {
             IOUtils.closeStream(pw);

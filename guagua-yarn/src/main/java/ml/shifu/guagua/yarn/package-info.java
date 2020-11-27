@@ -19,14 +19,14 @@
  * framework.
  * 
  * <p>
- * {@link com.paypal.guagua.yarn.GuaguaYarnClient} is the entry point to trigger a guagua job by invoking its 
+ * {@link ml.shifu.guagua.yarn.GuaguaYarnClient} is the entry point to trigger a guagua job by invoking its 
  * <code>main</code> method. 
  * 
  * <p>
- * {@link com.paypal.guagua.yarn.GuaguaAppMaster} is served as an application master implementation for YARM.
+ * {@link ml.shifu.guagua.yarn.GuaguaAppMaster} is served as an application master implementation for YARM.
  * 
  * <p>
- * {@link com.paypal.guagua.yarn.GuaguaYarnTask} is used to lanuch master and worker containers on hadoop YARN framework.
+ * {@link ml.shifu.guagua.yarn.GuaguaYarnTask} is used to launch master and worker containers on hadoop YARN framework.
  */
 package ml.shifu.guagua.yarn;
 

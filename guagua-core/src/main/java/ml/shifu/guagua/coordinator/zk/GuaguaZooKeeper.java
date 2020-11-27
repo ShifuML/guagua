@@ -406,7 +406,7 @@ public class GuaguaZooKeeper {
 
     /**
      * Get the children of the path with extensions.
-     * Extension 1: Sort the children based on {@link Code childComparator} number
+     * Extension 1: Sort the children based on {@code childComparator} number
      * Extension 2: Get the full path instead of relative path
      * 
      * @param path
