@@ -14,7 +14,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
-        <hadoop.version>2.2.0</hadoop.version>
+        <hadoop.version>3.2.3</hadoop.version>
     </properties>
     <dependencies>
         <dependency>
