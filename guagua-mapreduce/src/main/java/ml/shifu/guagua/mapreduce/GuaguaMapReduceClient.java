@@ -175,6 +175,9 @@ public class GuaguaMapReduceClient {
             for(ControlledJob controlledJob: runningJobs) {
                 String jobId = controlledJob.getJob().getJobID().toString();
                 Counters counters = getCounters(controlledJob.getJob());
+                if (counters == null) {
+                    continue;
+                }
                 Counter doneMaster = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
                         GuaguaMapReduceConstants.MASTER_SUCCESS);
                 Counter doneWorkers = counters.findCounter(GuaguaMapReduceConstants.GUAGUA_STATUS,
